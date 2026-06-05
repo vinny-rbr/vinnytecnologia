@@ -65,7 +65,7 @@ const I18N = {
         highlights: [["Importação", "Planilhas (XLSX) e PDF"], ["Visual", "Gráficos e dashboards"], ["Mobile", "Instalável como app (PWA)"]],
         link: "Ver no GitHub",
       },
-      placeholder: { name: "Seu projeto aqui", desc: "O próximo case pode ser o seu. Vamos construir algo que dê orgulho de mostrar.", cta: "Começar" },
+      placeholder: { name: "Seu projeto aqui", desc: "O próximo trabalho pode ser o seu. Vamos construir algo que dê orgulho de mostrar.", cta: "Começar" },
     },
     about: {
       eyebrow: "Sobre",
