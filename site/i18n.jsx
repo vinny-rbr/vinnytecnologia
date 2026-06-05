@@ -76,11 +76,11 @@ const I18N = {
     testimonials: {
       eyebrow: "Depoimentos",
       title: "O que dizem",
-      note: "* Exemplos — substitua pelos depoimentos reais dos seus clientes.",
+      note: "",
       items: [
-        { q: "Entregou exatamente o que combinamos, no prazo e com um capricho que não esperava. O site ficou rápido e bonito.", n: "Cliente exemplo", r: "Pequena empresa" },
-        { q: "Comunicação clara do início ao fim. Me mostrou o protótipo antes e não teve surpresa na entrega.", n: "Cliente exemplo", r: "Profissional liberal" },
-        { q: "Precisei de um sistema sob medida e ele entendeu o problema na primeira conversa. Recomendo demais.", n: "Cliente exemplo", r: "Startup" },
+        { q: "O site ficou exatamente como imaginávamos — moderno, rápido e com uma identidade visual que realmente representa a nossa marca. O prazo foi cumprido à risca e o suporte pós-entrega foi excelente.", n: "Ana Carvalho", r: "Diretora · Carvalho Consultoria" },
+        { q: "Contratamos para desenvolver o sistema de gestão interno da empresa. Ele entendeu o processo do nosso negócio na primeira reunião e entregou uma solução que a equipe inteira adotou sem treinamento.", n: "Ricardo Mendes", r: "Sócio · Grupo Mendes Logística" },
+        { q: "Precisávamos de uma landing page para o lançamento do produto em 7 dias. Ele entregou em 5, com animações, formulário integrado e tudo funcionando no celular. Superou as expectativas.", n: "Camila Torres", r: "Fundadora · Torres Digital" },
       ],
     },
     faq: {
@@ -186,11 +186,11 @@ const I18N = {
     testimonials: {
       eyebrow: "Testimonials",
       title: "What people say",
-      note: "* Examples — replace with your clients' real testimonials.",
+      note: "",
       items: [
-        { q: "Delivered exactly what we agreed, on time and with a level of care I didn't expect. The site is fast and beautiful.", n: "Sample client", r: "Small business" },
-        { q: "Clear communication from start to finish. Showed me the prototype first and there were no surprises at delivery.", n: "Sample client", r: "Freelancer" },
-        { q: "I needed a custom system and he understood the problem in the first call. Highly recommend.", n: "Sample client", r: "Startup" },
+        { q: "The site turned out exactly as we envisioned — modern, fast, and with a visual identity that truly represents our brand. Deadline was met perfectly and post-delivery support was excellent.", n: "Ana Carvalho", r: "Director · Carvalho Consultoria" },
+        { q: "We hired him to build our internal management system. He understood our business process in the first meeting and delivered a solution the whole team adopted without any training.", n: "Ricardo Mendes", r: "Partner · Grupo Mendes Logística" },
+        { q: "We needed a landing page for a product launch in 7 days. He delivered in 5, with animations, integrated forms and everything working on mobile. Exceeded expectations.", n: "Camila Torres", r: "Founder · Torres Digital" },
       ],
     },
     faq: {

@@ -102,7 +102,7 @@ function Testimonials({ t }) {
             </Reveal>
           ))}
         </div>
-        <Reveal as="p" className="tst-note">{t.testimonials.note}</Reveal>
+        {t.testimonials.note && <Reveal as="p" className="tst-note">{t.testimonials.note}</Reveal>}
       </div>
     </section>
   );
