@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="280" viewBox="0 0 400 140" fill="none">
+  <defs></defs>
+  <g transform="translate(8,38)">
+    <path d="M30 16 L14 32 L30 48" stroke="#3B82F6" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"></path>
+    <path d="M44 19 L58 47 L72 19" stroke="#3B82F6" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"></path>
+    <path d="M82 49 L94 15" stroke="#3B82F6" stroke-width="6.4" stroke-linecap="round"></path>
+    <path d="M100 16 L116 32 L100 48" stroke="#3B82F6" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"></path>
+  </g>
+  <text x="150" y="76" font-family="&#39;Space Grotesk&#39;,sans-serif" font-weight="700" font-size="50" letter-spacing="-1.5" fill="#EAEDF2">vinny</text>
+  <text x="152" y="99" font-family="&#39;JetBrains Mono&#39;,monospace" font-weight="500" font-size="14.5" letter-spacing="6.2" fill="#9097A6">TECNOLOGIA</text>
+</svg>
