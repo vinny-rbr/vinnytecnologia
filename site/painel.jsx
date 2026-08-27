@@ -252,7 +252,7 @@ function StatusPill({ l }) {
   return <span className="pill pill-ok"><Ic d={icCheck} strokeWidth="3" /> Ativa</span>;
 }
 
-function Linha({ l, onAtivar, busy, m, onGrupo }) {
+function Linha({ l, onAtivar, busy, m, onGrupo, rev }) {
   const soon = vencendoEmBreve(l);
   const nomeCell = (
     <td className="loja">
@@ -295,16 +295,22 @@ function Linha({ l, onAtivar, busy, m, onGrupo }) {
     <tr>
       {nomeCell}
       <td><span className={"on-dot " + (l.online ? "on" : "off")}><i></i> {l.online ? "online" : "offline"}</span></td>
-      <td className="dias">{l.status === "aguardando" ? "—" : l.diasUso}</td>
       <td className={"venc" + (soon ? " soon" : "")}>{l.status === "aguardando" ? "—" : fmtData(l.vencimento)}</td>
-      <td><StatusPill l={l} /></td>
+      <td>
+        <StatusPill l={l} />
+        {l.status !== "aguardando" && l.pago === false && <span className="pill pill-wait" style={{ marginLeft: 6 }}>R$ 30 a pagar</span>}
+      </td>
       <td>
         <div className="row-actions">
-          {l.status === "aguardando" && (
+          {l.status === "aguardando" ? (
             <button className="btn btn-mg btn-sm" disabled={busy} onClick={() => onAtivar(l)}>Ativar · R$ 30</button>
-          )}
-          {l.status === "bloqueada" && (
-            <button className="btn btn-ghost btn-sm" disabled={busy} onClick={() => onAtivar(l)}>Liberar</button>
+          ) : (
+            <>
+              <button className="btn btn-mg btn-sm" title="Registrar que você pagou o Meu Giro" disabled={busy} onClick={() => rev.marcarPago(l)}><Ic d={icCheck} strokeWidth="3" /> Paguei R$ 30</button>
+              {l.bloqueada
+                ? <button className="btn btn-ghost btn-sm" disabled={busy} onClick={() => rev.toggleBloqueio(l)}><Ic d={icUnlock} /> Liberar</button>
+                : <button className="btn btn-ghost btn-sm" disabled={busy} onClick={() => rev.toggleBloqueio(l)}><Ic d={icLock} /> Bloquear</button>}
+            </>
           )}
           <button className="iconbtn" title="Grupo" disabled={busy} onClick={() => onGrupo(l)}><Ic d={icFolder} /></button>
         </div>
@@ -313,7 +319,7 @@ function Linha({ l, onAtivar, busy, m, onGrupo }) {
   );
 }
 
-function TabelaLojas({ lojas, onAtivar, ativando, vazio, m, onGrupo }) {
+function TabelaLojas({ lojas, onAtivar, ativando, vazio, m, onGrupo, rev }) {
   if (lojas.length === 0) {
     return <div className="state"><div className="big">{vazio.t}</div>{vazio.s}</div>;
   }
@@ -324,11 +330,11 @@ function TabelaLojas({ lojas, onAtivar, ativando, vazio, m, onGrupo }) {
           <tr>
             {m
               ? <><th>Loja</th><th>Conexão</th><th>Mensalidade</th><th>Vencimento</th><th>Status</th><th style={{ textAlign: "right" }}>Ações</th></>
-              : <><th>Loja</th><th>Conexão</th><th>Dias de uso</th><th>Vencimento</th><th>Status</th><th style={{ textAlign: "right" }}>Ações</th></>}
+              : <><th>Loja</th><th>Conexão</th><th>Vencimento (R$ 30)</th><th>Status</th><th style={{ textAlign: "right" }}>Ações</th></>}
           </tr>
         </thead>
         <tbody>
-          {lojas.map((l) => <Linha key={l.cnpj} l={l} busy={ativando === l.cnpj} onAtivar={onAtivar} m={m} onGrupo={onGrupo} />)}
+          {lojas.map((l) => <Linha key={l.cnpj} l={l} busy={ativando === l.cnpj} onAtivar={onAtivar} m={m} rev={rev} onGrupo={onGrupo} />)}
         </tbody>
       </table>
     </div>
@@ -396,7 +402,7 @@ function ViewInicio({ lojas, sess, onAtivar, ativando, goto, isMaster }) {
   );
 }
 
-function ViewLojas({ lojas, onAtivar, ativando, isMaster, master, onGrupo }) {
+function ViewLojas({ lojas, onAtivar, ativando, isMaster, master, rev, onGrupo }) {
   const [tab, setTab] = useState("todas");
   const [q, setQ] = useState("");
   const [grupo, setGrupo] = useState("__todos");
@@ -450,7 +456,7 @@ function ViewLojas({ lojas, onAtivar, ativando, isMaster, master, onGrupo }) {
             <input placeholder="Buscar por nome ou CNPJ…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Buscar" />
           </div>
         </div>
-        <TabelaLojas lojas={filtradas} onAtivar={onAtivar} ativando={ativando} m={isMaster ? master : null} onGrupo={onGrupo}
+        <TabelaLojas lojas={filtradas} onAtivar={onAtivar} ativando={ativando} m={isMaster ? master : null} rev={rev} onGrupo={onGrupo}
           vazio={{ t: lojas.length === 0 ? "Nenhuma loja ainda" : "Nada nesse filtro", s: lojas.length === 0 ? (isMaster ? "Nenhuma loja conectou ainda." : "Instale o agente com o seu código de revenda numa loja e ela aparece aqui.") : "Tente outro filtro ou limpe a busca." }} />
         <div className="foot">
           <span>Mostrando <b style={{ color: "var(--text)" }}>{filtradas.length}</b> de <b style={{ color: "var(--text)" }}>{lojas.length}</b> lojas</span>
@@ -902,7 +908,30 @@ function Painel({ sess, onLogout }) {
     });
   }
 
-  const props = { lojas, sess, onAtivar: ativar, ativando, goto: setView, onLogout, mostrarToast, isMaster, master, onGrupo: definirGrupo };
+  // ---- acoes do REVENDEDOR sobre as lojas dele (cliente final) ----
+  const revenda = {
+    marcarPago(l) {
+      setModal({
+        title: "Pagamento ao Meu Giro", icon: { d: icCheck, cls: "ic-green" },
+        desc: `Confirmar que você pagou os R$ 30 desta loja (“${l.nome}”) ao Meu Giro? Ela fica em dia e liberada.`,
+        confirmLabel: "Paguei · R$ 30",
+        onConfirm: () => runAction(() => api(`/lojas/${l.cnpj}/pago`, { method: "POST", token: sess.token }), "Pagamento registrado."),
+      });
+    },
+    toggleBloqueio(l) {
+      const bloquear = !l.bloqueada;
+      setModal({
+        title: bloquear ? "Bloquear cliente" : "Liberar cliente",
+        icon: { d: bloquear ? icLock : icUnlock, cls: bloquear ? "ic-red" : "ic-green" },
+        desc: bloquear ? `Bloquear “${l.nome}”? Use quando o cliente não te pagou — ele perde o acesso.` : `Liberar “${l.nome}” e devolver o acesso?`,
+        confirmLabel: bloquear ? "Bloquear" : "Liberar",
+        danger: bloquear,
+        onConfirm: () => runAction(() => api(`/lojas/${l.cnpj}/${bloquear ? "bloquear" : "desbloquear"}`, { method: "POST", token: sess.token }), bloquear ? "Cliente bloqueado." : "Cliente liberado."),
+      });
+    },
+  };
+
+  const props = { lojas, sess, onAtivar: ativar, ativando, goto: setView, onLogout, mostrarToast, isMaster, master, rev: revenda, onGrupo: definirGrupo };
   const conteudo = () => {
     switch (view) {
       case "lojas": return <ViewLojas {...props} />;
