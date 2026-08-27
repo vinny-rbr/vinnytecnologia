@@ -277,7 +277,7 @@ function Linha({ l, onAtivar, busy, m, onGrupo }) {
         <td><StatusPill l={l} /></td>
         <td>
           <div className="row-actions">
-            <button className="btn btn-mg btn-sm" title="Registrar pagamento em dinheiro/Pix" disabled={busy} onClick={() => m.marcarPago(l)}><Ic d={icCheck} strokeWidth="3" /> Pago</button>
+            <button className="btn btn-mg btn-sm" title={l.fase !== "implantacao" && l.pagavel === false ? "Abre 10 dias antes do vencimento" : "Registrar pagamento em dinheiro/Pix"} disabled={busy || (l.fase !== "implantacao" && l.pagavel === false)} onClick={() => m.marcarPago(l)}><Ic d={icCheck} strokeWidth="3" /> Pago</button>
             {l.bloqueada
               ? <button className="btn btn-ghost btn-sm" disabled={busy} onClick={() => m.toggleBloqueio(l)}><Ic d={icUnlock} /> Liberar</button>
               : <button className="btn btn-ghost btn-sm" disabled={busy} onClick={() => m.toggleBloqueio(l)}><Ic d={icLock} /> Bloquear</button>}
@@ -538,7 +538,7 @@ function ViewCobrancas({ lojas, onAtivar, ativando, isMaster, master }) {
                   <td><StatusPill l={l} /></td>
                   <td><div className="row-actions">
                     {l.fase === "implantacao" && <button className="iconbtn" title="Vencimento da implantação" disabled={ativando === l.cnpj} onClick={() => master.definirImplantacaoVence(l)}><Ic d={icClock} /></button>}
-                    <button className="btn btn-mg btn-sm" disabled={ativando === l.cnpj} onClick={() => master.marcarPago(l)}><Ic d={icCheck} strokeWidth="3" /> Registrar pago</button>
+                    <button className="btn btn-mg btn-sm" title={l.fase !== "implantacao" && l.pagavel === false ? "Abre 10 dias antes do vencimento" : ""} disabled={ativando === l.cnpj || (l.fase !== "implantacao" && l.pagavel === false)} onClick={() => master.marcarPago(l)}><Ic d={icCheck} strokeWidth="3" /> Registrar pago</button>
                   </div></td>
                 </tr>
               ))}</tbody>
@@ -785,6 +785,7 @@ function Painel({ sess, onLogout }) {
           vencimentoAtual: e.vencimentoAtual || null, implantacaoVence: e.implantacaoVence || null,
           mensalidade: e.mensalidade, implantacao: e.implantacao,
           implantacaoPaga: e.implantacaoPaga, fase: e.fase, valorAtual: e.valorAtual,
+          pagavel: e.pagavel !== false,
           dispositivos: e.dispositivos, appVersion: e.appVersion || null,
         })));
       } else {
@@ -874,6 +875,10 @@ function Painel({ sess, onLogout }) {
     },
     marcarPago(l) {
       const impl = l.fase === "implantacao" || l.implantacaoPaga === false;
+      if (!impl && l.pagavel === false) {
+        mostrarToast(`Ainda não abriu — a mensalidade libera 10 dias antes do vencimento${l.vencimentoAtual ? " (" + fmtData(l.vencimentoAtual) + ")" : ""}.`, false);
+        return;
+      }
       const valor = impl ? IMPLANTACAO : (Number(l.mensalidade) || 0);
       const item = impl ? "implantação" : "mensalidade";
       setModal({
