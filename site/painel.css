@@ -186,6 +186,12 @@ tbody tr:hover{background:var(--surface)}
 .steps li + li{border-top:1px solid var(--line-2)}
 .step-n{flex:none;width:26px;height:26px;border-radius:8px;background:color-mix(in srgb,var(--mg) 16%,transparent);color:var(--mg);display:grid;place-items:center;font-family:var(--mono);font-weight:600;font-size:13px}
 
+/* ---- instaladores ---- */
+.inst-body{display:flex;align-items:flex-end;gap:16px;padding:18px;flex-wrap:wrap}
+.sel{width:100%;background:var(--ink-2);border:1px solid var(--line);border-radius:10px;padding:12px 13px;color:var(--text);font-family:var(--font);font-size:14.5px;outline:none;cursor:pointer}
+.sel:focus{border-color:var(--mg)}
+.inst-body .btn{flex:none}
+
 .note-inline{display:flex;align-items:center;gap:9px;color:var(--muted-2);font-size:13px;margin-top:16px}
 .note-inline svg{width:15px;height:15px;flex:none;color:var(--mg)}
 

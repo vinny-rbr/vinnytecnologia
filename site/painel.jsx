@@ -6,6 +6,16 @@ const API = "https://raizestecnologia-relay.onrender.com/api/revenda";
 const LS_TOKEN = "mg_rev_token";
 const LS_USER = "mg_rev_user";
 const PRECO = 30;
+// Instalador-base LIMPO (mesmo pra todos). O navegador baixa, injeta o codigo do
+// revendedor no RaizesAgente.xml e devolve o zip pronto. Precisa estar num host com
+// CORS liberado pro dominio do painel (ex.: Cloudflare R2) ou no mesmo dominio do site.
+const INSTALADOR_BASE = "instalador-base.zip";
+const SISTEMAS = [
+  { k: "host", label: "Host (TSD / Firebird)", asset: "agente-host.jar" },
+  { k: "link", label: "Link (InkDB / Postgres)", asset: "agente-link.jar" },
+  { k: "syspdv", label: "SysPDV (Firebird)", asset: "agente-syspdv.jar" },
+  { k: "lider", label: "Lider PDV (Postgres)", asset: "agente-lider.jar" },
+];
 
 /* ---------- HTTP ---------- */
 async function api(path, { method = "GET", body, token } = {}) {
@@ -451,19 +461,73 @@ function ViewRelatorios({ lojas }) {
   );
 }
 
-function ViewInstaladores({ sess }) {
+function ViewInstaladores({ sess, mostrarToast }) {
+  const [sistema, setSistema] = useState("host");
+  const [baixando, setBaixando] = useState(false);
+
+  async function baixar() {
+    if (typeof JSZip === "undefined") { mostrarToast("Recurso ainda carregando, tente de novo.", false); return; }
+    const sis = SISTEMAS.find((s) => s.k === sistema);
+    setBaixando(true);
+    try {
+      const resp = await fetch(INSTALADOR_BASE);
+      if (!resp.ok) throw new Error("base " + resp.status);
+      const buf = await resp.arrayBuffer();
+      const zip = await JSZip.loadAsync(buf);
+      const nomeXml = Object.keys(zip.files).find((n) => /RaizesAgente\.xml$/i.test(n));
+      if (!nomeXml) throw new Error("xml não encontrado no base");
+      let xml = await zip.file(nomeXml).async("string");
+      // define o jar do sistema escolhido
+      xml = xml.replace(/(<env name="RAIZES_UPDATE_ASSET" value=")[^"]*(")/, "$1" + sis.asset + "$2");
+      // injeta (ou atualiza) o codigo do revendedor
+      if (/<env name="REVENDA_CODE"/.test(xml)) {
+        xml = xml.replace(/\s*<env name="REVENDA_CODE"[^>]*\/>/, '\r\n  <env name="REVENDA_CODE" value="' + sess.codigo + '"/>');
+      } else {
+        xml = xml.replace(/(<env name="RAIZES_UPDATE_ASSET"[^>]*\/>)/, '$1\r\n  <env name="REVENDA_CODE" value="' + sess.codigo + '"/>');
+      }
+      zip.file(nomeXml, xml);
+      const out = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
+      const url = URL.createObjectURL(out);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `MeuGiro-${sis.k}-${sess.codigo}.zip`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      mostrarToast("Instalador gerado! Confira os downloads.");
+    } catch (err) {
+      mostrarToast("Instalador ainda não disponível para download.", false);
+    } finally {
+      setBaixando(false);
+    }
+  }
+
   return (
     <>
-      <div className="head-row"><div><h1>Instaladores</h1><p className="sub">O instalador que carrega o seu código de revenda.</p></div></div>
+      <div className="head-row"><div><h1>Instaladores</h1><p className="sub">Baixe o instalador já com o seu código embutido.</p></div></div>
       <CodigoBox codigo={sess.codigo} />
+
+      <div className="panel" style={{ marginTop: 18 }}>
+        <div className="p-head"><span className="p-title"><Ic d={icDownload} /> Gerar instalador</span></div>
+        <div className="inst-body">
+          <div className="field" style={{ marginBottom: 0, maxWidth: 340 }}>
+            <label>Sistema da loja</label>
+            <select className="sel" aria-label="Sistema da loja" value={sistema} onChange={(e) => setSistema(e.target.value)}>
+              {SISTEMAS.map((s) => <option key={s.k} value={s.k}>{s.label}</option>)}
+            </select>
+          </div>
+          <button className="btn btn-mg" disabled={baixando} onClick={baixar}>
+            <Ic d={icDownload} /> {baixando ? "Gerando…" : "Baixar instalador"}
+          </button>
+        </div>
+      </div>
+
       <div className="panel" style={{ marginTop: 18, padding: "6px 4px" }}>
         <ol className="steps">
-          <li><span className="step-n">1</span><span>Seu instalador personalizado já vem com o código <b className="mono">{sess.codigo}</b> embutido — nada é digitado na loja.</span></li>
-          <li><span className="step-n">2</span><span>Copie a pasta pro PC da loja e rode <b className="mono">INSTALAR.bat</b> como administrador.</span></li>
+          <li><span className="step-n">1</span><span>Escolha o sistema da loja acima e clique em <b>Baixar instalador</b> — o seu código <b className="mono">{sess.codigo}</b> já vai embutido.</span></li>
+          <li><span className="step-n">2</span><span>Descompacte no PC da loja e rode <b className="mono">INSTALAR.bat</b> como administrador.</span></li>
           <li><span className="step-n">3</span><span>O agente sobe sozinho, descobre o CNPJ e a loja aparece aqui em <b>Aguardando ativação</b>.</span></li>
         </ol>
       </div>
-      <p className="note-inline"><Ic d={icInfo} /> O download do instalador pelo painel está sendo liberado. Enquanto isso, peça o seu à Vinny Tecnologia informando o código acima.</p>
     </>
   );
 }
@@ -541,7 +605,7 @@ function Painel({ sess, onLogout }) {
     }
   }
 
-  const props = { lojas, sess, onAtivar: ativar, ativando, goto: setView, onLogout };
+  const props = { lojas, sess, onAtivar: ativar, ativando, goto: setView, onLogout, mostrarToast };
   const conteudo = () => {
     switch (view) {
       case "lojas": return <ViewLojas {...props} />;
