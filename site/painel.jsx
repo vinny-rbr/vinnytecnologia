@@ -707,6 +707,54 @@ const NAV = [
 ];
 const CRUMB = { inicio: "início", lojas: "início / lojas", nova: "início / nova loja", cobrancas: "financeiro / cobranças", relatorios: "financeiro / relatórios", instaladores: "recursos / instaladores", config: "recursos / configurações" };
 
+function Modal({ modal, onClose }) {
+  const [vals, setVals] = useState(() => Object.fromEntries((modal.fields || []).map((f) => [f.key, f.value != null ? f.value : ""])));
+  const [busy, setBusy] = useState(false);
+  const set = (k) => (e) => setVals((s) => ({ ...s, [k]: e.target.value }));
+  async function confirmar() {
+    setBusy(true);
+    try { await modal.onConfirm(vals); onClose(); }
+    catch (e) { setBusy(false); }
+  }
+  return (
+    <div className="modal-back" onClick={onClose}>
+      <div className="modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-h">
+          {modal.icon && <span className={"modal-ic " + modal.icon.cls}><Ic d={modal.icon.d} /></span>}
+          <h3>{modal.title}</h3>
+        </div>
+        {modal.desc && <p className="modal-desc">{modal.desc}</p>}
+        {(modal.fields || []).map((f, i) => (
+          <div className="field" key={f.key}>
+            {f.label && <label>{f.label}</label>}
+            {f.type === "select" ? (
+              <select className="sel" value={vals[f.key]} onChange={set(f.key)} autoFocus={i === 0}>
+                {f.options.map((o) => <option key={o.v} value={o.v}>{o.t}</option>)}
+              </select>
+            ) : (
+              <>
+                <input type={f.type || "text"} value={vals[f.key]} onChange={set(f.key)}
+                  min={f.min} max={f.max} step={f.step} placeholder={f.placeholder}
+                  list={f.datalist ? f.key + "-dl" : undefined} autoFocus={i === 0}
+                  onKeyDown={(e) => { if (e.key === "Enter" && f.type !== "date") confirmar(); }} />
+                {f.datalist && f.datalist.length > 0 && (
+                  <datalist id={f.key + "-dl"}>{f.datalist.map((d) => <option key={d} value={d} />)}</datalist>
+                )}
+              </>
+            )}
+          </div>
+        ))}
+        <div className="modal-actions">
+          <button type="button" className="btn btn-ghost" onClick={onClose} disabled={busy}>Cancelar</button>
+          <button type="button" className={"btn " + (modal.danger ? "btn-danger" : "btn-mg")} onClick={confirmar} disabled={busy}>
+            {busy ? "Aguarde…" : (modal.confirmLabel || "Confirmar")}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Painel({ sess, onLogout }) {
   const isMaster = sess.tipo === "master";
   const [lojas, setLojas] = useState([]);
@@ -715,6 +763,7 @@ function Painel({ sess, onLogout }) {
   const [view, setView] = useState("inicio");
   const [ativando, setAtivando] = useState("");
   const [toast, setToast] = useState(null);
+  const [modal, setModal] = useState(null);
 
   const carregar = useCallback(async () => {
     setErro("");
@@ -746,91 +795,98 @@ function Painel({ sess, onLogout }) {
 
   const mostrarToast = (msg, ok = true) => { setToast({ msg, ok }); setTimeout(() => setToast(null), 3200); };
 
+  // Executa a acao, recarrega e avisa. Lanca no erro (mantem o modal aberto).
+  async function runAction(fn, okMsg) {
+    try { await fn(); await carregar(); mostrarToast(okMsg); }
+    catch (err) { mostrarToast(err.message, false); throw err; }
+  }
+  const adminReq = (l, path, body) => () => api(`/lojas/${l.cnpj}/${path}`, { method: "POST", base: ADMIN_API, token: sess.token, body });
+  const hoje = () => new Date().toISOString().slice(0, 10);
+
   async function ativar(l) {
     const liberar = l.status === "bloqueada";
-    const msg = liberar ? `Liberar novamente "${l.nome}"?`
-      : `Ativar "${l.nome}" por R$ 30?\n\nA loja vai aparecer como Ativa e o lojista passa a ter acesso.`;
-    if (!window.confirm(msg)) return;
-    setAtivando(l.cnpj);
-    try {
-      await api(`/lojas/${l.cnpj}/ativar`, { method: "POST", token: sess.token });
-      await carregar();
-      mostrarToast(liberar ? "Loja liberada." : "Loja ativada!");
-    } catch (err) {
-      mostrarToast(err.message, false);
-    } finally {
-      setAtivando("");
-    }
+    setModal({
+      title: liberar ? "Liberar loja" : "Ativar loja",
+      icon: { d: liberar ? icUnlock : icCheck, cls: "ic-green" },
+      desc: liberar ? `Liberar novamente “${l.nome}”? O lojista volta a ter acesso.`
+        : `Ativar “${l.nome}” por R$ 30? A loja fica Ativa e o lojista passa a ter acesso ao app.`,
+      confirmLabel: liberar ? "Liberar" : "Ativar · R$ 30",
+      onConfirm: () => runAction(() => api(`/lojas/${l.cnpj}/ativar`, { method: "POST", token: sess.token }), liberar ? "Loja liberada." : "Loja ativada!"),
+    });
   }
 
   // ---- acoes de master (usam os endpoints /api/admin ja existentes) ----
-  async function adminPost(l, path, body, okMsg) {
-    setAtivando(l.cnpj);
-    try {
-      await api(`/lojas/${l.cnpj}/${path}`, { method: "POST", base: ADMIN_API, token: sess.token, body });
-      await carregar();
-      mostrarToast(okMsg);
-    } catch (err) {
-      mostrarToast(err.message, false);
-    } finally {
-      setAtivando("");
-    }
-  }
   const master = {
     toggleBloqueio(l) {
       const bloquear = !l.bloqueada;
-      const msg = bloquear ? `Bloquear "${l.nome}"? O lojista perde o acesso ao app.` : `Liberar "${l.nome}"?`;
-      if (!window.confirm(msg)) return;
-      adminPost(l, bloquear ? "bloquear" : "desbloquear", bloquear ? { motivo: "Pagamento pendente" } : undefined, bloquear ? "Loja bloqueada." : "Loja liberada.");
+      setModal({
+        title: bloquear ? "Bloquear loja" : "Liberar loja",
+        icon: { d: bloquear ? icLock : icUnlock, cls: bloquear ? "ic-red" : "ic-green" },
+        desc: bloquear ? `Bloquear “${l.nome}”? O lojista perde o acesso ao app até ser liberado.` : `Liberar “${l.nome}” e devolver o acesso ao lojista?`,
+        confirmLabel: bloquear ? "Bloquear" : "Liberar",
+        danger: bloquear,
+        onConfirm: () => runAction(adminReq(l, bloquear ? "bloquear" : "desbloquear", bloquear ? { motivo: "Pagamento pendente" } : undefined), bloquear ? "Loja bloqueada." : "Loja liberada."),
+      });
     },
     editarMensalidade(l) {
-      const v = window.prompt(`Mensalidade de "${l.nome}" (R$):`, l.mensalidade != null ? String(l.mensalidade) : "30");
-      if (v == null || !v.trim()) return;
-      adminPost(l, "mensalidade", { valor: v.trim() }, "Mensalidade atualizada.");
+      setModal({
+        title: "Mensalidade", icon: { d: icMoney, cls: "ic-amber" },
+        desc: `Valor mensal cobrado de “${l.nome}”.`,
+        fields: [{ key: "valor", label: "Mensalidade (R$)", type: "number", value: l.mensalidade != null ? String(l.mensalidade) : "30", min: "0", step: "0.01" }],
+        confirmLabel: "Salvar",
+        onConfirm: (v) => runAction(adminReq(l, "mensalidade", { valor: v.valor }), "Mensalidade atualizada."),
+      });
     },
     editarVencimento(l) {
-      const v = window.prompt(`Dia de vencimento de "${l.nome}" (1 a 28):`, String(l.diaVencimento || 5));
-      if (v == null || !v.trim()) return;
-      adminPost(l, "dia-vencimento", { dia: v.trim() }, "Vencimento atualizado.");
+      setModal({
+        title: "Dia de vencimento", icon: { d: icCalendar, cls: "ic-blue" },
+        desc: `Dia do mês em que a mensalidade de “${l.nome}” vence.`,
+        fields: [{ key: "dia", label: "Dia do mês", type: "select", value: String(l.diaVencimento || 5), options: Array.from({ length: 28 }, (_, i) => ({ v: String(i + 1), t: "Dia " + (i + 1) })) }],
+        confirmLabel: "Salvar",
+        onConfirm: (v) => runAction(adminReq(l, "dia-vencimento", { dia: v.dia }), "Vencimento atualizado."),
+      });
     },
     definirAtivacao(l) {
-      const hoje = new Date().toISOString().slice(0, 10);
-      const v = window.prompt(`Data de início/implantação de "${l.nome}" (AAAA-MM-DD):`, l.ativadaEm ? l.ativadaEm.slice(0, 10) : hoje);
-      if (v == null || !v.trim()) return;
-      adminPost(l, "ativacao", { data: v.trim() }, "Data de início definida.");
+      setModal({
+        title: "Data de início", icon: { d: icEdit, cls: "ic-blue" },
+        desc: `Quando “${l.nome}” começou a usar (base da 1ª cobrança proporcional).`,
+        fields: [{ key: "data", label: "Data de início", type: "date", value: l.ativadaEm ? l.ativadaEm.slice(0, 10) : hoje() }],
+        confirmLabel: "Salvar",
+        onConfirm: (v) => runAction(adminReq(l, "ativacao", { data: v.data }), "Data de início definida."),
+      });
     },
     definirImplantacaoVence(l) {
-      const hoje = new Date().toISOString().slice(0, 10);
-      const v = window.prompt(`Vencimento da IMPLANTAÇÃO de "${l.nome}" (AAAA-MM-DD). Vazio = padrão (3 dias):`, l.implantacaoVence || hoje);
-      if (v === null) return;
-      adminPost(l, "implantacao-vencimento", { data: v.trim() }, v.trim() ? "Vencimento da implantação definido." : "Vencimento da implantação: padrão.");
+      setModal({
+        title: "Vencimento da implantação", icon: { d: icClock, cls: "ic-amber" },
+        desc: `Data de vencimento da implantação (R$ ${IMPLANTACAO}) de “${l.nome}”. Deixe vazio para o padrão (3 dias).`,
+        fields: [{ key: "data", label: "Vencimento", type: "date", value: l.implantacaoVence || "" }],
+        confirmLabel: "Salvar",
+        onConfirm: (v) => runAction(adminReq(l, "implantacao-vencimento", { data: v.data }), v.data ? "Vencimento da implantação definido." : "Vencimento da implantação: padrão."),
+      });
     },
-    // Pagamento em dinheiro/Pix: dá baixa no item pendente (implantação → mensalidade) e libera a loja.
     marcarPago(l) {
       const impl = l.fase === "implantacao" || l.implantacaoPaga === false;
-      const valor = impl ? "R$ " + IMPLANTACAO : "R$ " + (Number(l.mensalidade) || 0).toFixed(0);
-      const item = impl ? "IMPLANTAÇÃO" : "MENSALIDADE";
-      if (!window.confirm(`Registrar pagamento da ${item} (${valor}) de "${l.nome}"?\n\nUse para dinheiro/Pix (fora do Asaas). A loja é liberada.`)) return;
-      adminPost(l, impl ? "implantacao/paga" : "mensalidade/paga", undefined, "Pagamento registrado. Loja liberada.");
+      const valor = impl ? IMPLANTACAO : (Number(l.mensalidade) || 0);
+      const item = impl ? "implantação" : "mensalidade";
+      setModal({
+        title: "Registrar pagamento", icon: { d: icCheck, cls: "ic-green" },
+        desc: `Confirmar recebimento da ${item} (R$ ${valor}) de “${l.nome}” em dinheiro/Pix? A loja é liberada na hora.`,
+        confirmLabel: "Registrar pago",
+        onConfirm: () => runAction(adminReq(l, impl ? "implantacao/paga" : "mensalidade/paga", undefined), "Pagamento registrado. Loja liberada."),
+      });
     },
   };
 
   // grupos: organiza lojas (ex.: um cliente com varias lojas). Master e revendedor.
-  async function definirGrupo(l) {
+  function definirGrupo(l) {
     const grupos = [...new Set(lojas.map((x) => x.grupo).filter(Boolean))];
-    const hint = grupos.length ? "\n\nGrupos existentes: " + grupos.join(", ") : "";
-    const v = window.prompt(`Grupo de "${l.nome}" (deixe vazio pra tirar do grupo):` + hint, l.grupo || "");
-    if (v === null) return;
-    setAtivando(l.cnpj);
-    try {
-      await api(`/lojas/${l.cnpj}/grupo`, { method: "POST", base: isMaster ? ADMIN_API : API, token: sess.token, body: { grupo: v.trim() } });
-      await carregar();
-      mostrarToast(v.trim() ? "Grupo atualizado." : "Loja tirada do grupo.");
-    } catch (err) {
-      mostrarToast(err.message, false);
-    } finally {
-      setAtivando("");
-    }
+    setModal({
+      title: "Grupo da loja", icon: { d: icFolder, cls: "ic-amber" },
+      desc: `Organize “${l.nome}” num grupo (ex.: um cliente com várias lojas). Deixe vazio para tirar do grupo.`,
+      fields: [{ key: "grupo", label: "Grupo", type: "text", value: l.grupo || "", placeholder: "Nome do grupo", datalist: grupos }],
+      confirmLabel: "Salvar",
+      onConfirm: (v) => runAction(() => api(`/lojas/${l.cnpj}/grupo`, { method: "POST", base: isMaster ? ADMIN_API : API, token: sess.token, body: { grupo: v.grupo } }), (v.grupo || "").trim() ? "Grupo atualizado." : "Loja tirada do grupo."),
+    });
   }
 
   const props = { lojas, sess, onAtivar: ativar, ativando, goto: setView, onLogout, mostrarToast, isMaster, master, onGrupo: definirGrupo };
@@ -896,6 +952,7 @@ function Painel({ sess, onLogout }) {
       </main>
 
       {toast && (<div className={"toast " + (toast.ok ? "ok" : "bad")}><Ic d={toast.ok ? icCheck : icAlert} /> {toast.msg}</div>)}
+      {modal && <Modal modal={modal} onClose={() => setModal(null)} />}
     </div>
   );
 }
