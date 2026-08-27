@@ -7,9 +7,9 @@ const LS_TOKEN = "mg_rev_token";
 const LS_USER = "mg_rev_user";
 const PRECO = 30;
 // Instalador-base LIMPO (mesmo pra todos). O navegador baixa, injeta o codigo do
-// revendedor no RaizesAgente.xml e devolve o zip pronto. Precisa estar num host com
-// CORS liberado pro dominio do painel (ex.: Cloudflare R2) ou no mesmo dominio do site.
-const INSTALADOR_BASE = "instalador-base.zip";
+// revendedor no RaizesAgente.xml e devolve o zip pronto. Servido pelo relay (proxy do
+// release no GitHub) porque o relay ja responde com CORS aberto.
+const INSTALADOR_BASE = "https://raizestecnologia-relay.onrender.com/api/revenda/instalador-base";
 const SISTEMAS = [
   { k: "host", label: "Host (TSD / Firebird)", asset: "agente-host.jar" },
   { k: "link", label: "Link (InkDB / Postgres)", asset: "agente-link.jar" },
