@@ -96,6 +96,7 @@ const icEdit = <><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-
 const icCalendar = <><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>;
 const icUnlock = <><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></>;
 const icFolder = <><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></>;
+const icPhone = <><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></>;
 
 const Logo = (cls) => (
   <svg className={cls} viewBox="0 0 40 40" fill="none" aria-hidden="true">
@@ -257,6 +258,12 @@ function Linha({ l, onAtivar, busy, m, onGrupo }) {
     <td className="loja">
       <div className="nm">{l.nome || "Loja sem nome"}</div>
       <div className="cnpj">{fmtCnpj(l.cnpj)}{l.grupo && <span className="grp-chip"><Ic d={icFolder} /> {l.grupo}</span>}</div>
+      {l.dispositivos != null && (
+        <div className="dev-line">
+          <Ic d={icPhone} /> {l.dispositivos} {l.dispositivos === 1 ? "aparelho" : "aparelhos"}
+          {l.appVersion && <span className="ver-chip">v{l.appVersion}</span>}
+        </div>
+      )}
     </td>
   );
   if (m) {
@@ -728,7 +735,7 @@ function Modal({ modal, onClose }) {
           <div className="field" key={f.key}>
             {f.label && <label>{f.label}</label>}
             {f.type === "select" ? (
-              <select className="sel" value={vals[f.key]} onChange={set(f.key)} autoFocus={i === 0}>
+              <select className="sel" aria-label={f.label || modal.title} value={vals[f.key]} onChange={set(f.key)} autoFocus={i === 0}>
                 {f.options.map((o) => <option key={o.v} value={o.v}>{o.t}</option>)}
               </select>
             ) : (
@@ -778,6 +785,7 @@ function Painel({ sess, onLogout }) {
           vencimentoAtual: e.vencimentoAtual || null, implantacaoVence: e.implantacaoVence || null,
           mensalidade: e.mensalidade, implantacao: e.implantacao,
           implantacaoPaga: e.implantacaoPaga, fase: e.fase, valorAtual: e.valorAtual,
+          dispositivos: e.dispositivos, appVersion: e.appVersion || null,
         })));
       } else {
         const data = await api("/lojas", { token: sess.token });
