@@ -222,8 +222,8 @@ function MgReseller() {
             <h2 className="mg-h2" style={{ marginTop: "12px" }}>Revenda o Meu Giro. Ganhe recorrente.</h2>
             <p className="mg-head-p" style={{ marginTop: "14px", maxWidth: "52ch" }}>Seja um revendedor autorizado e ofereça o Meu Giro pras lojas da sua região. Um painel só pra você acompanhar suas lojas, ativações e mensalidades.</p>
             <div className="mg-cta" style={{ marginTop: "28px" }}>
-              <Btn href="/painel" variant="primary" icon={<Icon.arrow />}>Entrar no painel da revenda</Btn>
-              <Btn href="#revenda" variant="ghost">Quero ser revendedor</Btn>
+              <Btn href="painel.html" variant="primary" icon={<Icon.arrow />}>Entrar no painel da revenda</Btn>
+              <Btn href="painel.html#cadastro" variant="ghost">Quero ser revendedor</Btn>
             </div>
             <p className="mg-revs">// revendedores autorizados em todo o Brasil</p>
           </div>

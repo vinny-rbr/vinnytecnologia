@@ -28,8 +28,8 @@ function Nav({ t, lang, setLang }) {
             <span>/</span>
             <button className={lang === "en" ? "on" : ""} onClick={() => setLang("en")}>EN</button>
           </div>
-          <Btn href="#revenda" variant="ghost" className="nav-cta">Seja revendedor</Btn>
-          <Btn href="/painel" variant="primary" className="nav-cta nav-panel">Painel da revenda</Btn>
+          <Btn href="painel.html#cadastro" variant="ghost" className="nav-cta">Seja revendedor</Btn>
+          <Btn href="painel.html" variant="primary" className="nav-cta nav-panel">Painel da revenda</Btn>
           <button className={`burger ${open ? "x" : ""}`} onClick={() => setOpen(!open)} aria-label="Menu">
             <span></span><span></span><span></span>
           </button>
@@ -37,8 +37,8 @@ function Nav({ t, lang, setLang }) {
       </div>
       <div className={`nav-mobile ${open ? "show" : ""}`}>
         {links.map(([h, l]) => <a key={h} href={h} onClick={(e) => go(e, h)}>{l}</a>)}
-        <a href="#revenda" onClick={(e) => go(e, "#revenda")}>Seja revendedor</a>
-        <a href="/painel" className="nm-cta">Painel da revenda</a>
+        <a href="painel.html#cadastro">Seja revendedor</a>
+        <a href="painel.html" className="nm-cta">Painel da revenda</a>
       </div>
     </nav>
   );
