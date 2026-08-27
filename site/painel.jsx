@@ -59,6 +59,15 @@ const diasAteVenc = (iso) => {
   return Math.round((alvo - hoje) / 86400000);
 };
 const vencendoEmBreve = (l) => l.status === "ativa" && diasAteVenc(l.vencimento) <= 7 && diasAteVenc(l.vencimento) >= 0;
+// Próxima data do dia da mensalidade (ex.: dia 5 -> 05/09). Igual ao "vencimento" do celular.
+const proxVencDia = (dia) => {
+  const d = Math.min(28, Math.max(1, Number(dia) || 5));
+  const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+  let dt = new Date(hoje.getFullYear(), hoje.getMonth(), d);
+  if (dt < hoje) dt = new Date(hoje.getFullYear(), hoje.getMonth() + 1, d);
+  const mm = String(dt.getMonth() + 1).padStart(2, "0");
+  return `${dt.getFullYear()}-${mm}-${String(d).padStart(2, "0")}`;
+};
 
 /* ---------- ícones ---------- */
 const Ic = ({ d, ...p }) => (
@@ -267,7 +276,8 @@ function Linha({ l, onAtivar, busy, m, onGrupo }) {
               : <button className="btn btn-ghost btn-sm" disabled={busy} onClick={() => m.toggleBloqueio(l)}><Ic d={icLock} /> Bloquear</button>}
             <button className="iconbtn" title="Mensalidade" disabled={busy} onClick={() => m.editarMensalidade(l)}><Ic d={icMoney} /></button>
             <button className="iconbtn" title="Dia de vencimento" disabled={busy} onClick={() => m.editarVencimento(l)}><Ic d={icCalendar} /></button>
-            <button className="iconbtn" title="Data de início (implantação)" disabled={busy} onClick={() => m.definirAtivacao(l)}><Ic d={icEdit} /></button>
+            <button className="iconbtn" title="Data de início (base da cobrança)" disabled={busy} onClick={() => m.definirAtivacao(l)}><Ic d={icEdit} /></button>
+            {!l.implantacaoPaga && <button className="iconbtn" title="Vencimento da implantação" disabled={busy} onClick={() => m.definirImplantacaoVence(l)}><Ic d={icClock} /></button>}
             <button className="iconbtn" title="Grupo" disabled={busy} onClick={() => onGrupo(l)}><Ic d={icFolder} /></button>
           </div>
         </td>
@@ -517,9 +527,12 @@ function ViewCobrancas({ lojas, onAtivar, ativando, isMaster, master }) {
                   <td className="loja"><div className="nm">{l.nome}</div><div className="cnpj">{fmtCnpj(l.cnpj)}</div></td>
                   <td className="mono" style={{ fontWeight: 600 }}>R$ {(Number(l.mensalidade) || 0).toFixed(0)}</td>
                   <td style={{ color: "var(--muted)", fontSize: 13 }}>{l.fase === "implantacao" ? "Implantação (R$ " + IMPLANTACAO + ")" : (l.fase || "—")}</td>
-                  <td className="venc mono">{l.vencimento ? fmtData(l.vencimento) : "—"}</td>
+                  <td className="venc mono">{l.vencimentoAtual ? fmtData(l.vencimentoAtual) : (l.vencimento ? fmtData(l.vencimento) : "—")}</td>
                   <td><StatusPill l={l} /></td>
-                  <td><div className="row-actions"><button className="btn btn-mg btn-sm" disabled={ativando === l.cnpj} onClick={() => master.marcarPago(l)}><Ic d={icCheck} strokeWidth="3" /> Registrar pago</button></div></td>
+                  <td><div className="row-actions">
+                    {l.fase === "implantacao" && <button className="iconbtn" title="Vencimento da implantação" disabled={ativando === l.cnpj} onClick={() => master.definirImplantacaoVence(l)}><Ic d={icClock} /></button>}
+                    <button className="btn btn-mg btn-sm" disabled={ativando === l.cnpj} onClick={() => master.marcarPago(l)}><Ic d={icCheck} strokeWidth="3" /> Registrar pago</button>
+                  </div></td>
                 </tr>
               ))}</tbody>
             </table></div>
@@ -712,7 +725,8 @@ function Painel({ sess, onLogout }) {
           cnpj: e.cnpj, nome: e.nome, online: e.online, bloqueada: e.bloqueada,
           status: e.bloqueada ? "bloqueada" : "ativa",
           diasUso: e.diasUso, diaVencimento: e.diaVencimento, ativadaEm: e.ativadaEm,
-          vencimento: e.vencimentoAtual || null, grupo: e.grupo || null,
+          vencimento: proxVencDia(e.diaVencimento), grupo: e.grupo || null,
+          vencimentoAtual: e.vencimentoAtual || null, implantacaoVence: e.implantacaoVence || null,
           mensalidade: e.mensalidade, implantacao: e.implantacao,
           implantacaoPaga: e.implantacaoPaga, fase: e.fase, valorAtual: e.valorAtual,
         })));
@@ -784,6 +798,12 @@ function Painel({ sess, onLogout }) {
       const v = window.prompt(`Data de início/implantação de "${l.nome}" (AAAA-MM-DD):`, l.ativadaEm ? l.ativadaEm.slice(0, 10) : hoje);
       if (v == null || !v.trim()) return;
       adminPost(l, "ativacao", { data: v.trim() }, "Data de início definida.");
+    },
+    definirImplantacaoVence(l) {
+      const hoje = new Date().toISOString().slice(0, 10);
+      const v = window.prompt(`Vencimento da IMPLANTAÇÃO de "${l.nome}" (AAAA-MM-DD). Vazio = padrão (3 dias):`, l.implantacaoVence || hoje);
+      if (v === null) return;
+      adminPost(l, "implantacao-vencimento", { data: v.trim() }, v.trim() ? "Vencimento da implantação definido." : "Vencimento da implantação: padrão.");
     },
     // Pagamento em dinheiro/Pix: dá baixa no item pendente (implantação → mensalidade) e libera a loja.
     marcarPago(l) {
