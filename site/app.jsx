@@ -26,26 +26,10 @@ function App() {
   return (
     <div id="topo" className="site">
       <Nav t={t} lang={lang} setLang={setLang} />
-      <Hero variant={tw.heroStyle} t={t} />
-      <Marquee items={t.marquee} />
-      <Services t={t} />
-      <Process t={t} />
-      <Stack t={t} />
-      <Work t={t} />
-      <About t={t} />
-      <Testimonials t={t} />
-      <FAQ t={t} />
-      <Contact t={t} />
+      <MeuGiro />
       <Footer t={t} lang={lang} setLang={setLang} />
 
       <TweaksPanel>
-        <TweakSection label={lang === "pt" ? "Versão do início (hero)" : "Hero version"} />
-        <TweakRadio
-          label={lang === "pt" ? "Estilo" : "Style"}
-          value={tw.heroStyle}
-          options={["terminal", "statement", "showcase"]}
-          onChange={(v) => setTweak("heroStyle", v)}
-        />
         <TweakSection label={lang === "pt" ? "Cor de destaque" : "Accent color"} />
         <TweakColor
           label="Accent"

@@ -389,3 +389,110 @@ img,svg{display:block;}
   .float-chip{display:none;}
   .hero-ctas .btn{flex:1;justify-content:center;}
 }
+
+/* ============================================================
+   MEU GIRO — seções do produto (marca Vinny mantida)
+   Usa os tokens do site: --accent (azul Vinny) + --pos (verde "giro")
+   ============================================================ */
+.mg-h1,.mg-h2,.mg-step-h,.mg-feat-h,.mg-val,.mg-lock-name{font-family:var(--font);letter-spacing:-.02em}
+.tnum{font-variant-numeric:tabular-nums}
+
+/* hero */
+.mg-hero{padding:64px 0 20px;position:relative}
+.mg-hero-in{display:grid;grid-template-columns:1.05fr .95fr;gap:52px;align-items:center}
+.mg-lock{display:inline-flex;align-items:center;gap:10px;padding:7px 8px 7px 9px;border:1px solid var(--line);border-radius:999px;background:var(--surface)}
+.mg-lock-name{font-weight:700;font-size:15.5px;color:var(--text)}
+.mg-lock-tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#06120c;background:var(--mg);padding:4px 9px;border-radius:999px;font-weight:600}
+.mg-h1{font-size:clamp(38px,5.6vw,64px);font-weight:700;line-height:1.03;margin:22px 0 0;text-wrap:balance}
+.mg-h1 .mg-g{color:var(--mg)}
+.mg-lead{font-size:18.5px;line-height:1.55;color:var(--muted);margin-top:20px;max-width:34ch}
+.mg-lead b{color:var(--text);font-weight:600}
+.mg-cta{display:flex;gap:13px;margin-top:30px;flex-wrap:wrap}
+.mg-note{display:flex;align-items:center;gap:8px;margin-top:18px;font-size:13.5px;color:var(--muted-2)}
+.mg-note svg{width:15px;height:15px;color:var(--mg);flex:none}
+
+/* device / phone */
+.mg-hero-media{display:flex;justify-content:center}
+.mg-device{position:relative;display:flex;justify-content:center;align-items:center}
+.mg-ring{position:absolute;width:420px;height:420px;max-width:120%;z-index:0;opacity:.9;pointer-events:none}
+.mg-phone{position:relative;z-index:1;width:282px;border-radius:38px;background:linear-gradient(180deg,#0d1420,#0a0f18);border:1px solid var(--line);box-shadow:0 40px 80px -34px #000,0 0 0 8px #05080d,0 0 0 9px rgba(255,255,255,.06);padding:14px 14px 20px}
+.mg-notch{width:118px;height:22px;background:#05080d;border-radius:0 0 14px 14px;margin:-14px auto 12px}
+.mg-screen{border-radius:26px;background:var(--ink);border:1px solid var(--line-2);padding:15px;overflow:hidden}
+.mg-scr-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.mg-hi{font-size:12.5px;color:var(--muted-2)}
+.mg-hi b{display:block;color:var(--text);font-size:14.5px;font-weight:600;font-family:var(--font)}
+.mg-avatar{width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,var(--mg),#C47F0E);display:grid;place-items:center;font-weight:700;color:#06120c;font-size:14px}
+.mg-bigcard{background:linear-gradient(150deg,var(--card-2),var(--card));border:1px solid var(--line);border-radius:18px;padding:14px 15px;margin-bottom:11px}
+.mg-lbl{font-family:var(--mono);font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted-2)}
+.mg-val{font-weight:700;font-size:29px;color:var(--mg);margin-top:3px}
+.mg-sub{font-size:11.5px;color:var(--muted-2);margin-top:3px}
+.mg-up{color:var(--mg);font-weight:600}
+.mg-spark{margin-top:9px;height:34px;display:flex;align-items:flex-end;gap:3px}
+.mg-spark span{flex:1;background:linear-gradient(180deg,var(--mg),#C47F0E);border-radius:3px 3px 1px 1px;opacity:.85}
+.mg-minirow{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.mg-mini{background:var(--surface);border:1px solid var(--line-2);border-radius:14px;padding:11px 12px}
+.mg-mini .mg-v{font-family:var(--font);font-weight:700;font-size:18px;margin-top:4px;color:var(--text)}
+
+/* systems bar */
+.mg-systems{border-top:1px solid var(--line-2);border-bottom:1px solid var(--line-2);background:var(--ink-2);margin-top:30px}
+.mg-systems-in{display:flex;align-items:center;gap:26px;padding:16px 28px;flex-wrap:wrap}
+.mg-systems-t{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2);white-space:nowrap}
+.mg-chips{display:flex;gap:10px;flex-wrap:wrap}
+.mg-chip{display:inline-flex;align-items:center;gap:8px;font-size:14px;color:var(--muted);padding:8px 13px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.mg-chip i{width:7px;height:7px;border-radius:50%;background:var(--mg);flex:none}
+
+/* sections shared */
+.mg-sec{padding:84px 0}
+.mg-sec-tight{padding:20px 0 84px}
+.mg-head{max-width:620px;margin-bottom:44px}
+.mg-h2{font-size:clamp(28px,3.8vw,42px);font-weight:700;margin:12px 0 0;text-wrap:balance}
+.mg-head-p{color:var(--muted);font-size:17.5px;line-height:1.55;margin-top:14px}
+
+/* how */
+.mg-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.mg-step{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:24px 22px}
+.mg-step-n{font-family:var(--mono);font-size:13px;color:var(--mg);font-weight:600}
+.mg-step-h{font-size:19px;margin:14px 0 9px;color:var(--text);font-weight:600}
+.mg-step-p{color:var(--muted-2);font-size:15px;line-height:1.5}
+.mg-step-ic{width:44px;height:44px;border-radius:12px;background:var(--card-2);border:1px solid var(--line);display:grid;place-items:center;margin-top:16px}
+.mg-step-ic svg{width:22px;height:22px;color:var(--mg)}
+
+/* features */
+.mg-feats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.mg-feat{background:var(--card);border:1px solid var(--line-2);border-radius:var(--r);padding:22px;transition:border-color .25s,transform .25s,background .25s}
+.mg-feat:hover{border-color:var(--line-acc);transform:translateY(-3px);background:var(--card-2)}
+.mg-feat-ic{width:40px;height:40px;border-radius:11px;background:color-mix(in srgb,var(--mg) 14%,transparent);display:grid;place-items:center;margin-bottom:15px}
+.mg-feat-ic svg{width:21px;height:21px;color:var(--mg)}
+.mg-feat-h{font-size:17px;margin-bottom:7px;color:var(--text);font-weight:600}
+.mg-feat-p{color:var(--muted-2);font-size:14.5px;line-height:1.55}
+
+/* security band */
+.mg-band{background:linear-gradient(160deg,var(--card),var(--ink-2));border:1px solid var(--line);border-radius:20px;padding:38px;display:grid;grid-template-columns:1.2fr 1fr;gap:38px;align-items:center}
+.mg-seclist{display:flex;flex-direction:column;gap:13px}
+.mg-secitem{display:flex;gap:12px;align-items:flex-start}
+.mg-ck{width:24px;height:24px;border-radius:7px;background:color-mix(in srgb,var(--mg) 16%,transparent);display:grid;place-items:center;flex:none;margin-top:1px}
+.mg-ck svg{width:14px;height:14px;color:var(--mg)}
+.mg-secitem b{display:block;font-weight:600;color:var(--text);font-family:var(--font)}
+.mg-secitem span span{display:block;color:var(--muted-2);font-size:14px}
+
+/* reseller */
+.mg-reseller{position:relative;overflow:hidden;background:radial-gradient(120% 140% at 100% 0,color-mix(in srgb,var(--mg) 55%,transparent) 0%,transparent 55%),var(--card);border:1px solid var(--line);border-radius:22px;padding:48px 44px}
+.mg-reseller-in{position:relative;z-index:1;max-width:640px}
+.mg-revs{margin-top:30px;font-size:13px;color:var(--muted-2);font-family:var(--mono);letter-spacing:.04em}
+
+/* nav: painel button + reseller link */
+.nav-panel{gap:7px}
+.nav-panel svg{width:16px;height:16px}
+
+@media (max-width:860px){
+  .mg-hero-in{grid-template-columns:1fr;gap:36px}
+  .mg-hero-media{order:-1}
+  .mg-steps,.mg-feats,.mg-band{grid-template-columns:1fr}
+  .mg-band{padding:28px}
+  .mg-reseller{padding:32px 24px}
+}
+@media (prefers-reduced-motion:reduce){.mg-feat{transition:none}}
+
+/* Meu Giro — cor da marca (âmbar do "giro"/logo MG) + logo no lockup */
+:root{ --mg:#F5A623; --mg-deep:#C47F0E; }
+.mg-lock-logo{width:30px;height:30px;border-radius:8px;display:block;object-fit:cover}

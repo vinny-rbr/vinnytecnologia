@@ -174,7 +174,7 @@ function Footer({ t, lang, setLang }) {
       <div className="wrap footer-in">
         <div className="footer-brand">
           <Logo markSize={24} />
-          <p className="footer-tag">{t.footer.tagline}</p>
+          <p className="footer-tag">O <b>Meu Giro</b> é o sistema da Vinny Tecnologia que coloca a loja na palma da mão — vendas, caixa e estoque em tempo real.</p>
         </div>
         <div className="footer-right">
           <div className="footer-social">
