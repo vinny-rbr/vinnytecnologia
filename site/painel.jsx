@@ -3,9 +3,11 @@
 const { useState, useEffect, useCallback } = React;
 
 const API = "https://raizestecnologia-relay.onrender.com/api/revenda";
+const ADMIN_API = "https://raizestecnologia-relay.onrender.com/api/admin";
 const LS_TOKEN = "mg_rev_token";
 const LS_USER = "mg_rev_user";
 const PRECO = 30;
+const IMPLANTACAO = 50;
 // Instalador-base LIMPO (mesmo pra todos). O navegador baixa, injeta o codigo do
 // revendedor no RaizesAgente.xml e devolve o zip pronto. Servido pelo relay (proxy do
 // release no GitHub) porque o relay ja responde com CORS aberto.
@@ -18,8 +20,8 @@ const SISTEMAS = [
 ];
 
 /* ---------- HTTP ---------- */
-async function api(path, { method = "GET", body, token } = {}) {
-  const res = await fetch(API + path, {
+async function api(path, { method = "GET", body, token, base = API } = {}) {
+  const res = await fetch(base + path, {
     method,
     headers: {
       "Content-Type": "application/json",
@@ -81,6 +83,9 @@ const icLogout = <><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline 
 const icInfo = <><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12" y2="16"/></>;
 const icCopy = <><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></>;
 const icArrow = <><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></>;
+const icEdit = <><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></>;
+const icCalendar = <><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>;
+const icUnlock = <><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></>;
 
 const Logo = (cls) => (
   <svg className={cls} viewBox="0 0 40 40" fill="none" aria-hidden="true">
@@ -185,11 +190,18 @@ function Auth({ onAuth }) {
 }
 
 /* ================= peças ================= */
-function Kpis({ lojas }) {
+function Kpis({ lojas, isMaster }) {
   const ativas = lojas.filter((l) => l.status === "ativa").length;
   const aguardando = lojas.filter((l) => l.status === "aguardando").length;
+  const bloqueadas = lojas.filter((l) => l.status === "bloqueada").length;
   const aVencer = lojas.filter(vencendoEmBreve).length;
-  const cards = [
+  const receitaMaster = lojas.filter((l) => l.status === "ativa").reduce((s, l) => s + (Number(l.mensalidade) || 0), 0);
+  const cards = isMaster ? [
+    { ic: icUsers, cls: "ic-blue", l: "Lojas", v: lojas.length, s: `${ativas} ativas` },
+    { ic: icCheck, cls: "ic-green", l: "Ativas", v: ativas, s: "com acesso liberado" },
+    { ic: icLock, cls: "ic-red", l: "Bloqueadas", v: bloqueadas, s: "sem acesso", vcls: bloqueadas ? { color: "var(--neg)" } : undefined },
+    { ic: icMoney, cls: "ic-amber", l: "Receita/mês", v: "R$ " + receitaMaster.toFixed(0), s: `${ativas} mensalidades` },
+  ] : [
     { ic: icCheck, cls: "ic-green", l: "Lojas ativas", v: ativas, s: `de ${lojas.length} no total` },
     { ic: icClock, cls: "ic-amber", l: "Aguardando ativação", v: aguardando, s: "R$ 30 cada pra liberar", vcls: { color: "var(--mg)" } },
     { ic: icAlert, cls: "ic-red", l: "A vencer (7 dias)", v: aVencer, s: "mensalidade a receber" },
@@ -229,8 +241,33 @@ function StatusPill({ l }) {
   return <span className="pill pill-ok"><Ic d={icCheck} strokeWidth="3" /> Ativa</span>;
 }
 
-function Linha({ l, onAtivar, busy }) {
+function Linha({ l, onAtivar, busy, m }) {
   const soon = vencendoEmBreve(l);
+  if (m) {
+    // modo master: mensalidade, vencimento e acoes de liberar/bloquear/editar
+    return (
+      <tr>
+        <td className="loja">
+          <div className="nm">{l.nome || "Loja sem nome"}</div>
+          <div className="cnpj">{fmtCnpj(l.cnpj)}</div>
+        </td>
+        <td><span className={"on-dot " + (l.online ? "on" : "off")}><i></i> {l.online ? "online" : "offline"}</span></td>
+        <td className="mono" style={{ fontWeight: 600 }}>R$ {(Number(l.mensalidade) || 0).toFixed(0)}</td>
+        <td className={"venc" + (soon ? " soon" : "")}>{l.vencimento ? fmtData(l.vencimento) : "—"}</td>
+        <td><StatusPill l={l} /></td>
+        <td>
+          <div className="row-actions">
+            {l.bloqueada
+              ? <button className="btn btn-ghost btn-sm" disabled={busy} onClick={() => m.toggleBloqueio(l)}><Ic d={icUnlock} /> Liberar</button>
+              : <button className="btn btn-ghost btn-sm" disabled={busy} onClick={() => m.toggleBloqueio(l)}><Ic d={icLock} /> Bloquear</button>}
+            <button className="iconbtn" title="Mensalidade" disabled={busy} onClick={() => m.editarMensalidade(l)}><Ic d={icMoney} /></button>
+            <button className="iconbtn" title="Dia de vencimento" disabled={busy} onClick={() => m.editarVencimento(l)}><Ic d={icCalendar} /></button>
+            <button className="iconbtn" title="Data de início (implantação)" disabled={busy} onClick={() => m.definirAtivacao(l)}><Ic d={icEdit} /></button>
+          </div>
+        </td>
+      </tr>
+    );
+  }
   return (
     <tr>
       <td className="loja">
@@ -256,7 +293,7 @@ function Linha({ l, onAtivar, busy }) {
   );
 }
 
-function TabelaLojas({ lojas, onAtivar, ativando, vazio }) {
+function TabelaLojas({ lojas, onAtivar, ativando, vazio, m }) {
   if (lojas.length === 0) {
     return <div className="state"><div className="big">{vazio.t}</div>{vazio.s}</div>;
   }
@@ -265,12 +302,13 @@ function TabelaLojas({ lojas, onAtivar, ativando, vazio }) {
       <table>
         <thead>
           <tr>
-            <th>Loja</th><th>Conexão</th><th>Dias de uso</th><th>Vencimento</th><th>Status</th>
-            <th style={{ textAlign: "right" }}>Ações</th>
+            {m
+              ? <><th>Loja</th><th>Conexão</th><th>Mensalidade</th><th>Vencimento</th><th>Status</th><th style={{ textAlign: "right" }}>Ações</th></>
+              : <><th>Loja</th><th>Conexão</th><th>Dias de uso</th><th>Vencimento</th><th>Status</th><th style={{ textAlign: "right" }}>Ações</th></>}
           </tr>
         </thead>
         <tbody>
-          {lojas.map((l) => <Linha key={l.cnpj} l={l} busy={ativando === l.cnpj} onAtivar={onAtivar} />)}
+          {lojas.map((l) => <Linha key={l.cnpj} l={l} busy={ativando === l.cnpj} onAtivar={onAtivar} m={m} />)}
         </tbody>
       </table>
     </div>
@@ -278,31 +316,49 @@ function TabelaLojas({ lojas, onAtivar, ativando, vazio }) {
 }
 
 /* ================= VIEWS ================= */
-function ViewInicio({ lojas, sess, onAtivar, ativando, goto }) {
+function ViewInicio({ lojas, sess, onAtivar, ativando, goto, isMaster }) {
   const pend = lojas.filter((l) => l.status === "aguardando");
+  const bloqueadas = lojas.filter((l) => l.status === "bloqueada");
   const vencendo = lojas.filter(vencendoEmBreve);
   return (
     <>
       <div className="head-row">
         <div>
           <h1>Início</h1>
-          <p className="sub">Olá, {sess.nome.split(" ")[0]}. Um resumo da sua revenda.</p>
+          <p className="sub">Olá, {sess.nome.split(" ")[0]}. {isMaster ? "Um resumo do Meu Giro." : "Um resumo da sua revenda."}</p>
         </div>
       </div>
-      <Kpis lojas={lojas} />
-      <Pendentes lojas={lojas} />
+      <Kpis lojas={lojas} isMaster={isMaster} />
+      {!isMaster && <Pendentes lojas={lojas} />}
       <div className="two-col">
         <div className="panel">
-          <div className="p-head"><span className="p-title"><Ic d={icClock} /> Aguardando ativação</span>
-            <button className="link" onClick={() => goto("lojas")}>Ver todas</button></div>
-          {pend.length === 0
-            ? <div className="mini-empty">Nenhuma loja pendente. 🎉</div>
-            : pend.slice(0, 5).map((l) => (
-              <div className="mini-row" key={l.cnpj}>
-                <div><div className="mini-nm">{l.nome}</div><div className="mini-sub mono">{fmtCnpj(l.cnpj)}</div></div>
-                <button className="btn btn-mg btn-sm" disabled={ativando === l.cnpj} onClick={() => onAtivar(l)}>Ativar · R$ 30</button>
-              </div>
-            ))}
+          {isMaster ? (
+            <>
+              <div className="p-head"><span className="p-title"><Ic d={icLock} /> Bloqueadas</span>
+                <button className="link" onClick={() => goto("lojas")}>Ver todas</button></div>
+              {bloqueadas.length === 0
+                ? <div className="mini-empty">Nenhuma loja bloqueada. 🎉</div>
+                : bloqueadas.slice(0, 5).map((l) => (
+                  <div className="mini-row" key={l.cnpj}>
+                    <div><div className="mini-nm">{l.nome}</div><div className="mini-sub mono">{fmtCnpj(l.cnpj)}</div></div>
+                    <span className="pill pill-block">bloqueada</span>
+                  </div>
+                ))}
+            </>
+          ) : (
+            <>
+              <div className="p-head"><span className="p-title"><Ic d={icClock} /> Aguardando ativação</span>
+                <button className="link" onClick={() => goto("lojas")}>Ver todas</button></div>
+              {pend.length === 0
+                ? <div className="mini-empty">Nenhuma loja pendente. 🎉</div>
+                : pend.slice(0, 5).map((l) => (
+                  <div className="mini-row" key={l.cnpj}>
+                    <div><div className="mini-nm">{l.nome}</div><div className="mini-sub mono">{fmtCnpj(l.cnpj)}</div></div>
+                    <button className="btn btn-mg btn-sm" disabled={ativando === l.cnpj} onClick={() => onAtivar(l)}>Ativar · R$ 30</button>
+                  </div>
+                ))}
+            </>
+          )}
         </div>
         <div className="panel">
           <div className="p-head"><span className="p-title"><Ic d={icAlert} /> Vencendo em 7 dias</span></div>
@@ -320,7 +376,7 @@ function ViewInicio({ lojas, sess, onAtivar, ativando, goto }) {
   );
 }
 
-function ViewLojas({ lojas, onAtivar, ativando }) {
+function ViewLojas({ lojas, onAtivar, ativando, isMaster, master }) {
   const [tab, setTab] = useState("todas");
   const [q, setQ] = useState("");
   const cont = {
@@ -341,14 +397,16 @@ function ViewLojas({ lojas, onAtivar, ativando }) {
     }
     return true;
   });
-  const tabs = [["todas", "Todas", cont.todas], ["ativas", "Ativas", cont.ativas], ["aguardando", "Aguardando", cont.aguardando], ["vencer", "A vencer", cont.vencer], ["bloqueadas", "Bloqueadas", cont.bloqueadas]];
+  const tabs = isMaster
+    ? [["todas", "Todas", cont.todas], ["ativas", "Ativas", cont.ativas], ["vencer", "A vencer", cont.vencer], ["bloqueadas", "Bloqueadas", cont.bloqueadas]]
+    : [["todas", "Todas", cont.todas], ["ativas", "Ativas", cont.ativas], ["aguardando", "Aguardando", cont.aguardando], ["vencer", "A vencer", cont.vencer], ["bloqueadas", "Bloqueadas", cont.bloqueadas]];
   return (
     <>
       <div className="head-row">
-        <div><h1>Lojas</h1><p className="sub">As lojas onde você instalou o Meu Giro. Ative, libere e acompanhe.</p></div>
+        <div><h1>Lojas</h1><p className="sub">{isMaster ? "Todas as lojas do Meu Giro. Libere/bloqueie, defina mensalidade e vencimento." : "As lojas onde você instalou o Meu Giro. Ative, libere e acompanhe."}</p></div>
       </div>
-      <Kpis lojas={lojas} />
-      <Pendentes lojas={lojas} />
+      <Kpis lojas={lojas} isMaster={isMaster} />
+      {!isMaster && <Pendentes lojas={lojas} />}
       <div className="panel">
         <div className="p-tools">
           <div className="tabs">
@@ -361,8 +419,8 @@ function ViewLojas({ lojas, onAtivar, ativando }) {
             <input placeholder="Buscar por nome ou CNPJ…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Buscar" />
           </div>
         </div>
-        <TabelaLojas lojas={filtradas} onAtivar={onAtivar} ativando={ativando}
-          vazio={{ t: lojas.length === 0 ? "Nenhuma loja ainda" : "Nada nesse filtro", s: lojas.length === 0 ? "Instale o agente com o seu código de revenda numa loja e ela aparece aqui." : "Tente outro filtro ou limpe a busca." }} />
+        <TabelaLojas lojas={filtradas} onAtivar={onAtivar} ativando={ativando} m={isMaster ? master : null}
+          vazio={{ t: lojas.length === 0 ? "Nenhuma loja ainda" : "Nada nesse filtro", s: lojas.length === 0 ? (isMaster ? "Nenhuma loja conectou ainda." : "Instale o agente com o seu código de revenda numa loja e ela aparece aqui.") : "Tente outro filtro ou limpe a busca." }} />
         <div className="foot">
           <span>Mostrando <b style={{ color: "var(--text)" }}>{filtradas.length}</b> de <b style={{ color: "var(--text)" }}>{lojas.length}</b> lojas</span>
           <span className="mono">Meu Giro · Vinny Tecnologia</span>
@@ -377,6 +435,14 @@ function CodigoBox({ codigo }) {
   const copiar = async () => {
     try { await navigator.clipboard.writeText(codigo); setCopiado(true); setTimeout(() => setCopiado(false), 1800); } catch (e) {}
   };
+  if (!codigo) {
+    return (
+      <div className="code-box">
+        <div><div className="code-l">Instalador</div><div className="code-v mono" style={{ fontSize: 20 }}>Venda direta</div></div>
+        <span className="mini-sub" style={{ marginLeft: "auto" }}>sem código de revendedor</span>
+      </div>
+    );
+  }
   return (
     <div className="code-box">
       <div><div className="code-l">Seu código de revenda</div><div className="code-v mono">{codigo}</div></div>
@@ -385,8 +451,13 @@ function CodigoBox({ codigo }) {
   );
 }
 
-function ViewNova({ sess, goto }) {
-  const passos = [
+function ViewNova({ sess, goto, isMaster }) {
+  const passos = isMaster ? [
+    "Baixe o instalador do sistema da loja na aba Instaladores (venda direta, sem código).",
+    "Instale o agente do Meu Giro no PC da loja e rode o INSTALAR.bat como administrador.",
+    "Quando o agente conectar, a loja aparece aqui na lista.",
+    "Defina a mensalidade e o vencimento, e libere o acesso do lojista.",
+  ] : [
     "Cada revendedor tem um código único (o seu está aqui embaixo). Ele já vem embutido no seu instalador.",
     "Instale o agente do Meu Giro no PC da loja (o instalador detecta o sistema — Host, Link, SysPDV ou Lider).",
     "Assim que o agente conectar, a loja aparece sozinha aqui no seu painel como \"Aguardando ativação\".",
@@ -408,9 +479,40 @@ function ViewNova({ sess, goto }) {
   );
 }
 
-function ViewCobrancas({ lojas, onAtivar, ativando }) {
+function ViewCobrancas({ lojas, onAtivar, ativando, isMaster }) {
   const ativas = lojas.filter((l) => l.status === "ativa");
   const pend = lojas.filter((l) => l.status === "aguardando");
+  if (isMaster) {
+    const bloqueadas = lojas.filter((l) => l.status === "bloqueada");
+    const receita = ativas.reduce((s, l) => s + (Number(l.mensalidade) || 0), 0);
+    return (
+      <>
+        <div className="head-row"><div><h1>Cobranças</h1><p className="sub">Mensalidades das lojas. Ajuste o valor na aba Lojas.</p></div></div>
+        <div className="kpis kpis-3">
+          <div className="kpi"><div className="k-ic ic-amber"><Ic d={icMoney} /></div><div className="k-l">Receita/mês</div><div className="k-v tnum">R$ {receita.toFixed(0)}</div><div className="k-s">{ativas.length} mensalidades ativas</div></div>
+          <div className="kpi"><div className="k-ic ic-green"><Ic d={icCheck} /></div><div className="k-l">Ativas</div><div className="k-v tnum">{ativas.length}</div><div className="k-s">de {lojas.length} lojas</div></div>
+          <div className="kpi"><div className="k-ic ic-red"><Ic d={icLock} /></div><div className="k-l">Bloqueadas</div><div className="k-v tnum" style={{ color: bloqueadas.length ? "var(--neg)" : undefined }}>{bloqueadas.length}</div><div className="k-s">pagamento pendente</div></div>
+        </div>
+        <div className="panel">
+          <div className="p-head"><span className="p-title"><Ic d={icCard} /> Mensalidades</span></div>
+          {lojas.length === 0 ? <div className="mini-empty">Nenhuma loja ainda.</div> : (
+            <div className="tbl-wrap"><table>
+              <thead><tr><th>Loja</th><th>Mensalidade</th><th>Fase</th><th>Vencimento</th><th>Status</th></tr></thead>
+              <tbody>{lojas.map((l) => (
+                <tr key={l.cnpj}>
+                  <td className="loja"><div className="nm">{l.nome}</div><div className="cnpj">{fmtCnpj(l.cnpj)}</div></td>
+                  <td className="mono" style={{ fontWeight: 600 }}>R$ {(Number(l.mensalidade) || 0).toFixed(0)}</td>
+                  <td style={{ color: "var(--muted)", fontSize: 13 }}>{l.fase || "—"}</td>
+                  <td className="venc mono">{l.vencimento ? fmtData(l.vencimento) : "—"}</td>
+                  <td><StatusPill l={l} /></td>
+                </tr>
+              ))}</tbody>
+            </table></div>
+          )}
+        </div>
+      </>
+    );
+  }
   return (
     <>
       <div className="head-row"><div><h1>Cobranças</h1><p className="sub">R$ 30 por loja ativada. Aqui estão as pagas e as pendentes.</p></div></div>
@@ -435,12 +537,20 @@ function ViewCobrancas({ lojas, onAtivar, ativando }) {
   );
 }
 
-function ViewRelatorios({ lojas }) {
+function ViewRelatorios({ lojas, isMaster }) {
   const ativas = lojas.filter((l) => l.status === "ativa").length;
   const aguardando = lojas.filter((l) => l.status === "aguardando").length;
   const bloqueadas = lojas.filter((l) => l.status === "bloqueada").length;
   const online = lojas.filter((l) => l.online).length;
-  const linhas = [
+  const receitaMaster = lojas.filter((l) => l.status === "ativa").reduce((s, l) => s + (Number(l.mensalidade) || 0), 0);
+  const linhas = isMaster ? [
+    ["Total de lojas", lojas.length],
+    ["Ativas", ativas],
+    ["Bloqueadas", bloqueadas],
+    ["Online agora", online],
+    ["Receita recorrente/mês", "R$ " + receitaMaster.toFixed(0)],
+    ["Ticket médio (ativas)", "R$ " + (ativas ? (receitaMaster / ativas).toFixed(0) : 0)],
+  ] : [
     ["Total de lojas", lojas.length],
     ["Ativas", ativas],
     ["Aguardando ativação", aguardando],
@@ -451,7 +561,7 @@ function ViewRelatorios({ lojas }) {
   ];
   return (
     <>
-      <div className="head-row"><div><h1>Relatórios</h1><p className="sub">Resumo da sua carteira de lojas.</p></div></div>
+      <div className="head-row"><div><h1>Relatórios</h1><p className="sub">{isMaster ? "Resumo do Meu Giro." : "Resumo da sua carteira de lojas."}</p></div></div>
       <div className="panel"><div className="tbl-wrap"><table>
         <tbody>{linhas.map(([k, v], i) => (
           <tr key={i}><td style={{ color: "var(--muted)" }}>{k}</td><td className="mono" style={{ textAlign: "right", fontWeight: 600 }}>{v}</td></tr>
@@ -479,18 +589,22 @@ function ViewInstaladores({ sess, mostrarToast }) {
       let xml = await zip.file(nomeXml).async("string");
       // define o jar do sistema escolhido
       xml = xml.replace(/(<env name="RAIZES_UPDATE_ASSET" value=")[^"]*(")/, "$1" + sis.asset + "$2");
-      // injeta (ou atualiza) o codigo do revendedor
-      if (/<env name="REVENDA_CODE"/.test(xml)) {
-        xml = xml.replace(/\s*<env name="REVENDA_CODE"[^>]*\/>/, '\r\n  <env name="REVENDA_CODE" value="' + sess.codigo + '"/>');
+      // injeta o codigo do revendedor. master = venda direta (sem codigo): nao injeta.
+      if (sess.codigo) {
+        if (/<env name="REVENDA_CODE"/.test(xml)) {
+          xml = xml.replace(/\s*<env name="REVENDA_CODE"[^>]*\/>/, '\r\n  <env name="REVENDA_CODE" value="' + sess.codigo + '"/>');
+        } else {
+          xml = xml.replace(/(<env name="RAIZES_UPDATE_ASSET"[^>]*\/>)/, '$1\r\n  <env name="REVENDA_CODE" value="' + sess.codigo + '"/>');
+        }
       } else {
-        xml = xml.replace(/(<env name="RAIZES_UPDATE_ASSET"[^>]*\/>)/, '$1\r\n  <env name="REVENDA_CODE" value="' + sess.codigo + '"/>');
+        xml = xml.replace(/\s*<env name="REVENDA_CODE"[^>]*\/>/, '');
       }
       zip.file(nomeXml, xml);
       const out = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
       const url = URL.createObjectURL(out);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `MeuGiro-${sis.k}-${sess.codigo}.zip`;
+      a.download = `MeuGiro-${sis.k}-${sess.codigo || "direto"}.zip`;
       document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 4000);
       mostrarToast("Instalador gerado! Confira os downloads.");
@@ -503,7 +617,7 @@ function ViewInstaladores({ sess, mostrarToast }) {
 
   return (
     <>
-      <div className="head-row"><div><h1>Instaladores</h1><p className="sub">Baixe o instalador já com o seu código embutido.</p></div></div>
+      <div className="head-row"><div><h1>Instaladores</h1><p className="sub">{sess.codigo ? "Baixe o instalador já com o seu código embutido." : "Baixe o instalador do Meu Giro (venda direta, sem código)."}</p></div></div>
       <CodigoBox codigo={sess.codigo} />
 
       <div className="panel" style={{ marginTop: 18 }}>
@@ -523,20 +637,22 @@ function ViewInstaladores({ sess, mostrarToast }) {
 
       <div className="panel" style={{ marginTop: 18, padding: "6px 4px" }}>
         <ol className="steps">
-          <li><span className="step-n">1</span><span>Escolha o sistema da loja acima e clique em <b>Baixar instalador</b> — o seu código <b className="mono">{sess.codigo}</b> já vai embutido.</span></li>
+          <li><span className="step-n">1</span><span>Escolha o sistema da loja acima e clique em <b>Baixar instalador</b>{sess.codigo ? <> — o seu código <b className="mono">{sess.codigo}</b> já vai embutido.</> : "."}</span></li>
           <li><span className="step-n">2</span><span>Descompacte no PC da loja e rode <b className="mono">INSTALAR.bat</b> como administrador.</span></li>
-          <li><span className="step-n">3</span><span>O agente sobe sozinho, descobre o CNPJ e a loja aparece aqui em <b>Aguardando ativação</b>.</span></li>
+          <li><span className="step-n">3</span><span>O agente sobe sozinho, descobre o CNPJ e a loja aparece aqui na lista.</span></li>
         </ol>
       </div>
     </>
   );
 }
 
-function ViewConfig({ sess, onLogout }) {
-  const campos = [["Nome", sess.nome], ["E-mail", sess.email], ["Código de revenda", sess.codigo]];
+function ViewConfig({ sess, onLogout, isMaster }) {
+  const campos = isMaster
+    ? [["Nome", sess.nome], ["E-mail", sess.email], ["Perfil", "Master (dono)"]]
+    : [["Nome", sess.nome], ["E-mail", sess.email], ["Código de revenda", sess.codigo]];
   return (
     <>
-      <div className="head-row"><div><h1>Configurações</h1><p className="sub">Seus dados de revendedor.</p></div></div>
+      <div className="head-row"><div><h1>Configurações</h1><p className="sub">{isMaster ? "Seus dados de master." : "Seus dados de revendedor."}</p></div></div>
       <div className="panel" style={{ padding: 4 }}>
         {campos.map(([k, v], i) => (
           <div className="cfg-row" key={i}><span className="cfg-k">{k}</span><span className="cfg-v mono">{v}</span></div>
@@ -564,6 +680,7 @@ const NAV = [
 const CRUMB = { inicio: "início", lojas: "início / lojas", nova: "início / nova loja", cobrancas: "financeiro / cobranças", relatorios: "financeiro / relatórios", instaladores: "recursos / instaladores", config: "recursos / configurações" };
 
 function Painel({ sess, onLogout }) {
+  const isMaster = sess.tipo === "master";
   const [lojas, setLojas] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
@@ -574,15 +691,27 @@ function Painel({ sess, onLogout }) {
   const carregar = useCallback(async () => {
     setErro("");
     try {
-      const data = await api("/lojas", { token: sess.token });
-      setLojas(data || []);
+      if (isMaster) {
+        const data = await api("/empresas", { base: ADMIN_API, token: sess.token });
+        setLojas((data || []).map((e) => ({
+          cnpj: e.cnpj, nome: e.nome, online: e.online, bloqueada: e.bloqueada,
+          status: e.bloqueada ? "bloqueada" : "ativa",
+          diasUso: e.diasUso, diaVencimento: e.diaVencimento, ativadaEm: e.ativadaEm,
+          vencimento: e.vencimentoAtual || null,
+          mensalidade: e.mensalidade, implantacao: e.implantacao,
+          implantacaoPaga: e.implantacaoPaga, fase: e.fase, valorAtual: e.valorAtual,
+        })));
+      } else {
+        const data = await api("/lojas", { token: sess.token });
+        setLojas(data || []);
+      }
     } catch (err) {
       if (/401|autoriz/i.test(err.message)) { onLogout(); return; }
       setErro(err.message);
     } finally {
       setCarregando(false);
     }
-  }, [sess.token, onLogout]);
+  }, [sess.token, onLogout, isMaster]);
 
   useEffect(() => { carregar(); }, [carregar]);
 
@@ -605,7 +734,45 @@ function Painel({ sess, onLogout }) {
     }
   }
 
-  const props = { lojas, sess, onAtivar: ativar, ativando, goto: setView, onLogout, mostrarToast };
+  // ---- acoes de master (usam os endpoints /api/admin ja existentes) ----
+  async function adminPost(l, path, body, okMsg) {
+    setAtivando(l.cnpj);
+    try {
+      await api(`/lojas/${l.cnpj}/${path}`, { method: "POST", base: ADMIN_API, token: sess.token, body });
+      await carregar();
+      mostrarToast(okMsg);
+    } catch (err) {
+      mostrarToast(err.message, false);
+    } finally {
+      setAtivando("");
+    }
+  }
+  const master = {
+    toggleBloqueio(l) {
+      const bloquear = !l.bloqueada;
+      const msg = bloquear ? `Bloquear "${l.nome}"? O lojista perde o acesso ao app.` : `Liberar "${l.nome}"?`;
+      if (!window.confirm(msg)) return;
+      adminPost(l, bloquear ? "bloquear" : "desbloquear", bloquear ? { motivo: "Pagamento pendente" } : undefined, bloquear ? "Loja bloqueada." : "Loja liberada.");
+    },
+    editarMensalidade(l) {
+      const v = window.prompt(`Mensalidade de "${l.nome}" (R$):`, l.mensalidade != null ? String(l.mensalidade) : "30");
+      if (v == null || !v.trim()) return;
+      adminPost(l, "mensalidade", { valor: v.trim() }, "Mensalidade atualizada.");
+    },
+    editarVencimento(l) {
+      const v = window.prompt(`Dia de vencimento de "${l.nome}" (1 a 28):`, String(l.diaVencimento || 5));
+      if (v == null || !v.trim()) return;
+      adminPost(l, "dia-vencimento", { dia: v.trim() }, "Vencimento atualizado.");
+    },
+    definirAtivacao(l) {
+      const hoje = new Date().toISOString().slice(0, 10);
+      const v = window.prompt(`Data de início/implantação de "${l.nome}" (AAAA-MM-DD):`, l.ativadaEm ? l.ativadaEm.slice(0, 10) : hoje);
+      if (v == null || !v.trim()) return;
+      adminPost(l, "ativacao", { data: v.trim() }, "Data de início definida.");
+    },
+  };
+
+  const props = { lojas, sess, onAtivar: ativar, ativando, goto: setView, onLogout, mostrarToast, isMaster, master };
   const conteudo = () => {
     switch (view) {
       case "lojas": return <ViewLojas {...props} />;
@@ -624,7 +791,7 @@ function Painel({ sess, onLogout }) {
       <aside className="side">
         <div className="brand">
           {Logo("logo")}
-          <div><div className="n">Meu Giro</div><div className="s">Painel da revenda</div></div>
+          <div><div className="n">Meu Giro</div><div className="s">{isMaster ? "Painel master" : "Painel da revenda"}</div></div>
         </div>
         <nav className="nav">
           {NAV.map((it, i) => it.grp
@@ -639,7 +806,7 @@ function Painel({ sess, onLogout }) {
           <div className="av">{iniciais(sess.nome)}</div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className="nm">{sess.nome}</div>
-            <div className="rl">Revenda · {sess.codigo}</div>
+            <div className="rl">{isMaster ? "Master" : "Revenda · " + sess.codigo}</div>
           </div>
           <button className="logout" title="Sair" onClick={onLogout}><Ic d={icLogout} /></button>
         </div>
@@ -651,7 +818,7 @@ function Painel({ sess, onLogout }) {
           <div className="sp">
             <button className="btn btn-ghost btn-sm" onClick={carregar}><Ic d={icRefresh} /> Atualizar</button>
             <div className="who">
-              <div style={{ textAlign: "right" }}><div className="nm">{sess.nome}</div><div className="rl">Revenda</div></div>
+              <div style={{ textAlign: "right" }}><div className="nm">{sess.nome}</div><div className="rl">{isMaster ? "Master" : "Revenda"}</div></div>
               <div className="av">{iniciais(sess.nome)}</div>
             </div>
           </div>
@@ -685,7 +852,7 @@ function App() {
   const onAuth = (s) => {
     try {
       localStorage.setItem(LS_TOKEN, s.token);
-      localStorage.setItem(LS_USER, JSON.stringify({ id: s.id, nome: s.nome, email: s.email, codigo: s.codigo }));
+      localStorage.setItem(LS_USER, JSON.stringify({ tipo: s.tipo, id: s.id, nome: s.nome, email: s.email, codigo: s.codigo }));
     } catch (e) {}
     setSess(s);
   };
