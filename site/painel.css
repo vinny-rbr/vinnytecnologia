@@ -191,6 +191,11 @@ tbody tr:hover{background:var(--surface)}
 .sel{width:100%;background:var(--ink-2);border:1px solid var(--line);border-radius:10px;padding:12px 13px;color:var(--text);font-family:var(--font);font-size:14.5px;outline:none;cursor:pointer}
 .sel:focus{border-color:var(--mg)}
 .inst-body .btn{flex:none}
+.sel-grp{width:auto;min-width:150px;padding:9px 12px;font-size:13.5px}
+
+/* ---- grupo ---- */
+.grp-chip{display:inline-flex;align-items:center;gap:4px;margin-left:8px;font-family:var(--font);font-size:11px;font-weight:600;color:var(--mg);background:color-mix(in srgb,var(--mg) 14%,transparent);border-radius:6px;padding:2px 7px;vertical-align:middle}
+.grp-chip svg{width:11px;height:11px}
 
 .note-inline{display:flex;align-items:center;gap:9px;color:var(--muted-2);font-size:13px;margin-top:16px}
 .note-inline svg{width:15px;height:15px;flex:none;color:var(--mg)}
