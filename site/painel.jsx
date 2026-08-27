@@ -474,7 +474,7 @@ function ViewInstaladores({ sess, mostrarToast }) {
       if (!resp.ok) throw new Error("base " + resp.status);
       const buf = await resp.arrayBuffer();
       const zip = await JSZip.loadAsync(buf);
-      const nomeXml = Object.keys(zip.files).find((n) => /RaizesAgente\.xml$/i.test(n));
+      const nomeXml = Object.keys(zip.files).find((n) => /MeuGiroAgente\.xml$/i.test(n));
       if (!nomeXml) throw new Error("xml não encontrado no base");
       let xml = await zip.file(nomeXml).async("string");
       // define o jar do sistema escolhido
