@@ -252,7 +252,7 @@ function StatusPill({ l }) {
   return <span className="pill pill-ok"><Ic d={icCheck} strokeWidth="3" /> Ativa</span>;
 }
 
-function Linha({ l, onAtivar, busy, m, onGrupo, rev }) {
+function Linha({ l, onAtivar, busy, m, onGrupo, rev, onHist, sel, onSel }) {
   const soon = vencendoEmBreve(l);
   const nomeCell = (
     <td className="loja">
@@ -286,6 +286,7 @@ function Linha({ l, onAtivar, busy, m, onGrupo, rev }) {
             <button className="iconbtn" title="Data de início (base da cobrança)" disabled={busy} onClick={() => m.definirAtivacao(l)}><Ic d={icEdit} /></button>
             {!l.implantacaoPaga && <button className="iconbtn" title="Vencimento da implantação" disabled={busy} onClick={() => m.definirImplantacaoVence(l)}><Ic d={icClock} /></button>}
             <button className="iconbtn" title="Grupo" disabled={busy} onClick={() => onGrupo(l)}><Ic d={icFolder} /></button>
+            <button className="iconbtn" title="Parcelas pagas" disabled={busy} onClick={() => onHist(l)}><Ic d={icFile} /></button>
           </div>
         </td>
       </tr>
@@ -302,6 +303,9 @@ function Linha({ l, onAtivar, busy, m, onGrupo, rev }) {
       </td>
       <td>
         <div className="row-actions">
+          {l.status !== "aguardando" && (
+            <input type="checkbox" className="chk" title="Selecionar pra pagar junto" checked={sel && sel.has(l.cnpj)} onChange={() => onSel && onSel(l.cnpj)} />
+          )}
           {l.status === "aguardando" ? (
             <button className="btn btn-mg btn-sm" disabled={busy} onClick={() => onAtivar(l)}>Ativar · R$ 30</button>
           ) : (
@@ -313,13 +317,14 @@ function Linha({ l, onAtivar, busy, m, onGrupo, rev }) {
             </>
           )}
           <button className="iconbtn" title="Grupo" disabled={busy} onClick={() => onGrupo(l)}><Ic d={icFolder} /></button>
+          <button className="iconbtn" title="Parcelas pagas" disabled={busy} onClick={() => onHist(l)}><Ic d={icFile} /></button>
         </div>
       </td>
     </tr>
   );
 }
 
-function TabelaLojas({ lojas, onAtivar, ativando, vazio, m, onGrupo, rev }) {
+function TabelaLojas({ lojas, onAtivar, ativando, vazio, m, onGrupo, rev, onHist, sel, onSel }) {
   if (lojas.length === 0) {
     return <div className="state"><div className="big">{vazio.t}</div>{vazio.s}</div>;
   }
@@ -334,7 +339,7 @@ function TabelaLojas({ lojas, onAtivar, ativando, vazio, m, onGrupo, rev }) {
           </tr>
         </thead>
         <tbody>
-          {lojas.map((l) => <Linha key={l.cnpj} l={l} busy={ativando === l.cnpj} onAtivar={onAtivar} m={m} rev={rev} onGrupo={onGrupo} />)}
+          {lojas.map((l) => <Linha key={l.cnpj} l={l} busy={ativando === l.cnpj} onAtivar={onAtivar} m={m} rev={rev} onGrupo={onGrupo} onHist={onHist} sel={sel} onSel={onSel} />)}
         </tbody>
       </table>
     </div>
@@ -402,10 +407,12 @@ function ViewInicio({ lojas, sess, onAtivar, ativando, goto, isMaster }) {
   );
 }
 
-function ViewLojas({ lojas, onAtivar, ativando, isMaster, master, rev, onGrupo }) {
+function ViewLojas({ lojas, onAtivar, ativando, isMaster, master, rev, onGrupo, onHist }) {
   const [tab, setTab] = useState("todas");
   const [q, setQ] = useState("");
   const [grupo, setGrupo] = useState("__todos");
+  const [sel, setSel] = useState(() => new Set());
+  const toggleSel = (cnpj) => setSel((s) => { const n = new Set(s); n.has(cnpj) ? n.delete(cnpj) : n.add(cnpj); return n; });
   const grupos = [...new Set(lojas.map((l) => l.grupo).filter(Boolean))].sort();
   const cont = {
     todas: lojas.length,
@@ -456,7 +463,15 @@ function ViewLojas({ lojas, onAtivar, ativando, isMaster, master, rev, onGrupo }
             <input placeholder="Buscar por nome ou CNPJ…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Buscar" />
           </div>
         </div>
+        {!isMaster && sel.size > 0 && (
+          <div className="sel-bar">
+            <span><b>{sel.size}</b> selecionada(s) · <b>R$ {sel.size * PRECO}</b></span>
+            <button className="link" onClick={() => setSel(new Set())}>limpar</button>
+            <button className="btn btn-mg btn-sm" onClick={() => rev.pagarLote([...sel])}><Ic d={icCard} /> Gerar boleto / Pix</button>
+          </div>
+        )}
         <TabelaLojas lojas={filtradas} onAtivar={onAtivar} ativando={ativando} m={isMaster ? master : null} rev={rev} onGrupo={onGrupo}
+          onHist={onHist} sel={isMaster ? null : sel} onSel={isMaster ? null : toggleSel}
           vazio={{ t: lojas.length === 0 ? "Nenhuma loja ainda" : "Nada nesse filtro", s: lojas.length === 0 ? (isMaster ? "Nenhuma loja conectou ainda." : "Instale o agente com o seu código de revenda numa loja e ela aparece aqui.") : "Tente outro filtro ou limpe a busca." }} />
         <div className="foot">
           <span>Mostrando <b style={{ color: "var(--text)" }}>{filtradas.length}</b> de <b style={{ color: "var(--text)" }}>{lojas.length}</b> lojas</span>
@@ -737,6 +752,29 @@ function Modal({ modal, onClose }) {
           <h3>{modal.title}</h3>
         </div>
         {modal.desc && <p className="modal-desc">{modal.desc}</p>}
+        {modal.link !== undefined && (
+          <div className="pay-box">
+            {modal.link ? (
+              <>
+                <a className="btn btn-mg btn-block" href={modal.link} target="_blank" rel="noopener noreferrer"><Ic d={icCard} /> Abrir boleto / Pix</a>
+                <button type="button" className="btn btn-ghost btn-block" style={{ marginTop: 8 }} onClick={() => { try { navigator.clipboard.writeText(modal.link); } catch (e) {} }}><Ic d={icCopy} /> Copiar link</button>
+              </>
+            ) : <p className="mini-empty">Pagamento gerado, mas o link não veio. Confira no Asaas.</p>}
+          </div>
+        )}
+        {modal.list !== undefined && (
+          <div className="hist">
+            {(!modal.list || modal.list.length === 0)
+              ? <div className="mini-empty">Nenhuma parcela paga ainda.</div>
+              : modal.list.map((p, i) => (
+                <div className="hist-row" key={i}>
+                  <div><div className="hist-item">{p.item}{p.competencia ? " · " + fmtData(p.competencia) : ""}</div>
+                    <div className="mini-sub">{p.pagoEm ? "pago em " + fmtData(p.pagoEm) : ""} {p.forma ? "· " + p.forma : ""}</div></div>
+                  <div className="mono" style={{ fontWeight: 600 }}>R$ {(Number(p.valor) || 0).toFixed(0)}</div>
+                </div>
+              ))}
+          </div>
+        )}
         {(modal.fields || []).map((f, i) => (
           <div className="field" key={f.key}>
             {f.label && <label>{f.label}</label>}
@@ -758,10 +796,16 @@ function Modal({ modal, onClose }) {
           </div>
         ))}
         <div className="modal-actions">
-          <button type="button" className="btn btn-ghost" onClick={onClose} disabled={busy}>Cancelar</button>
-          <button type="button" className={"btn " + (modal.danger ? "btn-danger" : "btn-mg")} onClick={confirmar} disabled={busy}>
-            {busy ? "Aguarde…" : (modal.confirmLabel || "Confirmar")}
-          </button>
+          {(modal.list !== undefined || modal.link !== undefined) ? (
+            <button type="button" className="btn btn-ghost" onClick={onClose}>Fechar</button>
+          ) : (
+            <>
+              <button type="button" className="btn btn-ghost" onClick={onClose} disabled={busy}>Cancelar</button>
+              <button type="button" className={"btn " + (modal.danger ? "btn-danger" : "btn-mg")} onClick={confirmar} disabled={busy}>
+                {busy ? "Aguarde…" : (modal.confirmLabel || "Confirmar")}
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -908,8 +952,26 @@ function Painel({ sess, onLogout }) {
     });
   }
 
+  async function verHistorico(l) {
+    try {
+      const data = await api(`/lojas/${l.cnpj}/pagamentos`, { base: isMaster ? ADMIN_API : API, token: sess.token });
+      setModal({ title: `Parcelas pagas`, desc: l.nome, icon: { d: icFile, cls: "ic-blue" }, list: data || [] });
+    } catch (err) { mostrarToast(err.message, false); }
+  }
+
   // ---- acoes do REVENDEDOR sobre as lojas dele (cliente final) ----
   const revenda = {
+    async pagarLote(cnpjs) {
+      if (!cnpjs || cnpjs.length === 0) { mostrarToast("Selecione ao menos uma loja.", false); return; }
+      try {
+        const r = await api("/pagar-lote", { method: "POST", token: sess.token, body: { cnpjs } });
+        setModal({
+          title: "Boleto / Pix gerado", icon: { d: icCard, cls: "ic-green" },
+          desc: `${r.lojas} loja(s) · R$ ${Number(r.valor).toFixed(2)} · vence ${fmtData(r.vencimento)}. Depois de pago, as lojas são liberadas.`,
+          link: r.linkPagamento || "",
+        });
+      } catch (err) { mostrarToast(err.message, false); }
+    },
     marcarPago(l) {
       setModal({
         title: "Pagamento ao Meu Giro", icon: { d: icCheck, cls: "ic-green" },
@@ -931,7 +993,7 @@ function Painel({ sess, onLogout }) {
     },
   };
 
-  const props = { lojas, sess, onAtivar: ativar, ativando, goto: setView, onLogout, mostrarToast, isMaster, master, rev: revenda, onGrupo: definirGrupo };
+  const props = { lojas, sess, onAtivar: ativar, ativando, goto: setView, onLogout, mostrarToast, isMaster, master, rev: revenda, onGrupo: definirGrupo, onHist: verHistorico };
   const conteudo = () => {
     switch (view) {
       case "lojas": return <ViewLojas {...props} />;

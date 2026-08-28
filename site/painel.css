@@ -173,6 +173,16 @@ tbody tr:hover{background:var(--surface)}
 .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:22px}
 .btn-danger{background:var(--neg);color:#2a0810;box-shadow:0 8px 22px -12px var(--neg)}
 .btn-danger:hover:not(:disabled){background:#ff8a98}
+.btn-block{width:100%;justify-content:center}
+.pay-box{margin:4px 0 4px}
+.hist{max-height:320px;overflow-y:auto;margin:2px 0}
+.hist-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 2px;border-bottom:1px solid var(--line-2)}
+.hist-row:last-child{border-bottom:none}
+.hist-item{font-weight:600;font-size:14px}
+.chk{width:17px;height:17px;accent-color:var(--mg);cursor:pointer;flex:none}
+.sel-bar{display:flex;align-items:center;gap:14px;padding:12px 18px;border-bottom:1px solid var(--line-2);background:color-mix(in srgb,var(--mg) 8%,transparent)}
+.sel-bar .btn,.sel-bar .link{margin-left:0}
+.sel-bar .btn-mg{margin-left:auto}
 
 .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--card-2);border:1px solid var(--line);border-radius:12px;padding:13px 18px;font-size:14px;font-weight:500;box-shadow:0 20px 50px -20px rgba(0,0,0,.7);z-index:120;display:flex;align-items:center;gap:10px}
 .toast svg{width:18px;height:18px;flex:none}
