@@ -32,7 +32,9 @@ async function api(path, { method = "GET", body, token, base = API } = {}) {
   let json = {};
   try { json = await res.json(); } catch (e) {}
   if (!res.ok || json.success === false) {
-    throw new Error(json.message || "Falha na conexão (" + res.status + ")");
+    const e = new Error(json.message || "Falha na conexão (" + res.status + ")");
+    e.status = res.status;
+    throw e;
   }
   return json.data;
 }
@@ -843,7 +845,7 @@ function Painel({ sess, onLogout }) {
         setLojas(data || []);
       }
     } catch (err) {
-      if (/401|autoriz/i.test(err.message)) { onLogout(); return; }
+      if (err.status === 401 || /autentic|autoriz|expir|401/i.test(err.message)) { onLogout(); return; }
       setErro(err.message);
     } finally {
       setCarregando(false);
@@ -857,7 +859,10 @@ function Painel({ sess, onLogout }) {
   // Executa a acao, recarrega e avisa. Lanca no erro (mantem o modal aberto).
   async function runAction(fn, okMsg) {
     try { await fn(); await carregar(); mostrarToast(okMsg); }
-    catch (err) { mostrarToast(err.message, false); throw err; }
+    catch (err) {
+      if (err.status === 401) { onLogout(); return; }
+      mostrarToast(err.message, false); throw err;
+    }
   }
   const adminReq = (l, path, body) => () => api(`/lojas/${l.cnpj}/${path}`, { method: "POST", base: ADMIN_API, token: sess.token, body });
   const hoje = () => new Date().toISOString().slice(0, 10);
