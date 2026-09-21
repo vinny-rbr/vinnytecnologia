@@ -1,4 +1,4 @@
-// i18n.jsx — conteúdo bilíngue (PT/EN) da Vinny Tecnologia
+// i18n.jsx - conteúdo bilíngue (PT/EN) da Vinny Tecnologia
 // Convenção: *palavra* dentro de strings vira destaque (accent) no render.
 const I18N = {
   pt: {
@@ -7,7 +7,7 @@ const I18N = {
     hero: {
       eyebrow: "Desenvolvimento web full-stack",
       title: "Web sob medida, do *design* ao *deploy*.",
-      sub: "Desenvolvedor full-stack. Front-end e back-end, performance e código limpo — transformo ideias em sites e sistemas que geram resultado.",
+      sub: "Desenvolvedor full-stack. Front-end e back-end, performance e código limpo - transformo ideias em sites e sistemas que geram resultado.",
       ctaPrimary: "Iniciar projeto",
       ctaSecondary: "Ver projetos",
       available: "Disponível para novos projetos",
@@ -33,7 +33,7 @@ const I18N = {
     process: {
       eyebrow: "Processo",
       title: "Como trabalhamos juntos",
-      sub: "Um caminho claro, sem surpresas — você acompanha cada etapa.",
+      sub: "Um caminho claro, sem surpresas - você acompanha cada etapa.",
       steps: [
         { n: "01", k: "Descoberta", v: "Entendo o objetivo, o público e o escopo. Saio com um plano e um orçamento fechado." },
         { n: "02", k: "Design & Protótipo", v: "Desenho a interface e te mostro um protótipo navegável antes de uma linha de código final." },
@@ -45,7 +45,7 @@ const I18N = {
     stack: {
       eyebrow: "Stack",
       title: "Tecnologias que domino",
-      sub: "Ferramentas modernas, escolhidas pelo que entregam — não por moda.",
+      sub: "Ferramentas modernas, escolhidas pelo que entregam - não por moda.",
       groups: [
         { k: "Front-end", items: ["React", "TypeScript", "JavaScript", "HTML5", "CSS3", "Tailwind", "Vite"] },
         { k: "Back-end", items: ["Node.js", "REST API", "PostgreSQL", "Autenticação", "Integrações"] },
@@ -70,7 +70,7 @@ const I18N = {
     about: {
       eyebrow: "Sobre",
       title: "Oi, eu sou o Vinny.",
-      body: ["Desenvolvedor full-stack baseado no Amapá, Brasil. Trabalho a stack inteira — do pixel do front-end à lógica do back-end.", "Gosto de código limpo, interfaces que respeitam quem usa e de entregar coisas que carregam rápido e simplesmente funcionam. Atendo de freela a parcerias de longo prazo."],
+      body: ["Desenvolvedor full-stack baseado no Amapá, Brasil. Trabalho a stack inteira - do pixel do front-end à lógica do back-end.", "Gosto de código limpo, interfaces que respeitam quem usa e de entregar coisas que carregam rápido e simplesmente funcionam. Atendo de freela a parcerias de longo prazo."],
       facts: [["Foco", "Full-stack web"], ["Base", "Amapá, Brasil"], ["Atende", "Brasil e exterior"], ["Idiomas", "PT · EN"]],
     },
     testimonials: {
@@ -78,7 +78,7 @@ const I18N = {
       title: "O que dizem",
       note: "",
       items: [
-        { q: "O site ficou exatamente como imaginávamos — moderno, rápido e com uma identidade visual que realmente representa a nossa marca. O prazo foi cumprido à risca e o suporte pós-entrega foi excelente.", n: "Ana Carvalho", r: "Diretora · Carvalho Consultoria" },
+        { q: "O site ficou exatamente como imaginávamos - moderno, rápido e com uma identidade visual que realmente representa a nossa marca. O prazo foi cumprido à risca e o suporte pós-entrega foi excelente.", n: "Ana Carvalho", r: "Diretora · Carvalho Consultoria" },
         { q: "Contratamos para desenvolver o sistema de gestão interno da empresa. Ele entendeu o processo do nosso negócio na primeira reunião e entregou uma solução que a equipe inteira adotou sem treinamento.", n: "Ricardo Mendes", r: "Sócio · Grupo Mendes Logística" },
         { q: "Precisávamos de uma landing page para o lançamento do produto em 7 dias. Ele entregou em 5, com animações, formulário integrado e tudo funcionando no celular. Superou as expectativas.", n: "Camila Torres", r: "Fundadora · Torres Digital" },
       ],
@@ -87,11 +87,11 @@ const I18N = {
       eyebrow: "FAQ",
       title: "Perguntas frequentes",
       items: [
-        ["Quanto tempo leva um projeto?", "Uma landing page costuma sair em 5–10 dias. Um site institucional, de 2 a 4 semanas. Sistemas sob medida dependem do escopo — sempre combino o prazo antes de começar."],
+        ["Quanto tempo leva um projeto?", "Uma landing page costuma sair em 5–10 dias. Um site institucional, de 2 a 4 semanas. Sistemas sob medida dependem do escopo - sempre combino o prazo antes de começar."],
         ["Como funciona o pagamento?", "Normalmente 50% na aprovação e 50% na entrega. Projetos maiores podem ser divididos em parcelas mensais."],
-        ["Você dá manutenção depois?", "Sim. Ofereço planos mensais de hospedagem, suporte e evolução — ou pacotes de horas avulsas para alterações sob demanda."],
+        ["Você dá manutenção depois?", "Sim. Ofereço planos mensais de hospedagem, suporte e evolução - ou pacotes de horas avulsas para alterações sob demanda."],
         ["Eu consigo editar o conteúdo sozinho?", "Nos sites institucionais entrego um painel simples para você atualizar textos e imagens sem depender de mim."],
-        ["Trabalha com clientes de fora?", "Sim. Atendo o Brasil inteiro e também o exterior — o site pode ser bilíngue (PT/EN) e as reuniões são online."],
+        ["Trabalha com clientes de fora?", "Sim. Atendo o Brasil inteiro e também o exterior - o site pode ser bilíngue (PT/EN) e as reuniões são online."],
         ["O que está incluído no valor?", "Reuniões de alinhamento, 2 rodadas de revisão e a publicação no ar. Rodadas extras são cobradas à parte."],
       ],
     },
@@ -108,7 +108,7 @@ const I18N = {
       formSend: "Enviar pelo WhatsApp",
       directLabel: "Ou fale direto:",
     },
-    footer: { tagline: "Desenvolvimento web — front-end & back-end.", rights: "Todos os direitos reservados.", made: "Feito com código limpo no Amapá, Brasil." },
+    footer: { tagline: "Desenvolvimento web - front-end & back-end.", rights: "Todos os direitos reservados.", made: "Feito com código limpo no Amapá, Brasil." },
   },
 
   en: {
@@ -117,7 +117,7 @@ const I18N = {
     hero: {
       eyebrow: "Full-stack web development",
       title: "Bespoke web, from *design* to *deploy*.",
-      sub: "Full-stack developer. Front-end and back-end, performance and clean code — I turn ideas into sites and systems that deliver results.",
+      sub: "Full-stack developer. Front-end and back-end, performance and clean code - I turn ideas into sites and systems that deliver results.",
       ctaPrimary: "Start a project",
       ctaSecondary: "View work",
       available: "Available for new projects",
@@ -143,7 +143,7 @@ const I18N = {
     process: {
       eyebrow: "Process",
       title: "How we work together",
-      sub: "A clear path, no surprises — you follow every step.",
+      sub: "A clear path, no surprises - you follow every step.",
       steps: [
         { n: "01", k: "Discovery", v: "I learn the goal, audience and scope. I leave with a plan and a fixed quote." },
         { n: "02", k: "Design & Prototype", v: "I design the interface and show you a clickable prototype before any final code." },
@@ -155,7 +155,7 @@ const I18N = {
     stack: {
       eyebrow: "Stack",
       title: "Technologies I master",
-      sub: "Modern tools, chosen for what they deliver — not for hype.",
+      sub: "Modern tools, chosen for what they deliver - not for hype.",
       groups: [
         { k: "Front-end", items: ["React", "TypeScript", "JavaScript", "HTML5", "CSS3", "Tailwind", "Vite"] },
         { k: "Back-end", items: ["Node.js", "REST API", "PostgreSQL", "Auth", "Integrations"] },
@@ -180,7 +180,7 @@ const I18N = {
     about: {
       eyebrow: "About",
       title: "Hi, I'm Vinny.",
-      body: ["Full-stack developer based in Amapá, Brazil. I work the whole stack — from the front-end pixel to the back-end logic.", "I care about clean code, interfaces that respect the user, and shipping things that load fast and just work. From freelance gigs to long-term partnerships."],
+      body: ["Full-stack developer based in Amapá, Brazil. I work the whole stack - from the front-end pixel to the back-end logic.", "I care about clean code, interfaces that respect the user, and shipping things that load fast and just work. From freelance gigs to long-term partnerships."],
       facts: [["Focus", "Full-stack web"], ["Based in", "Amapá, Brazil"], ["Serves", "Brazil & abroad"], ["Languages", "PT · EN"]],
     },
     testimonials: {
@@ -188,7 +188,7 @@ const I18N = {
       title: "What people say",
       note: "",
       items: [
-        { q: "The site turned out exactly as we envisioned — modern, fast, and with a visual identity that truly represents our brand. Deadline was met perfectly and post-delivery support was excellent.", n: "Ana Carvalho", r: "Director · Carvalho Consultoria" },
+        { q: "The site turned out exactly as we envisioned - modern, fast, and with a visual identity that truly represents our brand. Deadline was met perfectly and post-delivery support was excellent.", n: "Ana Carvalho", r: "Director · Carvalho Consultoria" },
         { q: "We hired him to build our internal management system. He understood our business process in the first meeting and delivered a solution the whole team adopted without any training.", n: "Ricardo Mendes", r: "Partner · Grupo Mendes Logística" },
         { q: "We needed a landing page for a product launch in 7 days. He delivered in 5, with animations, integrated forms and everything working on mobile. Exceeded expectations.", n: "Camila Torres", r: "Founder · Torres Digital" },
       ],
@@ -197,11 +197,11 @@ const I18N = {
       eyebrow: "FAQ",
       title: "Frequently asked",
       items: [
-        ["How long does a project take?", "A landing page usually takes 5–10 days. A business website, 2 to 4 weeks. Custom systems depend on scope — I always agree on the timeline before starting."],
+        ["How long does a project take?", "A landing page usually takes 5–10 days. A business website, 2 to 4 weeks. Custom systems depend on scope - I always agree on the timeline before starting."],
         ["How does payment work?", "Usually 50% on approval and 50% on delivery. Larger projects can be split into monthly installments."],
-        ["Do you provide maintenance?", "Yes. I offer monthly hosting, support and evolution plans — or hourly packs for on-demand changes."],
+        ["Do you provide maintenance?", "Yes. I offer monthly hosting, support and evolution plans - or hourly packs for on-demand changes."],
         ["Can I edit the content myself?", "On business websites I deliver a simple panel so you can update text and images without depending on me."],
-        ["Do you work with clients abroad?", "Yes. I serve all of Brazil and abroad — the site can be bilingual (PT/EN) and meetings are online."],
+        ["Do you work with clients abroad?", "Yes. I serve all of Brazil and abroad - the site can be bilingual (PT/EN) and meetings are online."],
         ["What's included in the price?", "Alignment meetings, 2 rounds of revisions and going live. Extra rounds are charged separately."],
       ],
     },
@@ -218,7 +218,7 @@ const I18N = {
       formSend: "Send via WhatsApp",
       directLabel: "Or reach out directly:",
     },
-    footer: { tagline: "Web development — front-end & back-end.", rights: "All rights reserved.", made: "Made with clean code in Amapá, Brazil." },
+    footer: { tagline: "Web development - front-end & back-end.", rights: "All rights reserved.", made: "Made with clean code in Amapá, Brazil." },
   },
 };
 

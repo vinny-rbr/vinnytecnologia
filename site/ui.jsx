@@ -1,4 +1,4 @@
-// ui.jsx — primitivos visuais compartilhados
+// ui.jsx - primitivos visuais compartilhados
 const { useState, useEffect, useRef } = React;
 
 // Símbolo <V/> da marca
@@ -150,7 +150,7 @@ function useTyped(words, { type = 70, del = 38, hold = 1400 } = {}) {
   return txt;
 }
 
-// Componente isolado de digitação — re-renderiza só ele mesmo, sem
+// Componente isolado de digitação - re-renderiza só ele mesmo, sem
 // disparar re-render dos irmãos (que travaria as transições de Reveal).
 function Typed({ words, className }) {
   const txt = useTyped(words);

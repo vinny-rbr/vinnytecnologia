@@ -1,4 +1,4 @@
-// sections-a.jsx — Nav, Marquee, Serviços, Processo, Stack
+// sections-a.jsx - Nav, Marquee, Serviços, Processo, Stack
 const { useState: useS_A, useEffect: useE_A } = React;
 
 /* ── Navbar ───────────────────────────────────── */

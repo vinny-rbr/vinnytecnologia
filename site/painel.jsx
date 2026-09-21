@@ -1,4 +1,4 @@
-/* Painel da Revenda — Meu Giro (Vinny Tecnologia).
+/* Painel da Revenda - Meu Giro (Vinny Tecnologia).
    No-build React (UMD + Babel no navegador). Fala com o relay em /api/revenda. */
 const { useState, useEffect, useCallback } = React;
 
@@ -513,7 +513,7 @@ function ViewNova({ sess, goto, isMaster }) {
     "Defina a mensalidade e o vencimento, e libere o acesso do lojista.",
   ] : [
     "Cada revendedor tem um código único (o seu está aqui embaixo). Ele já vem embutido no seu instalador.",
-    "Instale o agente do Meu Giro no PC da loja (o instalador detecta o sistema — Host, Link, SysPDV ou Lider).",
+    "Instale o agente do Meu Giro no PC da loja (o instalador detecta o sistema - Host, Link, SysPDV ou Lider).",
     "Assim que o agente conectar, a loja aparece sozinha aqui no seu painel como \"Aguardando ativação\".",
     "Você paga R$ 30 pra liberar e o lojista passa a acessar o app.",
   ];
@@ -695,7 +695,7 @@ function ViewInstaladores({ sess, mostrarToast }) {
 
       <div className="panel" style={{ marginTop: 18, padding: "6px 4px" }}>
         <ol className="steps">
-          <li><span className="step-n">1</span><span>Escolha o sistema da loja acima e clique em <b>Baixar instalador</b>{sess.codigo ? <> — o seu código <b className="mono">{sess.codigo}</b> já vai embutido.</> : "."}</span></li>
+          <li><span className="step-n">1</span><span>Escolha o sistema da loja acima e clique em <b>Baixar instalador</b>{sess.codigo ? <> - o seu código <b className="mono">{sess.codigo}</b> já vai embutido.</> : "."}</span></li>
           <li><span className="step-n">2</span><span>Descompacte no PC da loja e rode <b className="mono">INSTALAR.bat</b> como administrador.</span></li>
           <li><span className="step-n">3</span><span>O agente sobe sozinho, descobre o CNPJ e a loja aparece aqui na lista.</span></li>
         </ol>
@@ -931,7 +931,7 @@ function Painel({ sess, onLogout }) {
     marcarPago(l) {
       const impl = l.fase === "implantacao" || l.implantacaoPaga === false;
       if (!impl && l.pagavel === false) {
-        mostrarToast(`Ainda não abriu — a mensalidade libera 10 dias antes do vencimento${l.vencimentoAtual ? " (" + fmtData(l.vencimentoAtual) + ")" : ""}.`, false);
+        mostrarToast(`Ainda não abriu - a mensalidade libera 10 dias antes do vencimento${l.vencimentoAtual ? " (" + fmtData(l.vencimentoAtual) + ")" : ""}.`, false);
         return;
       }
       const valor = impl ? IMPLANTACAO : (Number(l.mensalidade) || 0);
@@ -990,7 +990,7 @@ function Painel({ sess, onLogout }) {
       setModal({
         title: bloquear ? "Bloquear cliente" : "Liberar cliente",
         icon: { d: bloquear ? icLock : icUnlock, cls: bloquear ? "ic-red" : "ic-green" },
-        desc: bloquear ? `Bloquear “${l.nome}”? Use quando o cliente não te pagou — ele perde o acesso.` : `Liberar “${l.nome}” e devolver o acesso?`,
+        desc: bloquear ? `Bloquear “${l.nome}”? Use quando o cliente não te pagou - ele perde o acesso.` : `Liberar “${l.nome}” e devolver o acesso?`,
         confirmLabel: bloquear ? "Bloquear" : "Liberar",
         danger: bloquear,
         onConfirm: () => runAction(() => api(`/lojas/${l.cnpj}/${bloquear ? "bloquear" : "desbloquear"}`, { method: "POST", token: sess.token }), bloquear ? "Cliente bloqueado." : "Cliente liberado."),

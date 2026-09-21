@@ -1,4 +1,4 @@
-// app.jsx — monta o site, idioma e Tweaks
+// app.jsx - monta o site, idioma e Tweaks
 const { useState: useS, useEffect: useE } = React;
 
 const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{

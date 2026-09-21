@@ -1,5 +1,5 @@
 /* ============================================================
-   Vinny Tecnologia — sistema visual (dark / neon dev-to-dev)
+   Vinny Tecnologia - sistema visual (dark / neon dev-to-dev)
    ============================================================ */
 :root{
   --ink:#07090D; --ink-2:#0B0D12; --surface:#0F131B; --surface-2:#141926;
@@ -28,7 +28,7 @@ img,svg{display:block;}
 .accent{color:var(--accent);}
 [data-neon="off"]{--glow:transparent;}
 
-/* reveal — visível por padrão; .pre esconde até a animação rodar */
+/* reveal - visível por padrão; .pre esconde até a animação rodar */
 .reveal.pre{opacity:0;transform:translateY(18px);}
 @media(prefers-reduced-motion:reduce){.reveal.pre{opacity:1!important;transform:none!important;}}
 
@@ -391,7 +391,7 @@ img,svg{display:block;}
 }
 
 /* ============================================================
-   MEU GIRO — seções do produto (marca Vinny mantida)
+   MEU GIRO - seções do produto (marca Vinny mantida)
    Usa os tokens do site: --accent (azul Vinny) + --pos (verde "giro")
    ============================================================ */
 .mg-h1,.mg-h2,.mg-step-h,.mg-feat-h,.mg-val,.mg-lock-name{font-family:var(--font);letter-spacing:-.02em}
@@ -493,6 +493,6 @@ img,svg{display:block;}
 }
 @media (prefers-reduced-motion:reduce){.mg-feat{transition:none}}
 
-/* Meu Giro — cor da marca (âmbar do "giro"/logo MG) + logo no lockup */
+/* Meu Giro - cor da marca (âmbar do "giro"/logo MG) + logo no lockup */
 :root{ --mg:#F5A623; --mg-deep:#C47F0E; }
 .mg-lock-logo{width:30px;height:30px;border-radius:8px;display:block;object-fit:cover}

@@ -1,4 +1,4 @@
-// heroes.jsx — 3 variações de hero (toggle via Tweaks)
+// heroes.jsx - 3 variações de hero (toggle via Tweaks)
 const { useState: useStateH, useEffect: useEffectH } = React;
 
 // pílula "disponível"
