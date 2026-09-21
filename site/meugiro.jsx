@@ -107,7 +107,7 @@ function MgHero() {
 }
 
 function MgSystems() {
-  const sys = ["Firebird / TSD", "SysPDV", "Líder PDV", "InkDB", "e mais"];
+  const sys = ["Firebird / TSD", "SysPDV", "InkDB", "e mais"];
   return (
     <div className="mg-systems" id="sistemas">
       <div className="wrap mg-systems-in">
