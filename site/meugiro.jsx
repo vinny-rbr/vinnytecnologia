@@ -126,8 +126,8 @@ const STEP_ICONS = [
 function MgHow() {
   const steps = [
     ["01", "Instala o agente", "Um instalador único no PC da loja, ligado ao PDV que ela já usa. Atualiza sozinho."],
-    ["02", "Conecta com segurança", "O agente só lê o banco da loja e fala pra fora — conexão de saída, nada abre pra internet."],
-    ["03", "Acompanha no celular", "Vendas, caixa, estoque e relatórios na palma da mão, de qualquer lugar, sem ligar o PC."],
+    ["02", "Conecta com segurança", "O agente trabalha de forma segura, mantendo seus dados sempre protegidos."],
+    ["03", "Gerencia pelo celular", "A loja inteira na palma da mão: muda preço, ajusta estoque, controla custo e acompanha o caixa, de onde estiver."],
   ];
   return (
     <section className="mg-sec" id="como">
