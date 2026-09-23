@@ -99,6 +99,8 @@ const icCalendar = <><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="
 const icUnlock = <><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></>;
 const icFolder = <><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></>;
 const icPhone = <><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></>;
+const icKey = <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>;
+const icTrash = <><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></>;
 
 const Logo = (cls) => (
   <svg className={cls} viewBox="0 0 40 40" fill="none" aria-hidden="true">
@@ -723,11 +725,187 @@ function ViewConfig({ sess, onLogout, isMaster }) {
   );
 }
 
+/* ================= USUÁRIOS (revenda) ================= */
+// Telas/permissões (as mesmas chaves do app). Vazio = vê tudo.
+const MODULOS = [
+  ["dashboard", "Início / painel"], ["vendas", "Vendas"], ["produtos", "Produtos"],
+  ["contagem", "Contagem de estoque"], ["pessoas", "Pessoas"], ["contas_pagar", "Contas a pagar"],
+  ["contas_receber", "Contas a receber"], ["fechamento", "Fechamento de caixa"],
+  ["estatisticas", "Estatísticas / relatórios"], ["cancelamentos", "Cancelamentos"],
+  ["fluxo_caixa", "Fluxo de caixa"], ["comparativo", "Comparativo"], ["compra_junto", "Compra junto"],
+];
+const ESTOQUE = ["produtos", "contagem"];
+const ehSoEstoque = (p) => p && p.length === ESTOQUE.length && ESTOQUE.every((k) => p.includes(k));
+const resumoPerms = (p) => !p || p.length === 0 ? "Vê tudo" : ehSoEstoque(p) ? "Só estoque" : p.length + (p.length === 1 ? " tela" : " telas");
+
+function ViewUsuarios({ sess, lojas, mostrarToast }) {
+  const [users, setUsers] = useState(null);
+  const [erro, setErro] = useState("");
+  const [form, setForm] = useState(null);
+  const [busy, setBusy] = useState(false);
+
+  const carregar = useCallback(async () => {
+    try { setUsers(await api("/usuarios", { token: sess.token }) || []); setErro(""); }
+    catch (e) { setErro(e.message); setUsers([]); }
+  }, [sess.token]);
+  useEffect(() => { carregar(); }, [carregar]);
+
+  const nomeLoja = (c) => { const l = lojas.find((x) => x.cnpj === c); return l ? l.nome : fmtCnpj(c); };
+
+  function novo() {
+    if (lojas.length === 0) { mostrarToast("Você precisa ter ao menos uma loja para criar usuários.", false); return; }
+    setForm({ modo: "novo", nome: "", email: "", senha: "", cnpj: lojas[0].cnpj, preset: "tudo", perms: new Set() });
+  }
+  function editar(u) {
+    const perms = new Set(u.permissoes || []);
+    const preset = (u.permissoes || []).length === 0 ? "tudo" : ehSoEstoque(u.permissoes) ? "estoque" : "custom";
+    setForm({ modo: "editar", id: u.id, nome: u.nome || "", email: u.email, ativo: u.ativo !== false, preset, perms });
+  }
+  const set = (patch) => setForm((f) => ({ ...f, ...patch }));
+  const togglePerm = (k) => setForm((f) => { const p = new Set(f.perms); p.has(k) ? p.delete(k) : p.add(k); return { ...f, perms: p, preset: "custom" }; });
+  const permsFinais = (f) => f.preset === "tudo" ? [] : f.preset === "estoque" ? ESTOQUE : [...f.perms];
+
+  async function salvar() {
+    const f = form; setBusy(true);
+    try {
+      if (f.modo === "novo") {
+        if (!f.email.trim() || !f.senha.trim()) { mostrarToast("Preencha e-mail e senha.", false); setBusy(false); return; }
+        await api("/usuarios", { method: "POST", token: sess.token, body: { nome: f.nome, email: f.email, senha: f.senha, cnpj: f.cnpj, permissoes: permsFinais(f) } });
+        mostrarToast("Usuário criado.");
+      } else if (f.modo === "editar") {
+        await api("/usuarios/" + f.id, { method: "POST", token: sess.token, body: { nome: f.nome, ativo: f.ativo, permissoes: permsFinais(f) } });
+        mostrarToast("Usuário atualizado.");
+      } else if (f.modo === "senha") {
+        if (!f.senha.trim()) { mostrarToast("Digite a nova senha.", false); setBusy(false); return; }
+        await api("/usuarios/" + f.id + "/senha", { method: "POST", token: sess.token, body: { senha: f.senha } });
+        mostrarToast("Senha redefinida.");
+      } else if (f.modo === "excluir") {
+        await api("/usuarios/" + f.id, { method: "DELETE", token: sess.token });
+        mostrarToast("Usuário excluído.");
+      }
+      setForm(null); await carregar();
+    } catch (e) { mostrarToast(e.message, false); }
+    setBusy(false);
+  }
+
+  return (
+    <>
+      <div className="head-row">
+        <div><h1>Usuários</h1><p className="sub">Crie e gerencie os acessos das suas lojas. Defina se a pessoa vê tudo ou só o estoque.</p></div>
+        <button className="btn btn-mg" onClick={novo}><Ic d={icPlus} /> Novo usuário</button>
+      </div>
+
+      {erro && <div className="erro-inline"><Ic d={icAlert} /> {erro}</div>}
+
+      <div className="panel">
+        <div className="p-head"><span className="p-title"><Ic d={icUsers} /> Usuários das suas lojas</span></div>
+        {users === null ? (
+          <div className="mini-empty">Carregando…</div>
+        ) : users.length === 0 ? (
+          <div className="mini-empty">Nenhum usuário ainda. Clique em <b>Novo usuário</b> para criar o acesso de um cliente.</div>
+        ) : (
+          <div className="ulist">
+            {users.map((u) => (
+              <div className="urow" key={u.id}>
+                <div className="uav">{iniciais(u.nome || u.email)}</div>
+                <div className="uinfo">
+                  <div className="un">{u.nome || "(sem nome)"} {u.ativo === false && <span className="pill pill-block" style={{ marginLeft: 6 }}>Inativo</span>}</div>
+                  <div className="ue">{u.email}</div>
+                  <div className="umeta">
+                    <span className="grp-chip"><Ic d={icUsers} /> {(u.empresas || []).map((e) => e.nome || nomeLoja(e.cnpj)).join(", ") || "—"}</span>
+                    <span className="grp-chip"><Ic d={icLock} /> {resumoPerms(u.permissoes)}</span>
+                  </div>
+                </div>
+                <div className="uactions">
+                  <button className="iconbtn" title="Editar" onClick={() => editar(u)}><Ic d={icEdit} /></button>
+                  <button className="iconbtn" title="Redefinir senha" onClick={() => setForm({ modo: "senha", id: u.id, email: u.email, senha: "" })}><Ic d={icKey} /></button>
+                  <button className="iconbtn" title="Excluir" onClick={() => setForm({ modo: "excluir", id: u.id, email: u.email })}><Ic d={icTrash} /></button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {form && (
+        <div className="modal-back" onClick={() => !busy && setForm(null)}>
+          <div className="modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-h">
+              <span className={"modal-ic " + (form.modo === "excluir" ? "ic-red" : "ic-blue")}><Ic d={form.modo === "excluir" ? icTrash : form.modo === "senha" ? icKey : icUsers} /></span>
+              <h3>{form.modo === "novo" ? "Novo usuário" : form.modo === "senha" ? "Redefinir senha" : form.modo === "excluir" ? "Excluir usuário" : "Editar usuário"}</h3>
+            </div>
+
+            {form.modo === "excluir" ? (
+              <p className="modal-desc">Excluir <b>{form.email}</b>? Ele perde o acesso ao app. Essa ação não volta atrás.</p>
+            ) : form.modo === "senha" ? (
+              <>
+                <p className="modal-desc">Nova senha para <b>{form.email}</b>. Ele troca por uma própria no 1º acesso.</p>
+                <div className="field"><label>Nova senha</label>
+                  <input type="text" value={form.senha} onChange={(e) => set({ senha: e.target.value })} placeholder="mín. 4 caracteres" autoFocus /></div>
+              </>
+            ) : (
+              <>
+                <div className="field"><label>Nome</label>
+                  <input type="text" value={form.nome} onChange={(e) => set({ nome: e.target.value })} placeholder="Nome do usuário" autoFocus /></div>
+                {form.modo === "novo" ? (
+                  <>
+                    <div className="field"><label>E-mail (login)</label>
+                      <input type="email" value={form.email} onChange={(e) => set({ email: e.target.value })} placeholder="email@exemplo.com" /></div>
+                    <div className="field"><label>Senha</label>
+                      <input type="text" value={form.senha} onChange={(e) => set({ senha: e.target.value })} placeholder="mín. 4 caracteres" /></div>
+                    <div className="field"><label>Loja</label>
+                      <select className="sel" value={form.cnpj} onChange={(e) => set({ cnpj: e.target.value })}>
+                        {lojas.map((l) => <option key={l.cnpj} value={l.cnpj}>{l.nome || fmtCnpj(l.cnpj)}</option>)}
+                      </select></div>
+                  </>
+                ) : (
+                  <>
+                    <div className="field"><label>E-mail (login)</label>
+                      <input type="email" value={form.email} disabled /></div>
+                    <label className="chk-row" style={{ marginBottom: 10 }}>
+                      <input type="checkbox" checked={form.ativo} onChange={(e) => set({ ativo: e.target.checked })} /> <span>Usuário ativo (pode entrar no app)</span>
+                    </label>
+                  </>
+                )}
+                <div className="field">
+                  <label>Acesso</label>
+                  <div className="preset-row">
+                    {[["tudo", "Vê tudo"], ["estoque", "Só estoque"], ["custom", "Personalizado"]].map(([k, t]) => (
+                      <button type="button" key={k} className={"preset " + (form.preset === k ? "on" : "")} onClick={() => set({ preset: k })}>{t}</button>
+                    ))}
+                  </div>
+                </div>
+                {form.preset === "custom" && (
+                  <div className="perms-grid">
+                    {MODULOS.map(([k, t]) => (
+                      <label className="chk-row" key={k}>
+                        <input type="checkbox" checked={form.perms.has(k)} onChange={() => togglePerm(k)} /> <span>{t}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
+            <div className="modal-actions">
+              <button type="button" className="btn btn-ghost" onClick={() => setForm(null)} disabled={busy}>Cancelar</button>
+              <button type="button" className={"btn " + (form.modo === "excluir" ? "btn-danger" : "btn-mg")} onClick={salvar} disabled={busy}>
+                {busy ? "Aguarde…" : form.modo === "novo" ? "Criar usuário" : form.modo === "senha" ? "Salvar senha" : form.modo === "excluir" ? "Excluir" : "Salvar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 /* ================= SHELL ================= */
 const NAV = [
   { k: "inicio", label: "Início", icon: icHome },
   { k: "lojas", label: "Lojas", icon: icUsers },
   { k: "nova", label: "Nova loja", icon: icPlus },
+  { k: "usuarios", label: "Usuários", icon: icKey, revOnly: true },
   { grp: "Financeiro" },
   { k: "cobrancas", label: "Cobranças", icon: icCard },
   { k: "relatorios", label: "Relatórios", icon: icFile },
@@ -735,7 +913,7 @@ const NAV = [
   { k: "instaladores", label: "Instaladores", icon: icDownload },
   { k: "config", label: "Configurações", icon: icGear },
 ];
-const CRUMB = { inicio: "início", lojas: "início / lojas", nova: "início / nova loja", cobrancas: "financeiro / cobranças", relatorios: "financeiro / relatórios", instaladores: "recursos / instaladores", config: "recursos / configurações" };
+const CRUMB = { inicio: "início", lojas: "início / lojas", nova: "início / nova loja", usuarios: "início / usuários", cobrancas: "financeiro / cobranças", relatorios: "financeiro / relatórios", instaladores: "recursos / instaladores", config: "recursos / configurações" };
 
 function Modal({ modal, onClose }) {
   const [vals, setVals] = useState(() => Object.fromEntries((modal.fields || []).map((f) => [f.key, f.value != null ? f.value : ""])));
@@ -1003,6 +1181,7 @@ function Painel({ sess, onLogout }) {
     switch (view) {
       case "lojas": return <ViewLojas {...props} />;
       case "nova": return <ViewNova {...props} />;
+      case "usuarios": return <ViewUsuarios {...props} />;
       case "cobrancas": return <ViewCobrancas {...props} />;
       case "relatorios": return <ViewRelatorios {...props} />;
       case "instaladores": return <ViewInstaladores {...props} />;
@@ -1020,7 +1199,7 @@ function Painel({ sess, onLogout }) {
           <div><div className="n">Meu Giro</div><div className="s">{isMaster ? "Painel master" : "Painel da revenda"}</div></div>
         </div>
         <nav className="nav">
-          {NAV.map((it, i) => it.grp
+          {NAV.filter((it) => !(it.revOnly && isMaster)).map((it, i) => it.grp
             ? <div className="grp" key={i}>{it.grp}</div>
             : <button key={i} className={view === it.k ? "on" : ""} onClick={() => setView(it.k)}>
                 <Ic d={it.icon} /> {it.label}
