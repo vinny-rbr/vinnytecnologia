@@ -314,7 +314,6 @@ function Linha({ l, onAtivar, busy, m, onGrupo, rev, onHist, sel, onSel }) {
             <button className="btn btn-mg btn-sm" disabled={busy} onClick={() => onAtivar(l)}>Ativar · R$ 30</button>
           ) : (
             <>
-              <button className="btn btn-mg btn-sm" title="Registrar que você pagou o Meu Giro" disabled={busy} onClick={() => rev.marcarPago(l)}><Ic d={icCheck} strokeWidth="3" /> Paguei R$ 30</button>
               {l.bloqueada
                 ? <button className="btn btn-ghost btn-sm" disabled={busy} onClick={() => rev.toggleBloqueio(l)}><Ic d={icUnlock} /> Liberar</button>
                 : <button className="btn btn-ghost btn-sm" disabled={busy} onClick={() => rev.toggleBloqueio(l)}><Ic d={icLock} /> Bloquear</button>}
