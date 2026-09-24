@@ -633,22 +633,6 @@ function ViewRelatorios({ lojas, isMaster }) {
 function ViewInstaladores({ sess, mostrarToast }) {
   const [sistema, setSistema] = useState("host");
   const [baixando, setBaixando] = useState(false);
-  // Link (InkDB): dados de conexao com o Postgres da loja (a porta varia por maquina).
-  const [porta, setPorta] = useState("5432");
-  const [inkBase, setInkBase] = useState("InkDB");
-  const [inkUser, setInkUser] = useState("postgres");
-  const [inkSenha, setInkSenha] = useState("");
-  const [adv, setAdv] = useState(false);
-
-  // Insere/atualiza um <env> no XML (WinSW): substitui se existir, senao adiciona após RAIZES_UPDATE_ASSET.
-  function setEnv(xml, name, value) {
-    const v = String(value)
-      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-    const line = '\r\n  <env name="' + name + '" value="' + v + '"/>';
-    const re = new RegExp('\\s*<env name="' + name + '"[^>]*/>');
-    if (re.test(xml)) return xml.replace(re, line);
-    return xml.replace(/(<env name="RAIZES_UPDATE_ASSET"[^>]*\/>)/, "$1" + line);
-  }
 
   async function baixar() {
     if (typeof JSZip === "undefined") { mostrarToast("Recurso ainda carregando, tente de novo.", false); return; }
@@ -673,14 +657,6 @@ function ViewInstaladores({ sess, mostrarToast }) {
         }
       } else {
         xml = xml.replace(/\s*<env name="REVENDA_CODE"[^>]*\/>/, '');
-      }
-      // Link (InkDB): injeta a conexao do Postgres (porta que varia por maquina).
-      if (sis.k === "link") {
-        const p = (porta || "5432").replace(/\D/g, "") || "5432";
-        const base = (inkBase || "InkDB").trim() || "InkDB";
-        xml = setEnv(xml, "INKDB_URL", "jdbc:postgresql://127.0.0.1:" + p + "/" + base);
-        xml = setEnv(xml, "INKDB_USER", (inkUser || "postgres").trim() || "postgres");
-        if (inkSenha) xml = setEnv(xml, "INKDB_PASSWORD", inkSenha);
       }
       zip.file(nomeXml, xml);
       const out = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
@@ -712,42 +688,14 @@ function ViewInstaladores({ sess, mostrarToast }) {
               {SISTEMAS.map((s) => <option key={s.k} value={s.k}>{s.label}</option>)}
             </select>
           </div>
-          {sistema === "link" && (
-            <div className="field" style={{ marginBottom: 0, maxWidth: 150 }}>
-              <label>Porta do banco</label>
-              <input type="text" inputMode="numeric" value={porta} placeholder="5432"
-                onChange={(e) => setPorta(e.target.value)} />
-            </div>
-          )}
           <button className="btn btn-mg" disabled={baixando} onClick={baixar}>
             <Ic d={icDownload} /> {baixando ? "Gerando…" : "Baixar instalador"}
           </button>
         </div>
         {sistema === "link" && (
-          <div style={{ padding: "0 4px 10px" }}>
-            <button type="button" className="preset" style={{ marginTop: 10 }} onClick={() => setAdv(!adv)}>
-              {adv ? "Ocultar avançado" : "Base / usuário / senha (avançado)"}
-            </button>
-            {adv && (
-              <div className="perms-grid" style={{ marginTop: 10 }}>
-                <div className="field" style={{ marginBottom: 0 }}>
-                  <label>Base (banco)</label>
-                  <input type="text" value={inkBase} placeholder="InkDB" onChange={(e) => setInkBase(e.target.value)} />
-                </div>
-                <div className="field" style={{ marginBottom: 0 }}>
-                  <label>Usuário</label>
-                  <input type="text" value={inkUser} placeholder="postgres" onChange={(e) => setInkUser(e.target.value)} />
-                </div>
-                <div className="field" style={{ marginBottom: 0 }}>
-                  <label>Senha (vazio = sem senha)</label>
-                  <input type="text" value={inkSenha} placeholder="(vazio)" onChange={(e) => setInkSenha(e.target.value)} />
-                </div>
-              </div>
-            )}
-            <p className="sub" style={{ fontSize: 12.5, marginTop: 8 }}>
-              A porta do Postgres do InkDB varia por máquina (geralmente <b>5432</b>). Se não souber, deixe 5432.
-            </p>
-          </div>
+          <p className="sub" style={{ fontSize: 12.5, padding: "0 4px 10px" }}>
+            No Link, ao rodar o <b className="mono">INSTALAR.bat</b> na loja ele pergunta a <b>porta</b> do banco (padrão 5432).
+          </p>
         )}
       </div>
 
