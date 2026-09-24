@@ -639,7 +639,7 @@ function ViewInstaladores({ sess, mostrarToast }) {
     const sis = SISTEMAS.find((s) => s.k === sistema);
     setBaixando(true);
     try {
-      const resp = await fetch(INSTALADOR_BASE);
+      const resp = await fetch(INSTALADOR_BASE + "?t=" + Date.now(), { cache: "no-store" });
       if (!resp.ok) throw new Error("base " + resp.status);
       const buf = await resp.arrayBuffer();
       const zip = await JSZip.loadAsync(buf);
