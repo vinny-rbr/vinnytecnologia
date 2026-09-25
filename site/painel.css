@@ -281,3 +281,7 @@ tbody tr:hover{background:var(--surface)}
 .chk-row{display:flex;align-items:center;gap:9px;font-size:13.5px;color:var(--text);cursor:pointer}
 .chk-row input{width:16px;height:16px;accent-color:var(--mg);flex:none}
 @media (max-width:560px){.perms-grid{grid-template-columns:1fr}}
+.dev-pend{display:flex;align-items:center;gap:9px;margin-top:8px;padding:9px 12px;border-radius:10px;background:color-mix(in srgb,var(--mg) 12%,var(--card));border:1px solid color-mix(in srgb,var(--mg) 35%,transparent);color:var(--text);font-size:13px}
+.dev-pend svg{color:var(--mg);flex:none}
+.dev-reset{margin-top:8px;background:none;border:none;color:var(--muted);font-size:12.5px;cursor:pointer;padding:0;text-decoration:underline}
+.dev-reset:hover{color:var(--mg)}

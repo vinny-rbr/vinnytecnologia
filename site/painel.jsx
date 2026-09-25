@@ -758,26 +758,35 @@ function ViewUsuarios({ sess, lojas, mostrarToast }) {
 
   function novo() {
     if (lojas.length === 0) { mostrarToast("Você precisa ter ao menos uma loja para criar usuários.", false); return; }
-    setForm({ modo: "novo", nome: "", email: "", senha: "", cnpj: lojas[0].cnpj, sessaoUnica: false, preset: "tudo", perms: new Set() });
+    setForm({ modo: "novo", nome: "", email: "", senha: "", cnpj: lojas[0].cnpj, sessaoUnica: false, deviceLock: false, preset: "tudo", perms: new Set() });
   }
   function editar(u) {
     const perms = new Set(u.permissoes || []);
     const preset = (u.permissoes || []).length === 0 ? "tudo" : ehSoEstoque(u.permissoes) ? "estoque" : "custom";
-    setForm({ modo: "editar", id: u.id, nome: u.nome || "", email: u.email, ativo: u.ativo !== false, sessaoUnica: u.sessaoUnica === true, preset, perms });
+    setForm({ modo: "editar", id: u.id, nome: u.nome || "", email: u.email, ativo: u.ativo !== false, sessaoUnica: u.sessaoUnica === true, deviceLock: u.deviceLock === true, preset, perms });
   }
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
   const togglePerm = (k) => setForm((f) => { const p = new Set(f.perms); p.has(k) ? p.delete(k) : p.add(k); return { ...f, perms: p, preset: "custom" }; });
   const permsFinais = (f) => f.preset === "tudo" ? [] : f.preset === "estoque" ? ESTOQUE : [...f.perms];
+
+  async function liberarAparelho(u) {
+    try { await api("/usuarios/" + u.id + "/liberar-aparelho", { method: "POST", token: sess.token }); mostrarToast("Aparelho liberado."); await carregar(); }
+    catch (e) { mostrarToast(e.message, false); }
+  }
+  async function resetarAparelho(u) {
+    try { await api("/usuarios/" + u.id + "/resetar-aparelho", { method: "POST", token: sess.token }); mostrarToast("Aparelho resetado."); await carregar(); }
+    catch (e) { mostrarToast(e.message, false); }
+  }
 
   async function salvar() {
     const f = form; setBusy(true);
     try {
       if (f.modo === "novo") {
         if (!f.email.trim() || !f.senha.trim()) { mostrarToast("Preencha e-mail e senha.", false); setBusy(false); return; }
-        await api("/usuarios", { method: "POST", token: sess.token, body: { nome: f.nome, email: f.email, senha: f.senha, cnpj: f.cnpj, sessaoUnica: !!f.sessaoUnica, permissoes: permsFinais(f) } });
+        await api("/usuarios", { method: "POST", token: sess.token, body: { nome: f.nome, email: f.email, senha: f.senha, cnpj: f.cnpj, sessaoUnica: !!f.sessaoUnica, deviceLock: !!f.deviceLock, permissoes: permsFinais(f) } });
         mostrarToast("Usuário criado.");
       } else if (f.modo === "editar") {
-        await api("/usuarios/" + f.id, { method: "POST", token: sess.token, body: { nome: f.nome, ativo: f.ativo, sessaoUnica: !!f.sessaoUnica, permissoes: permsFinais(f) } });
+        await api("/usuarios/" + f.id, { method: "POST", token: sess.token, body: { nome: f.nome, ativo: f.ativo, sessaoUnica: !!f.sessaoUnica, deviceLock: !!f.deviceLock, permissoes: permsFinais(f) } });
         mostrarToast("Usuário atualizado.");
       } else if (f.modo === "senha") {
         if (!f.senha.trim()) { mostrarToast("Digite a nova senha.", false); setBusy(false); return; }
@@ -818,8 +827,19 @@ function ViewUsuarios({ sess, lojas, mostrarToast }) {
                   <div className="umeta">
                     <span className="grp-chip"><Ic d={icUsers} /> {(u.empresas || []).map((e) => e.nome || nomeLoja(e.cnpj)).join(", ") || "—"}</span>
                     <span className="grp-chip"><Ic d={icLock} /> {resumoPerms(u.permissoes)}</span>
-                    {u.sessaoUnica && <span className="grp-chip"><Ic d={icPhone} /> 1 aparelho</span>}
+                    {u.sessaoUnica && <span className="grp-chip"><Ic d={icPhone} /> sessão única</span>}
+                    {u.deviceLock && <span className="grp-chip"><Ic d={icPhone} /> {u.deviceAtualNome ? u.deviceAtualNome : "sem aparelho"}</span>}
                   </div>
+                  {u.devicePendente && (
+                    <div className="dev-pend">
+                      <Ic d={icPhone} />
+                      <span style={{ flex: 1 }}>Novo aparelho pedindo acesso: <b>{u.devicePendenteNome || "aparelho"}</b></span>
+                      <button className="btn btn-mg btn-sm" onClick={() => liberarAparelho(u)}>Liberar</button>
+                    </div>
+                  )}
+                  {u.deviceLock && u.deviceAtualNome && !u.devicePendente && (
+                    <button type="button" className="dev-reset" onClick={() => resetarAparelho(u)}>Resetar aparelho</button>
+                  )}
                 </div>
                 <div className="uactions">
                   <button className="iconbtn" title="Editar" onClick={() => editar(u)}><Ic d={icEdit} /></button>
@@ -872,8 +892,11 @@ function ViewUsuarios({ sess, lojas, mostrarToast }) {
                     </label>
                   </>
                 )}
+                <label className="chk-row" style={{ marginBottom: 10 }}>
+                  <input type="checkbox" checked={!!form.sessaoUnica} onChange={(e) => set({ sessaoUnica: e.target.checked })} /> <span>Sessão única (ao entrar em outro celular, desconecta o anterior)</span>
+                </label>
                 <label className="chk-row" style={{ marginBottom: 12 }}>
-                  <input type="checkbox" checked={!!form.sessaoUnica} onChange={(e) => set({ sessaoUnica: e.target.checked })} /> <span>Limitar a um aparelho (ao entrar em outro celular, desconecta o anterior)</span>
+                  <input type="checkbox" checked={!!form.deviceLock} onChange={(e) => set({ deviceLock: e.target.checked })} /> <span>Travar por aparelho (fica preso a 1 celular; outro aparelho só entra se você liberar)</span>
                 </label>
                 <div className="field">
                   <label>Acesso</label>
