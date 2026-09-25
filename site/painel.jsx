@@ -931,12 +931,139 @@ function ViewUsuarios({ sess, lojas, mostrarToast }) {
   );
 }
 
+/* Usuários master da revenda: logins extras do painel que veem SÓ os clientes
+   desta revenda. (Quem vê todas as revendas é apenas o dono/master do sistema.) */
+function ViewMasters({ sess, mostrarToast }) {
+  const [users, setUsers] = useState(null);
+  const [erro, setErro] = useState("");
+  const [form, setForm] = useState(null);
+  const [busy, setBusy] = useState(false);
+
+  const carregar = useCallback(async () => {
+    try { setUsers(await api("/masters", { token: sess.token }) || []); setErro(""); }
+    catch (e) { setErro(e.message); setUsers([]); }
+  }, [sess.token]);
+  useEffect(() => { carregar(); }, [carregar]);
+
+  const set = (patch) => setForm((f) => ({ ...f, ...patch }));
+
+  async function salvar() {
+    const f = form; setBusy(true);
+    try {
+      if (f.modo === "novo") {
+        if (!f.email.trim() || !f.senha.trim()) { mostrarToast("Preencha e-mail e senha.", false); setBusy(false); return; }
+        await api("/masters", { method: "POST", token: sess.token, body: { nome: f.nome, email: f.email, senha: f.senha } });
+        mostrarToast("Usuário master criado.");
+      } else if (f.modo === "editar") {
+        await api("/masters/" + f.id, { method: "POST", token: sess.token, body: { nome: f.nome, ativo: f.ativo } });
+        mostrarToast("Usuário atualizado.");
+      } else if (f.modo === "senha") {
+        if (!f.senha.trim()) { mostrarToast("Digite a nova senha.", false); setBusy(false); return; }
+        await api("/masters/" + f.id + "/senha", { method: "POST", token: sess.token, body: { senha: f.senha } });
+        mostrarToast("Senha redefinida.");
+      } else if (f.modo === "excluir") {
+        await api("/masters/" + f.id, { method: "DELETE", token: sess.token });
+        mostrarToast("Usuário excluído.");
+      }
+      setForm(null); await carregar();
+    } catch (e) { mostrarToast(e.message, false); }
+    setBusy(false);
+  }
+
+  return (
+    <>
+      <div className="head-row">
+        <div><h1>Usuários master</h1><p className="sub">Logins extras do seu painel. Eles enxergam só os clientes da sua revenda, igual você.</p></div>
+        <button className="btn btn-mg" onClick={() => setForm({ modo: "novo", nome: "", email: "", senha: "" })}><Ic d={icPlus} /> Novo master</button>
+      </div>
+
+      {erro && <div className="erro-inline"><Ic d={icAlert} /> {erro}</div>}
+
+      <div className="panel">
+        <div className="p-head"><span className="p-title"><Ic d={icUsers} /> Usuários master da revenda</span></div>
+        {users === null ? (
+          <div className="mini-empty">Carregando…</div>
+        ) : users.length === 0 ? (
+          <div className="mini-empty">Nenhum usuário master ainda. Clique em <b>Novo master</b> para dar acesso ao painel a outra pessoa da sua equipe.</div>
+        ) : (
+          <div className="ulist">
+            {users.map((u) => (
+              <div className="urow" key={u.id}>
+                <div className="uav">{iniciais(u.nome || u.email)}</div>
+                <div className="uinfo">
+                  <div className="un">{u.nome || "(sem nome)"} {u.ativo === false && <span className="pill pill-block" style={{ marginLeft: 6 }}>Inativo</span>}</div>
+                  <div className="ue">{u.email}</div>
+                </div>
+                <div className="uactions">
+                  <button className="iconbtn" title="Editar" onClick={() => setForm({ modo: "editar", id: u.id, nome: u.nome || "", email: u.email, ativo: u.ativo !== false })}><Ic d={icEdit} /></button>
+                  <button className="iconbtn" title="Redefinir senha" onClick={() => setForm({ modo: "senha", id: u.id, email: u.email, senha: "" })}><Ic d={icKey} /></button>
+                  <button className="iconbtn" title="Excluir" onClick={() => setForm({ modo: "excluir", id: u.id, email: u.email })}><Ic d={icTrash} /></button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {form && (
+        <div className="modal-back" onClick={() => !busy && setForm(null)}>
+          <div className="modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-h">
+              <span className={"modal-ic " + (form.modo === "excluir" ? "ic-red" : "ic-blue")}><Ic d={form.modo === "excluir" ? icTrash : form.modo === "senha" ? icKey : icUsers} /></span>
+              <h3>{form.modo === "novo" ? "Novo usuário master" : form.modo === "senha" ? "Redefinir senha" : form.modo === "excluir" ? "Excluir usuário" : "Editar usuário master"}</h3>
+            </div>
+
+            {form.modo === "excluir" ? (
+              <p className="modal-desc">Excluir <b>{form.email}</b>? Ele perde o acesso ao painel. Essa ação não volta atrás.</p>
+            ) : form.modo === "senha" ? (
+              <>
+                <p className="modal-desc">Nova senha para <b>{form.email}</b>.</p>
+                <div className="field"><label>Nova senha</label>
+                  <input type="text" value={form.senha} onChange={(e) => set({ senha: e.target.value })} placeholder="mín. 4 caracteres" autoFocus /></div>
+              </>
+            ) : (
+              <>
+                <div className="field"><label>Nome</label>
+                  <input type="text" value={form.nome} onChange={(e) => set({ nome: e.target.value })} placeholder="Nome da pessoa" autoFocus /></div>
+                {form.modo === "novo" ? (
+                  <>
+                    <div className="field"><label>E-mail (login)</label>
+                      <input type="email" value={form.email} onChange={(e) => set({ email: e.target.value })} placeholder="email@exemplo.com" /></div>
+                    <div className="field"><label>Senha</label>
+                      <input type="text" value={form.senha} onChange={(e) => set({ senha: e.target.value })} placeholder="mín. 4 caracteres" /></div>
+                  </>
+                ) : (
+                  <>
+                    <div className="field"><label>E-mail (login)</label>
+                      <input type="email" value={form.email} disabled /></div>
+                    <label className="chk-row" style={{ marginBottom: 10 }}>
+                      <input type="checkbox" checked={form.ativo} onChange={(e) => set({ ativo: e.target.checked })} /> <span>Usuário ativo (pode entrar no painel)</span>
+                    </label>
+                  </>
+                )}
+              </>
+            )}
+
+            <div className="modal-actions">
+              <button type="button" className="btn btn-ghost" onClick={() => setForm(null)} disabled={busy}>Cancelar</button>
+              <button type="button" className={"btn " + (form.modo === "excluir" ? "btn-danger" : "btn-mg")} onClick={salvar} disabled={busy}>
+                {busy ? "Aguarde…" : form.modo === "novo" ? "Criar master" : form.modo === "senha" ? "Salvar senha" : form.modo === "excluir" ? "Excluir" : "Salvar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 /* ================= SHELL ================= */
 const NAV = [
   { k: "inicio", label: "Início", icon: icHome },
   { k: "lojas", label: "Lojas", icon: icUsers },
   { k: "nova", label: "Nova loja", icon: icPlus },
   { k: "usuarios", label: "Usuários", icon: icKey, revOnly: true },
+  { k: "masters", label: "Usuários master", icon: icUsers, revOnly: true },
   { grp: "Financeiro" },
   { k: "cobrancas", label: "Cobranças", icon: icCard },
   { k: "relatorios", label: "Relatórios", icon: icFile },
@@ -944,7 +1071,7 @@ const NAV = [
   { k: "instaladores", label: "Instaladores", icon: icDownload },
   { k: "config", label: "Configurações", icon: icGear },
 ];
-const CRUMB = { inicio: "início", lojas: "início / lojas", nova: "início / nova loja", usuarios: "início / usuários", cobrancas: "financeiro / cobranças", relatorios: "financeiro / relatórios", instaladores: "recursos / instaladores", config: "recursos / configurações" };
+const CRUMB = { inicio: "início", lojas: "início / lojas", nova: "início / nova loja", usuarios: "início / usuários", masters: "início / usuários master", cobrancas: "financeiro / cobranças", relatorios: "financeiro / relatórios", instaladores: "recursos / instaladores", config: "recursos / configurações" };
 
 function Modal({ modal, onClose }) {
   const [vals, setVals] = useState(() => Object.fromEntries((modal.fields || []).map((f) => [f.key, f.value != null ? f.value : ""])));
@@ -1213,6 +1340,7 @@ function Painel({ sess, onLogout }) {
       case "lojas": return <ViewLojas {...props} />;
       case "nova": return <ViewNova {...props} />;
       case "usuarios": return <ViewUsuarios {...props} />;
+      case "masters": return <ViewMasters {...props} />;
       case "cobrancas": return <ViewCobrancas {...props} />;
       case "relatorios": return <ViewRelatorios {...props} />;
       case "instaladores": return <ViewInstaladores {...props} />;
