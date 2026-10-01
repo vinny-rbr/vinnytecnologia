@@ -1057,6 +1057,73 @@ function ViewMasters({ sess, mostrarToast }) {
   );
 }
 
+/* Catálogo de produtos por código de barras (só master). Pesquisa por nome ou EAN;
+   alimenta o "Buscar" no cadastro de produto do app. */
+function ViewCatalogo({ sess }) {
+  const [q, setQ] = useState("");
+  const [itens, setItens] = useState(null);
+  const [total, setTotal] = useState(null);
+  const [erro, setErro] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const buscar = useCallback(async (term) => {
+    setBusy(true); setErro("");
+    try {
+      const data = await api("/catalogo?q=" + encodeURIComponent(term || ""), { base: ADMIN_API, token: sess.token });
+      setTotal(data.total);
+      setItens(data.itens || []);
+    } catch (e) { setErro(e.message); setItens([]); }
+    setBusy(false);
+  }, [sess.token]);
+
+  useEffect(() => { buscar(""); }, [buscar]); // pega o total
+
+  function onSubmit(e) { e.preventDefault(); buscar(q); }
+
+  return (
+    <>
+      <div className="head-row">
+        <div><h1>Catálogo</h1><p className="sub">Base de produtos por código de barras.{total != null ? " " + total.toLocaleString("pt-BR") + " itens." : ""} Alimenta o "Buscar" no cadastro de produto do app.</p></div>
+      </div>
+
+      <div className="panel" style={{ padding: 14, marginBottom: 14 }}>
+        <form onSubmit={onSubmit} style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <div className="field" style={{ flex: 1, marginBottom: 0 }}>
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar por nome ou código de barras..." autoFocus />
+          </div>
+          <button className="btn btn-mg" type="submit" disabled={busy}>{busy ? "Buscando…" : "Buscar"}</button>
+        </form>
+      </div>
+
+      {erro && <div className="erro-inline"><Ic d={icAlert} /> {erro}</div>}
+
+      <div className="panel">
+        <div className="p-head"><span className="p-title"><Ic d={icFile} /> Resultados</span></div>
+        {itens === null ? (
+          <div className="mini-empty">Carregando…</div>
+        ) : itens.length === 0 ? (
+          <div className="mini-empty">Digite um nome ou código de barras e clique em <b>Buscar</b>.</div>
+        ) : (
+          <div className="tbl-wrap"><table>
+            <thead><tr><th>Código de barras</th><th>Nome</th><th>NCM</th><th>CEST</th><th>Un.</th></tr></thead>
+            <tbody>
+              {itens.map((p) => (
+                <tr key={p.barras}>
+                  <td style={{ fontVariantNumeric: "tabular-nums" }}>{p.barras}</td>
+                  <td>{p.nome}</td>
+                  <td>{p.ncm || "—"}</td>
+                  <td>{p.cest || "—"}</td>
+                  <td>{p.unidade || "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table></div>
+        )}
+      </div>
+    </>
+  );
+}
+
 /* ================= SHELL ================= */
 const NAV = [
   { k: "inicio", label: "Início", icon: icHome },
@@ -1068,10 +1135,11 @@ const NAV = [
   { k: "cobrancas", label: "Cobranças", icon: icCard },
   { k: "relatorios", label: "Relatórios", icon: icFile },
   { grp: "Recursos" },
+  { k: "catalogo", label: "Catálogo", icon: icFile, masterOnly: true },
   { k: "instaladores", label: "Instaladores", icon: icDownload },
   { k: "config", label: "Configurações", icon: icGear },
 ];
-const CRUMB = { inicio: "início", lojas: "início / lojas", nova: "início / nova loja", usuarios: "início / usuários", masters: "início / usuários master", cobrancas: "financeiro / cobranças", relatorios: "financeiro / relatórios", instaladores: "recursos / instaladores", config: "recursos / configurações" };
+const CRUMB = { inicio: "início", lojas: "início / lojas", nova: "início / nova loja", usuarios: "início / usuários", masters: "início / usuários master", catalogo: "recursos / catálogo", cobrancas: "financeiro / cobranças", relatorios: "financeiro / relatórios", instaladores: "recursos / instaladores", config: "recursos / configurações" };
 
 function Modal({ modal, onClose }) {
   const [vals, setVals] = useState(() => Object.fromEntries((modal.fields || []).map((f) => [f.key, f.value != null ? f.value : ""])));
@@ -1341,6 +1409,7 @@ function Painel({ sess, onLogout }) {
       case "nova": return <ViewNova {...props} />;
       case "usuarios": return <ViewUsuarios {...props} />;
       case "masters": return <ViewMasters {...props} />;
+      case "catalogo": return <ViewCatalogo {...props} />;
       case "cobrancas": return <ViewCobrancas {...props} />;
       case "relatorios": return <ViewRelatorios {...props} />;
       case "instaladores": return <ViewInstaladores {...props} />;
@@ -1358,7 +1427,7 @@ function Painel({ sess, onLogout }) {
           <div><div className="n">Meu Giro</div><div className="s">{isMaster ? "Painel master" : "Painel da revenda"}</div></div>
         </div>
         <nav className="nav">
-          {NAV.filter((it) => !(it.revOnly && isMaster)).map((it, i) => it.grp
+          {NAV.filter((it) => !(it.revOnly && isMaster) && !(it.masterOnly && !isMaster)).map((it, i) => it.grp
             ? <div className="grp" key={i}>{it.grp}</div>
             : <button key={i} className={view === it.k ? "on" : ""} onClick={() => setView(it.k)}>
                 <Ic d={it.icon} /> {it.label}
