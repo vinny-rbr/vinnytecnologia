@@ -758,12 +758,12 @@ function ViewUsuarios({ sess, lojas, mostrarToast }) {
 
   function novo() {
     if (lojas.length === 0) { mostrarToast("Você precisa ter ao menos uma loja para criar usuários.", false); return; }
-    setForm({ modo: "novo", nome: "", email: "", senha: "", cnpj: lojas[0].cnpj, sessaoUnica: false, deviceLock: false, preset: "tudo", perms: new Set() });
+    setForm({ modo: "novo", nome: "", email: "", senha: "", cnpj: lojas[0].cnpj, sessaoUnica: false, deviceLock: false, consultaPreco: false, preset: "tudo", perms: new Set() });
   }
   function editar(u) {
     const perms = new Set(u.permissoes || []);
     const preset = (u.permissoes || []).length === 0 ? "tudo" : ehSoEstoque(u.permissoes) ? "estoque" : "custom";
-    setForm({ modo: "editar", id: u.id, nome: u.nome || "", email: u.email, ativo: u.ativo !== false, sessaoUnica: u.sessaoUnica === true, deviceLock: u.deviceLock === true, preset, perms });
+    setForm({ modo: "editar", id: u.id, nome: u.nome || "", email: u.email, ativo: u.ativo !== false, sessaoUnica: u.sessaoUnica === true, deviceLock: u.deviceLock === true, consultaPreco: u.consultaPreco === true, preset, perms });
   }
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
   const togglePerm = (k) => setForm((f) => { const p = new Set(f.perms); p.has(k) ? p.delete(k) : p.add(k); return { ...f, perms: p, preset: "custom" }; });
@@ -783,10 +783,10 @@ function ViewUsuarios({ sess, lojas, mostrarToast }) {
     try {
       if (f.modo === "novo") {
         if (!f.email.trim() || !f.senha.trim()) { mostrarToast("Preencha e-mail e senha.", false); setBusy(false); return; }
-        await api("/usuarios", { method: "POST", token: sess.token, body: { nome: f.nome, email: f.email, senha: f.senha, cnpj: f.cnpj, sessaoUnica: !!f.sessaoUnica, deviceLock: !!f.deviceLock, permissoes: permsFinais(f) } });
+        await api("/usuarios", { method: "POST", token: sess.token, body: { nome: f.nome, email: f.email, senha: f.senha, cnpj: f.cnpj, sessaoUnica: !!f.sessaoUnica, deviceLock: !!f.deviceLock, consultaPreco: !!f.consultaPreco, permissoes: permsFinais(f) } });
         mostrarToast("Usuário criado.");
       } else if (f.modo === "editar") {
-        await api("/usuarios/" + f.id, { method: "POST", token: sess.token, body: { nome: f.nome, ativo: f.ativo, sessaoUnica: !!f.sessaoUnica, deviceLock: !!f.deviceLock, permissoes: permsFinais(f) } });
+        await api("/usuarios/" + f.id, { method: "POST", token: sess.token, body: { nome: f.nome, ativo: f.ativo, sessaoUnica: !!f.sessaoUnica, deviceLock: !!f.deviceLock, consultaPreco: !!f.consultaPreco, permissoes: permsFinais(f) } });
         mostrarToast("Usuário atualizado.");
       } else if (f.modo === "senha") {
         if (!f.senha.trim()) { mostrarToast("Digite a nova senha.", false); setBusy(false); return; }
@@ -898,6 +898,10 @@ function ViewUsuarios({ sess, lojas, mostrarToast }) {
                 <label className="chk-row" style={{ marginBottom: 12 }}>
                   <input type="checkbox" checked={!!form.deviceLock} onChange={(e) => set({ deviceLock: e.target.checked })} /> <span>Travar por aparelho (fica preso a 1 celular; outro aparelho só entra se você liberar)</span>
                 </label>
+                <label className="chk-row" style={{ marginBottom: 12 }}>
+                  <input type="checkbox" checked={!!form.consultaPreco} onChange={(e) => set({ consultaPreco: e.target.checked })} /> <span>Só consulta de preço (ao entrar, abre direto na câmera pra ler o código do produto)</span>
+                </label>
+                {!form.consultaPreco && (<>
                 <div className="field">
                   <label>Acesso</label>
                   <div className="preset-row">
@@ -915,6 +919,7 @@ function ViewUsuarios({ sess, lojas, mostrarToast }) {
                     ))}
                   </div>
                 )}
+                </>)}
               </>
             )}
 
