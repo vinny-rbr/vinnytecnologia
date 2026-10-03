@@ -758,12 +758,12 @@ function ViewUsuarios({ sess, lojas, mostrarToast }) {
 
   function novo() {
     if (lojas.length === 0) { mostrarToast("Você precisa ter ao menos uma loja para criar usuários.", false); return; }
-    setForm({ modo: "novo", nome: "", email: "", senha: "", cnpj: lojas[0].cnpj, sessaoUnica: false, deviceLock: false, consultaPreco: false, preset: "tudo", perms: new Set() });
+    setForm({ modo: "novo", nome: "", email: "", login: "", senha: "", cnpj: lojas[0].cnpj, sessaoUnica: false, deviceLock: false, consultaPreco: false, preset: "tudo", perms: new Set() });
   }
   function editar(u) {
     const perms = new Set(u.permissoes || []);
     const preset = (u.permissoes || []).length === 0 ? "tudo" : ehSoEstoque(u.permissoes) ? "estoque" : "custom";
-    setForm({ modo: "editar", id: u.id, nome: u.nome || "", email: u.email, ativo: u.ativo !== false, sessaoUnica: u.sessaoUnica === true, deviceLock: u.deviceLock === true, consultaPreco: u.consultaPreco === true, preset, perms });
+    setForm({ modo: "editar", id: u.id, nome: u.nome || "", email: u.email, login: u.login || "", ativo: u.ativo !== false, sessaoUnica: u.sessaoUnica === true, deviceLock: u.deviceLock === true, consultaPreco: u.consultaPreco === true, preset, perms });
   }
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
   const togglePerm = (k) => setForm((f) => { const p = new Set(f.perms); p.has(k) ? p.delete(k) : p.add(k); return { ...f, perms: p, preset: "custom" }; });
@@ -782,11 +782,11 @@ function ViewUsuarios({ sess, lojas, mostrarToast }) {
     const f = form; setBusy(true);
     try {
       if (f.modo === "novo") {
-        if (!f.email.trim() || !f.senha.trim()) { mostrarToast("Preencha e-mail e senha.", false); setBusy(false); return; }
-        await api("/usuarios", { method: "POST", token: sess.token, body: { nome: f.nome, email: f.email, senha: f.senha, cnpj: f.cnpj, sessaoUnica: !!f.sessaoUnica, deviceLock: !!f.deviceLock, consultaPreco: !!f.consultaPreco, permissoes: permsFinais(f) } });
+        if ((!f.email.trim() && !f.login.trim()) || !f.senha.trim()) { mostrarToast("Preencha o e-mail ou o usuário, e a senha.", false); setBusy(false); return; }
+        await api("/usuarios", { method: "POST", token: sess.token, body: { nome: f.nome, email: f.email, login: f.login, senha: f.senha, cnpj: f.cnpj, sessaoUnica: !!f.sessaoUnica, deviceLock: !!f.deviceLock, consultaPreco: !!f.consultaPreco, permissoes: permsFinais(f) } });
         mostrarToast("Usuário criado.");
       } else if (f.modo === "editar") {
-        await api("/usuarios/" + f.id, { method: "POST", token: sess.token, body: { nome: f.nome, ativo: f.ativo, sessaoUnica: !!f.sessaoUnica, deviceLock: !!f.deviceLock, consultaPreco: !!f.consultaPreco, permissoes: permsFinais(f) } });
+        await api("/usuarios/" + f.id, { method: "POST", token: sess.token, body: { nome: f.nome, login: f.login, ativo: f.ativo, sessaoUnica: !!f.sessaoUnica, deviceLock: !!f.deviceLock, consultaPreco: !!f.consultaPreco, permissoes: permsFinais(f) } });
         mostrarToast("Usuário atualizado.");
       } else if (f.modo === "senha") {
         if (!f.senha.trim()) { mostrarToast("Digite a nova senha.", false); setBusy(false); return; }
@@ -823,7 +823,7 @@ function ViewUsuarios({ sess, lojas, mostrarToast }) {
                 <div className="uav">{iniciais(u.nome || u.email)}</div>
                 <div className="uinfo">
                   <div className="un">{u.nome || "(sem nome)"} {u.ativo === false && <span className="pill pill-block" style={{ marginLeft: 6 }}>Inativo</span>}</div>
-                  <div className="ue">{u.email}</div>
+                  <div className="ue">{[u.login && "usuário: " + u.login, u.email].filter(Boolean).join(" · ")}</div>
                   <div className="umeta">
                     <span className="grp-chip"><Ic d={icUsers} /> {(u.empresas || []).map((e) => e.nome || nomeLoja(e.cnpj)).join(", ") || "—"}</span>
                     <span className="grp-chip"><Ic d={icLock} /> {resumoPerms(u.permissoes)}</span>
@@ -843,8 +843,8 @@ function ViewUsuarios({ sess, lojas, mostrarToast }) {
                 </div>
                 <div className="uactions">
                   <button className="iconbtn" title="Editar" onClick={() => editar(u)}><Ic d={icEdit} /></button>
-                  <button className="iconbtn" title="Redefinir senha" onClick={() => setForm({ modo: "senha", id: u.id, email: u.email, senha: "" })}><Ic d={icKey} /></button>
-                  <button className="iconbtn" title="Excluir" onClick={() => setForm({ modo: "excluir", id: u.id, email: u.email })}><Ic d={icTrash} /></button>
+                  <button className="iconbtn" title="Redefinir senha" onClick={() => setForm({ modo: "senha", id: u.id, email: u.email || u.login, senha: "" })}><Ic d={icKey} /></button>
+                  <button className="iconbtn" title="Excluir" onClick={() => setForm({ modo: "excluir", id: u.id, email: u.email || u.login })}><Ic d={icTrash} /></button>
                 </div>
               </div>
             ))}
@@ -874,8 +874,11 @@ function ViewUsuarios({ sess, lojas, mostrarToast }) {
                   <input type="text" value={form.nome} onChange={(e) => set({ nome: e.target.value })} placeholder="Nome do usuário" autoFocus /></div>
                 {form.modo === "novo" ? (
                   <>
-                    <div className="field"><label>E-mail (login)</label>
+                    <div className="field"><label>E-mail (opcional se tiver usuário)</label>
                       <input type="email" value={form.email} onChange={(e) => set({ email: e.target.value })} placeholder="email@exemplo.com" /></div>
+                    <div className="field"><label>Usuário (pra entrar no app)</label>
+                      <input type="text" value={form.login} onChange={(e) => set({ login: e.target.value.toLowerCase() })} placeholder="ex.: preco bentevi" />
+                      <div className="hint" style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>A pessoa entra com o e-mail ou com esse usuário. Não pode repetir.</div></div>
                     <div className="field"><label>Senha</label>
                       <input type="text" value={form.senha} onChange={(e) => set({ senha: e.target.value })} placeholder="mín. 4 caracteres" /></div>
                     <div className="field"><label>Loja</label>
@@ -885,8 +888,11 @@ function ViewUsuarios({ sess, lojas, mostrarToast }) {
                   </>
                 ) : (
                   <>
-                    <div className="field"><label>E-mail (login)</label>
-                      <input type="email" value={form.email} disabled /></div>
+                    <div className="field"><label>E-mail</label>
+                      <input type="email" value={form.email || "(sem e-mail)"} disabled /></div>
+                    <div className="field"><label>Usuário (pra entrar no app)</label>
+                      <input type="text" value={form.login} onChange={(e) => set({ login: e.target.value.toLowerCase() })} placeholder="ex.: preco bentevi" />
+                      <div className="hint" style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>A pessoa entra com o e-mail ou com esse usuário. Não pode repetir.</div></div>
                     <label className="chk-row" style={{ marginBottom: 10 }}>
                       <input type="checkbox" checked={form.ativo} onChange={(e) => set({ ativo: e.target.checked })} /> <span>Usuário ativo (pode entrar no app)</span>
                     </label>
