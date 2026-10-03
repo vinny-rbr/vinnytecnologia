@@ -1082,14 +1082,15 @@ function ViewRevendas({ sess, mostrarToast }) {
   function abrir(rev) { setSel(rev); setUsers(null); carregarMasters(rev); }
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
 
-  async function salvar() {
+  async function salvar(vincular = false) {
     const f = form; setBusy(true);
     const bp = "/revendas/" + sel.id + "/masters";
     try {
       if (f.modo === "novo") {
-        if (!f.email.trim() || !f.senha.trim()) { mostrarToast("Preencha e-mail e senha.", false); setBusy(false); return; }
-        await api(bp, { method: "POST", base: ADMIN_API, token: sess.token, body: { nome: f.nome, email: f.email, senha: f.senha } });
-        mostrarToast("Master criado.");
+        if (!f.email.trim()) { mostrarToast("Preencha o e-mail.", false); setBusy(false); return; }
+        if (!vincular && !f.senha.trim()) { mostrarToast("Preencha a senha.", false); setBusy(false); return; }
+        await api(bp, { method: "POST", base: ADMIN_API, token: sess.token, body: { nome: f.nome, email: f.email, senha: f.senha, vincular } });
+        mostrarToast(vincular ? "E-mail transformado em master." : "Master criado.");
       } else if (f.modo === "editar") {
         await api(bp + "/" + f.id, { method: "POST", base: ADMIN_API, token: sess.token, body: { nome: f.nome, ativo: f.ativo } });
         mostrarToast("Master atualizado.");
@@ -1102,7 +1103,10 @@ function ViewRevendas({ sess, mostrarToast }) {
         mostrarToast("Master excluído.");
       }
       setForm(null); await carregarMasters(sel); await carregarRevendas();
-    } catch (e) { mostrarToast(e.message, false); }
+    } catch (e) {
+      if (f.modo === "novo" && !vincular && e.status === 409) { set({ jaExiste: true }); }
+      else { mostrarToast(e.message, false); }
+    }
     setBusy(false);
   }
 
@@ -1117,7 +1121,7 @@ function ViewRevendas({ sess, mostrarToast }) {
       <div className="modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
         <div className="modal-h">
           <span className={"modal-ic " + (form.modo === "excluir" ? "ic-red" : "ic-blue")}><Ic d={form.modo === "excluir" ? icTrash : form.modo === "senha" ? icKey : icUsers} /></span>
-          <h3>{form.modo === "novo" ? "Novo master da revenda" : form.modo === "senha" ? "Redefinir senha" : form.modo === "excluir" ? "Excluir master" : "Editar master"}</h3>
+          <h3>{form.modo === "novo" ? (form.jaExiste ? "Transformar em master" : "Novo master da revenda") : form.modo === "senha" ? "Redefinir senha" : form.modo === "excluir" ? "Excluir master" : "Editar master"}</h3>
         </div>
         {form.modo === "excluir" ? (
           <p className="modal-desc">Excluir <b>{form.email}</b>? Ele perde o acesso ao painel. Essa ação não volta atrás.</p>
@@ -1134,9 +1138,10 @@ function ViewRevendas({ sess, mostrarToast }) {
             {form.modo === "novo" ? (
               <>
                 <div className="field"><label>E-mail (login)</label>
-                  <input type="email" value={form.email} onChange={(e) => set({ email: e.target.value })} placeholder="email@exemplo.com" /></div>
+                  <input type="email" value={form.email} onChange={(e) => set({ email: e.target.value, jaExiste: false })} placeholder="email@exemplo.com" /></div>
                 <div className="field"><label>Senha</label>
-                  <input type="text" value={form.senha} onChange={(e) => set({ senha: e.target.value })} placeholder="mín. 4 caracteres" /></div>
+                  <input type="text" value={form.senha} onChange={(e) => set({ senha: e.target.value })} placeholder={form.jaExiste ? "deixe em branco pra manter a atual" : "mín. 4 caracteres"} /></div>
+                {form.jaExiste && <p className="modal-desc" style={{ color: "#f5a623" }}>Esse e-mail já existe no sistema. Clique em <b>Transformar em master</b> pra dar a ele o acesso de master desta revenda (vê só os clientes dela).</p>}
               </>
             ) : (
               <>
@@ -1151,8 +1156,8 @@ function ViewRevendas({ sess, mostrarToast }) {
         )}
         <div className="modal-actions">
           <button type="button" className="btn btn-ghost" onClick={() => setForm(null)} disabled={busy}>Cancelar</button>
-          <button type="button" className={"btn " + (form.modo === "excluir" ? "btn-danger" : "btn-mg")} onClick={salvar} disabled={busy}>
-            {busy ? "Aguarde…" : form.modo === "novo" ? "Criar master" : form.modo === "senha" ? "Salvar senha" : form.modo === "excluir" ? "Excluir" : "Salvar"}
+          <button type="button" className={"btn " + (form.modo === "excluir" ? "btn-danger" : "btn-mg")} onClick={() => salvar(form.modo === "novo" && form.jaExiste === true)} disabled={busy}>
+            {busy ? "Aguarde…" : form.modo === "novo" ? (form.jaExiste ? "Transformar em master" : "Criar master") : form.modo === "senha" ? "Salvar senha" : form.modo === "excluir" ? "Excluir" : "Salvar"}
           </button>
         </div>
       </div>
