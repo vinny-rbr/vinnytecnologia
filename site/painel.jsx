@@ -938,6 +938,79 @@ function ViewUsuarios({ sess, lojas, mostrarToast }) {
 
 /* Usuários master da revenda: logins extras do painel que veem SÓ os clientes
    desta revenda. (Quem vê todas as revendas é apenas o dono/master do sistema.) */
+/* Solicitações: pedidos de troca de senha feitos no "Esqueci a senha" do app.
+   A pessoa já escolheu a senha nova; aqui o revendedor (ou o master) aprova ou recusa. */
+function ViewSolicitacoes({ sess, mostrarToast, isMaster, onSolicitacoes }) {
+  const [itens, setItens] = useState(null);
+  const [erro, setErro] = useState("");
+  const [busy, setBusy] = useState("");
+  const base = isMaster ? ADMIN_API : API;
+
+  const carregar = useCallback(async () => {
+    try {
+      const l = await api("/solicitacoes", { base, token: sess.token }) || [];
+      setItens(l); setErro("");
+      if (onSolicitacoes) onSolicitacoes(l.length);
+    } catch (e) { setErro(e.message); setItens([]); }
+  }, [sess.token, base]);
+  useEffect(() => { carregar(); }, [carregar]);
+
+  async function decidir(s, acao) {
+    setBusy(s.id + acao);
+    try {
+      await api("/solicitacoes/" + s.id + "/" + acao, { method: "POST", base, token: sess.token });
+      mostrarToast(acao === "aprovar" ? "Senha nova liberada para " + s.email + "." : "Pedido recusado.");
+      await carregar();
+    } catch (e) { mostrarToast(e.message, false); }
+    setBusy("");
+  }
+
+  const quando = (iso) => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    return d.toLocaleDateString("pt-BR") + " às " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  };
+
+  return (
+    <>
+      <div className="head-row">
+        <div><h1>Solicitações</h1><p className="sub">Pedidos de troca de senha feitos no app. Ao aprovar, a senha que a pessoa escolheu passa a valer.</p></div>
+      </div>
+
+      {erro && <div className="erro-inline"><Ic d={icAlert} /> {erro}</div>}
+
+      <div className="panel">
+        <div className="p-head"><span className="p-title"><Ic d={icKey} /> Troca de senha</span></div>
+        {itens === null ? (
+          <div className="mini-empty">Carregando…</div>
+        ) : itens.length === 0 ? (
+          <div className="mini-empty">Nenhuma solicitação pendente.</div>
+        ) : (
+          <div className="ulist">
+            {itens.map((s) => (
+              <div className="urow" key={s.id}>
+                <div className="uav">{iniciais(s.nome || s.email)}</div>
+                <div className="uinfo">
+                  <div className="un">{s.nome || "(sem nome)"}</div>
+                  <div className="ue">{s.email}</div>
+                  <div className="umeta">
+                    {(s.lojas || []).length > 0 && <span className="grp-chip"><Ic d={icUsers} /> {s.lojas.join(", ")}</span>}
+                    <span className="grp-chip"><Ic d={icClock} /> pediu em {quando(s.pedidoEm)}</span>
+                  </div>
+                </div>
+                <div className="uactions">
+                  <button className="btn btn-mg btn-sm" disabled={!!busy} onClick={() => decidir(s, "aprovar")}><Ic d={icCheck} /> Aprovar</button>
+                  <button className="btn btn-ghost btn-sm" disabled={!!busy} onClick={() => decidir(s, "recusar")}>Recusar</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
 function ViewMasters({ sess, mostrarToast }) {
   const [users, setUsers] = useState(null);
   const [erro, setErro] = useState("");
@@ -1325,6 +1398,7 @@ const NAV = [
   { k: "nova", label: "Nova loja", icon: icPlus },
   { k: "usuarios", label: "Usuários", icon: icKey, revOnly: true },
   { k: "masters", label: "Usuários master", icon: icUsers, revOnly: true },
+  { k: "solicitacoes", label: "Solicitações", icon: icKey },
   { k: "revendas", label: "Revendas", icon: icUsers, masterOnly: true },
   { grp: "Financeiro" },
   { k: "cobrancas", label: "Cobranças", icon: icCard },
@@ -1334,7 +1408,7 @@ const NAV = [
   { k: "instaladores", label: "Instaladores", icon: icDownload },
   { k: "config", label: "Configurações", icon: icGear },
 ];
-const CRUMB = { inicio: "início", lojas: "início / lojas", nova: "início / nova loja", usuarios: "início / usuários", masters: "início / usuários master", revendas: "início / revendas", catalogo: "recursos / catálogo", cobrancas: "financeiro / cobranças", relatorios: "financeiro / relatórios", instaladores: "recursos / instaladores", config: "recursos / configurações" };
+const CRUMB = { inicio: "início", lojas: "início / lojas", nova: "início / nova loja", usuarios: "início / usuários", masters: "início / usuários master", solicitacoes: "início / solicitações", revendas: "início / revendas", catalogo: "recursos / catálogo", cobrancas: "financeiro / cobranças", relatorios: "financeiro / relatórios", instaladores: "recursos / instaladores", config: "recursos / configurações" };
 
 function Modal({ modal, onClose }) {
   const [vals, setVals] = useState(() => Object.fromEntries((modal.fields || []).map((f) => [f.key, f.value != null ? f.value : ""])));
@@ -1422,6 +1496,13 @@ function Painel({ sess, onLogout }) {
   const [ativando, setAtivando] = useState("");
   const [toast, setToast] = useState(null);
   const [modal, setModal] = useState(null);
+  const [nSolic, setNSolic] = useState(0);
+
+  const carregarSolic = useCallback(async () => {
+    try { const l = await api("/solicitacoes", { base: isMaster ? ADMIN_API : API, token: sess.token }) || []; setNSolic(l.length); }
+    catch (e) { /* aba mostra o erro */ }
+  }, [sess.token, isMaster]);
+  useEffect(() => { carregarSolic(); const t = setInterval(carregarSolic, 60000); return () => clearInterval(t); }, [carregarSolic]);
 
   const carregar = useCallback(async () => {
     setErro("");
@@ -1597,13 +1678,14 @@ function Painel({ sess, onLogout }) {
     },
   };
 
-  const props = { lojas, sess, onAtivar: ativar, ativando, goto: setView, onLogout, mostrarToast, isMaster, master, rev: revenda, onGrupo: definirGrupo, onHist: verHistorico };
+  const props = { onSolicitacoes: setNSolic, lojas, sess, onAtivar: ativar, ativando, goto: setView, onLogout, mostrarToast, isMaster, master, rev: revenda, onGrupo: definirGrupo, onHist: verHistorico };
   const conteudo = () => {
     switch (view) {
       case "lojas": return <ViewLojas {...props} />;
       case "nova": return <ViewNova {...props} />;
       case "usuarios": return <ViewUsuarios {...props} />;
       case "masters": return <ViewMasters {...props} />;
+      case "solicitacoes": return <ViewSolicitacoes {...props} />;
       case "revendas": return <ViewRevendas {...props} />;
       case "catalogo": return <ViewCatalogo {...props} />;
       case "cobrancas": return <ViewCobrancas {...props} />;
@@ -1628,6 +1710,7 @@ function Painel({ sess, onLogout }) {
             : <button key={i} className={view === it.k ? "on" : ""} onClick={() => setView(it.k)}>
                 <Ic d={it.icon} /> {it.label}
                 {it.k === "cobrancas" && pend > 0 && <span className="nav-badge">{pend}</span>}
+                {it.k === "solicitacoes" && nSolic > 0 && <span className="nav-badge">{nSolic}</span>}
               </button>
           )}
         </nav>
