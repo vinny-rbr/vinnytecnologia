@@ -1057,6 +1057,190 @@ function ViewMasters({ sess, mostrarToast }) {
   );
 }
 
+/* Revendas (só DONO): lista todas as revendas e cria/gere os usuários-master de cada uma.
+   Master de revenda = login que enxerga SÓ os clientes daquela revenda. */
+function ViewRevendas({ sess, mostrarToast }) {
+  const [revendas, setRevendas] = useState(null);
+  const [erro, setErro] = useState("");
+  const [busca, setBusca] = useState("");
+  const [sel, setSel] = useState(null);
+  const [users, setUsers] = useState(null);
+  const [form, setForm] = useState(null);
+  const [busy, setBusy] = useState(false);
+
+  const carregarRevendas = useCallback(async () => {
+    try { setRevendas(await api("/revendas", { base: ADMIN_API, token: sess.token }) || []); setErro(""); }
+    catch (e) { setErro(e.message); setRevendas([]); }
+  }, [sess.token]);
+  useEffect(() => { carregarRevendas(); }, [carregarRevendas]);
+
+  const carregarMasters = useCallback(async (rev) => {
+    try { setUsers(await api("/revendas/" + rev.id + "/masters", { base: ADMIN_API, token: sess.token }) || []); }
+    catch (e) { mostrarToast(e.message, false); setUsers([]); }
+  }, [sess.token, mostrarToast]);
+
+  function abrir(rev) { setSel(rev); setUsers(null); carregarMasters(rev); }
+  const set = (patch) => setForm((f) => ({ ...f, ...patch }));
+
+  async function salvar() {
+    const f = form; setBusy(true);
+    const bp = "/revendas/" + sel.id + "/masters";
+    try {
+      if (f.modo === "novo") {
+        if (!f.email.trim() || !f.senha.trim()) { mostrarToast("Preencha e-mail e senha.", false); setBusy(false); return; }
+        await api(bp, { method: "POST", base: ADMIN_API, token: sess.token, body: { nome: f.nome, email: f.email, senha: f.senha } });
+        mostrarToast("Master criado.");
+      } else if (f.modo === "editar") {
+        await api(bp + "/" + f.id, { method: "POST", base: ADMIN_API, token: sess.token, body: { nome: f.nome, ativo: f.ativo } });
+        mostrarToast("Master atualizado.");
+      } else if (f.modo === "senha") {
+        if (!f.senha.trim()) { mostrarToast("Digite a nova senha.", false); setBusy(false); return; }
+        await api(bp + "/" + f.id + "/senha", { method: "POST", base: ADMIN_API, token: sess.token, body: { senha: f.senha } });
+        mostrarToast("Senha redefinida.");
+      } else if (f.modo === "excluir") {
+        await api(bp + "/" + f.id, { method: "DELETE", base: ADMIN_API, token: sess.token });
+        mostrarToast("Master excluído.");
+      }
+      setForm(null); await carregarMasters(sel); await carregarRevendas();
+    } catch (e) { mostrarToast(e.message, false); }
+    setBusy(false);
+  }
+
+  const filtradas = (revendas || []).filter((r) => {
+    const q = busca.trim().toLowerCase();
+    if (!q) return true;
+    return (r.nome || "").toLowerCase().includes(q) || (r.cpfCnpj || "").toLowerCase().includes(q) || (r.codigo || "").toLowerCase().includes(q);
+  });
+
+  const modal = form && (
+    <div className="modal-back" onClick={() => !busy && setForm(null)}>
+      <div className="modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-h">
+          <span className={"modal-ic " + (form.modo === "excluir" ? "ic-red" : "ic-blue")}><Ic d={form.modo === "excluir" ? icTrash : form.modo === "senha" ? icKey : icUsers} /></span>
+          <h3>{form.modo === "novo" ? "Novo master da revenda" : form.modo === "senha" ? "Redefinir senha" : form.modo === "excluir" ? "Excluir master" : "Editar master"}</h3>
+        </div>
+        {form.modo === "excluir" ? (
+          <p className="modal-desc">Excluir <b>{form.email}</b>? Ele perde o acesso ao painel. Essa ação não volta atrás.</p>
+        ) : form.modo === "senha" ? (
+          <>
+            <p className="modal-desc">Nova senha para <b>{form.email}</b>.</p>
+            <div className="field"><label>Nova senha</label>
+              <input type="text" value={form.senha} onChange={(e) => set({ senha: e.target.value })} placeholder="mín. 4 caracteres" autoFocus /></div>
+          </>
+        ) : (
+          <>
+            <div className="field"><label>Nome</label>
+              <input type="text" value={form.nome} onChange={(e) => set({ nome: e.target.value })} placeholder="Nome da pessoa" autoFocus /></div>
+            {form.modo === "novo" ? (
+              <>
+                <div className="field"><label>E-mail (login)</label>
+                  <input type="email" value={form.email} onChange={(e) => set({ email: e.target.value })} placeholder="email@exemplo.com" /></div>
+                <div className="field"><label>Senha</label>
+                  <input type="text" value={form.senha} onChange={(e) => set({ senha: e.target.value })} placeholder="mín. 4 caracteres" /></div>
+              </>
+            ) : (
+              <>
+                <div className="field"><label>E-mail (login)</label>
+                  <input type="email" value={form.email} disabled /></div>
+                <label className="chk-row" style={{ marginBottom: 10 }}>
+                  <input type="checkbox" checked={form.ativo} onChange={(e) => set({ ativo: e.target.checked })} /> <span>Usuário ativo (pode entrar no painel)</span>
+                </label>
+              </>
+            )}
+          </>
+        )}
+        <div className="modal-actions">
+          <button type="button" className="btn btn-ghost" onClick={() => setForm(null)} disabled={busy}>Cancelar</button>
+          <button type="button" className={"btn " + (form.modo === "excluir" ? "btn-danger" : "btn-mg")} onClick={salvar} disabled={busy}>
+            {busy ? "Aguarde…" : form.modo === "novo" ? "Criar master" : form.modo === "senha" ? "Salvar senha" : form.modo === "excluir" ? "Excluir" : "Salvar"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // --- tela da revenda selecionada: os masters dela ---
+  if (sel) {
+    return (
+      <>
+        <div className="head-row">
+          <div>
+            <button className="btn btn-ghost btn-sm" onClick={() => { setSel(null); setUsers(null); }} style={{ marginBottom: 8 }}>← Revendas</button>
+            <h1>{sel.nome}</h1>
+            <p className="sub">Masters desta revenda. Eles enxergam só os clientes dela.{sel.codigo ? " Código: " + sel.codigo + "." : ""}</p>
+          </div>
+          <button className="btn btn-mg" onClick={() => setForm({ modo: "novo", nome: "", email: "", senha: "" })}><Ic d={icPlus} /> Novo master</button>
+        </div>
+        <div className="panel">
+          <div className="p-head"><span className="p-title"><Ic d={icUsers} /> Usuários master</span></div>
+          {users === null ? (
+            <div className="mini-empty">Carregando…</div>
+          ) : users.length === 0 ? (
+            <div className="mini-empty">Nenhum master ainda. Clique em <b>Novo master</b> para criar um login pra essa revenda.</div>
+          ) : (
+            <div className="ulist">
+              {users.map((u) => (
+                <div className="urow" key={u.id}>
+                  <div className="uav">{iniciais(u.nome || u.email)}</div>
+                  <div className="uinfo">
+                    <div className="un">{u.nome || "(sem nome)"} {u.ativo === false && <span className="pill pill-block" style={{ marginLeft: 6 }}>Inativo</span>}</div>
+                    <div className="ue">{u.email}</div>
+                  </div>
+                  <div className="uactions">
+                    <button className="iconbtn" title="Editar" onClick={() => setForm({ modo: "editar", id: u.id, nome: u.nome || "", email: u.email, ativo: u.ativo !== false })}><Ic d={icEdit} /></button>
+                    <button className="iconbtn" title="Redefinir senha" onClick={() => setForm({ modo: "senha", id: u.id, email: u.email, senha: "" })}><Ic d={icKey} /></button>
+                    <button className="iconbtn" title="Excluir" onClick={() => setForm({ modo: "excluir", id: u.id, email: u.email })}><Ic d={icTrash} /></button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        {modal}
+      </>
+    );
+  }
+
+  // --- lista de revendas ---
+  return (
+    <>
+      <div className="head-row">
+        <div><h1>Revendas</h1><p className="sub">Todas as revendas. Entre numa pra criar os logins-master dela (veem só os clientes daquela revenda).</p></div>
+      </div>
+      {erro && <div className="erro-inline"><Ic d={icAlert} /> {erro}</div>}
+      <div className="panel">
+        <div className="p-head">
+          <span className="p-title"><Ic d={icUsers} /> Revendas</span>
+          <div className="search">
+            <Ic d={icSearch} />
+            <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por nome, CNPJ ou código…" aria-label="Buscar" />
+          </div>
+        </div>
+        {revendas === null ? (
+          <div className="mini-empty">Carregando…</div>
+        ) : filtradas.length === 0 ? (
+          <div className="mini-empty">{(revendas || []).length === 0 ? "Nenhuma revenda cadastrada ainda." : "Nada nesse filtro."}</div>
+        ) : (
+          <div className="ulist">
+            {filtradas.map((r) => (
+              <div className="urow" key={r.id}>
+                <div className="uav">{iniciais(r.nome)}</div>
+                <div className="uinfo">
+                  <div className="un">{r.nome} {r.ativo === false && <span className="pill pill-block" style={{ marginLeft: 6 }}>Inativa</span>}</div>
+                  <div className="ue">{r.cpfCnpj || "sem CNPJ"}{r.codigo ? " · cód " + r.codigo : ""} · {r.qtdMasters || 0} master{(r.qtdMasters || 0) === 1 ? "" : "s"}</div>
+                </div>
+                <div className="uactions">
+                  <button className="btn btn-mg btn-sm" onClick={() => abrir(r)}><Ic d={icUsers} /> Masters</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
 /* Catálogo de produtos por código de barras (só master). Pesquisa por nome ou EAN;
    alimenta o "Buscar" no cadastro de produto do app. */
 function ViewCatalogo({ sess }) {
@@ -1131,6 +1315,7 @@ const NAV = [
   { k: "nova", label: "Nova loja", icon: icPlus },
   { k: "usuarios", label: "Usuários", icon: icKey, revOnly: true },
   { k: "masters", label: "Usuários master", icon: icUsers, revOnly: true },
+  { k: "revendas", label: "Revendas", icon: icUsers, masterOnly: true },
   { grp: "Financeiro" },
   { k: "cobrancas", label: "Cobranças", icon: icCard },
   { k: "relatorios", label: "Relatórios", icon: icFile },
@@ -1139,7 +1324,7 @@ const NAV = [
   { k: "instaladores", label: "Instaladores", icon: icDownload },
   { k: "config", label: "Configurações", icon: icGear },
 ];
-const CRUMB = { inicio: "início", lojas: "início / lojas", nova: "início / nova loja", usuarios: "início / usuários", masters: "início / usuários master", catalogo: "recursos / catálogo", cobrancas: "financeiro / cobranças", relatorios: "financeiro / relatórios", instaladores: "recursos / instaladores", config: "recursos / configurações" };
+const CRUMB = { inicio: "início", lojas: "início / lojas", nova: "início / nova loja", usuarios: "início / usuários", masters: "início / usuários master", revendas: "início / revendas", catalogo: "recursos / catálogo", cobrancas: "financeiro / cobranças", relatorios: "financeiro / relatórios", instaladores: "recursos / instaladores", config: "recursos / configurações" };
 
 function Modal({ modal, onClose }) {
   const [vals, setVals] = useState(() => Object.fromEntries((modal.fields || []).map((f) => [f.key, f.value != null ? f.value : ""])));
@@ -1409,6 +1594,7 @@ function Painel({ sess, onLogout }) {
       case "nova": return <ViewNova {...props} />;
       case "usuarios": return <ViewUsuarios {...props} />;
       case "masters": return <ViewMasters {...props} />;
+      case "revendas": return <ViewRevendas {...props} />;
       case "catalogo": return <ViewCatalogo {...props} />;
       case "cobrancas": return <ViewCobrancas {...props} />;
       case "relatorios": return <ViewRelatorios {...props} />;
