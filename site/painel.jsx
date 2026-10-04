@@ -702,7 +702,7 @@ function ViewInstaladores({ sess, mostrarToast }) {
       <div className="panel" style={{ marginTop: 18, padding: "6px 4px" }}>
         <ol className="steps">
           <li><span className="step-n">1</span><span>Escolha o sistema da loja acima e clique em <b>Baixar instalador</b>{sess.codigo ? <> - o seu código <b className="mono">{sess.codigo}</b> já vai embutido.</> : "."}</span></li>
-          <li><span className="step-n">2</span><span>Descompacte no PC da loja e rode <b className="mono">INSTALAR.bat</b> como administrador.</span></li>
+          <li><span className="step-n">2</span><span>Descompacte no PC da loja, abra a pasta <b className="mono">MeuGiro-Agente</b> e rode <b className="mono">INSTALAR.bat</b> como administrador. Ele se instala sozinho em <b className="mono">C:\MeuGiroAgente</b>.</span></li>
           <li><span className="step-n">3</span><span>O agente sobe sozinho, descobre o CNPJ e a loja aparece aqui na lista.</span></li>
         </ol>
       </div>
