@@ -262,6 +262,12 @@ function Linha({ l, onAtivar, busy, m, onGrupo, rev, onHist, sel, onSel }) {
     <td className="loja">
       <div className="nm">{l.nome || "Loja sem nome"}</div>
       <div className="cnpj">{fmtCnpj(l.cnpj)}{l.grupo && <span className="grp-chip"><Ic d={icFolder} /> {l.grupo}</span>}</div>
+      {m && (
+        <div className="dev-line">
+          <Ic d={icUsers} /> {l.revendaCodigo ? (l.revendaNome || l.revendaCodigo) : "Venda direta"}
+          {l.revendaPendente && <span className="ver-chip" style={{ color: "var(--mg)" }}>transferência pendente</span>}
+        </div>
+      )}
       {l.dispositivos != null && (
         <div className="dev-line">
           <Ic d={icPhone} /> {l.dispositivos} {l.dispositivos === 1 ? "aparelho" : "aparelhos"}
@@ -290,6 +296,8 @@ function Linha({ l, onAtivar, busy, m, onGrupo, rev, onHist, sel, onSel }) {
             <button className="iconbtn" title="Data de início (base da cobrança)" disabled={busy} onClick={() => m.definirAtivacao(l)}><Ic d={icEdit} /></button>
             {!l.implantacaoPaga && <button className="iconbtn" title="Vencimento da implantação" disabled={busy} onClick={() => m.definirImplantacaoVence(l)}><Ic d={icClock} /></button>}
             <button className="iconbtn" title="Grupo" disabled={busy} onClick={() => onGrupo(l)}><Ic d={icFolder} /></button>
+            <button className="iconbtn" title="Mover para outra revenda" disabled={busy} onClick={() => m.moverRevenda(l)}><Ic d={icUsers} /></button>
+            {l.revendaCodigo && <button className="iconbtn" title="Remover da revenda (pra reinstalar)" disabled={busy} onClick={() => m.removerRevenda(l)}><Ic d={icTrash} /></button>}
             <button className="iconbtn" title="Parcelas pagas" disabled={busy} onClick={() => onHist(l)}><Ic d={icFile} /></button>
           </div>
         </td>
@@ -1017,6 +1025,95 @@ function ViewSolicitacoes({ sess, mostrarToast, isMaster, onSolicitacoes }) {
   );
 }
 
+// Master: outra revenda instalou numa loja que ja tem revenda -> autorizar ou recusar.
+function ViewTransferencias({ sess, mostrarToast, recarregar }) {
+  const [itens, setItens] = useState(null);
+  const [erro, setErro] = useState("");
+  const [busy, setBusy] = useState("");
+
+  const carregar = useCallback(async () => {
+    try { setItens(await api("/transferencias", { base: ADMIN_API, token: sess.token }) || []); setErro(""); }
+    catch (e) { setErro(e.message); setItens([]); }
+  }, [sess.token]);
+  useEffect(() => { carregar(); }, [carregar]);
+
+  async function decidir(t, acao) {
+    setBusy(t.cnpj + acao);
+    try {
+      await api("/transferencias/" + t.cnpj + "/" + acao, { method: "POST", base: ADMIN_API, token: sess.token });
+      mostrarToast(acao === "aprovar" ? "Loja transferida para " + (t.nova.nome || t.nova.codigo) + "." : "Transferência recusada.");
+      await carregar(); if (recarregar) await recarregar();
+    } catch (e) { mostrarToast(e.message, false); }
+    setBusy("");
+  }
+
+  const quando = (iso) => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    return d.toLocaleDateString("pt-BR") + " às " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  };
+  const doc = (v) => { const d = (v || "").replace(/\D/g, ""); return d.length === 14 ? fmtCnpj(d) : d.length === 11 ? d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4") : (v || "—"); };
+
+  const Card = ({ titulo, r, destaque }) => (
+    <div style={{ flex: "1 1 240px", minWidth: 0, border: "1px solid " + (destaque ? "var(--mg)" : "var(--line, rgba(255,255,255,.12))"), borderRadius: 10, padding: 12 }}>
+      <div className="ue" style={{ textTransform: "uppercase", letterSpacing: ".04em", marginBottom: 4 }}>{titulo}</div>
+      {r && r.encontrada ? (
+        <>
+          <div className="un">{r.nome}</div>
+          <div className="ue">{doc(r.cpfCnpj)} · <span className="mono">{r.codigo}</span>{r.ativo === false ? " · inativa" : ""}</div>
+          {r.email && <div className="ue">{r.email}</div>}
+          {r.telefone && <div className="ue">{r.telefone}</div>}
+          {(r.cidade || r.uf) && <div className="ue">{[r.cidade, r.uf].filter(Boolean).join(" / ")}</div>}
+        </>
+      ) : (
+        <div className="ue">Código <span className="mono">{(r && r.codigo) || "—"}</span> (revenda não encontrada)</div>
+      )}
+    </div>
+  );
+
+  return (
+    <>
+      <div className="head-row">
+        <div><h1>Transferências</h1><p className="sub">Uma revenda instalou o agente numa loja que já é de outra revenda. A loja só muda de dono se você autorizar.</p></div>
+      </div>
+
+      {erro && <div className="erro-inline"><Ic d={icAlert} /> {erro}</div>}
+
+      <div className="panel">
+        <div className="p-head"><span className="p-title"><Ic d={icUsers} /> Pedidos pendentes</span></div>
+        {itens === null ? (
+          <div className="mini-empty">Carregando…</div>
+        ) : itens.length === 0 ? (
+          <div className="mini-empty">Nenhum pedido pendente.</div>
+        ) : (
+          <div className="ulist">
+            {itens.map((t) => (
+              <div className="urow" key={t.cnpj} style={{ flexWrap: "wrap", alignItems: "flex-start" }}>
+                <div className="uinfo" style={{ flex: "1 1 100%" }}>
+                  <div className="un">{t.nome || "Loja sem nome"}</div>
+                  <div className="ue">{fmtCnpj(t.cnpj)}</div>
+                  <div className="umeta">
+                    <span className={"on-dot " + (t.online ? "on" : "off")}><i></i> {t.online ? "online" : "offline"}</span>
+                    <span className="grp-chip"><Ic d={icClock} /> pediu em {quando(t.pedidoEm)}</span>
+                  </div>
+                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 10 }}>
+                    <Card titulo="Revenda atual" r={t.atual} />
+                    <Card titulo="Quer pegar a loja" r={t.nova} destaque />
+                  </div>
+                </div>
+                <div className="uactions" style={{ marginTop: 10 }}>
+                  <button className="btn btn-mg btn-sm" disabled={!!busy} onClick={() => decidir(t, "aprovar")}><Ic d={icCheck} /> Autorizar</button>
+                  <button className="btn btn-ghost btn-sm" disabled={!!busy} onClick={() => decidir(t, "recusar")}>Recusar</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
 function ViewMasters({ sess, mostrarToast }) {
   const [users, setUsers] = useState(null);
   const [erro, setErro] = useState("");
@@ -1406,6 +1503,7 @@ const NAV = [
   { k: "masters", label: "Usuários master", icon: icUsers, revOnly: true },
   { k: "solicitacoes", label: "Solicitações", icon: icKey },
   { k: "revendas", label: "Revendas", icon: icUsers, masterOnly: true },
+  { k: "transferencias", label: "Transferências", icon: icUsers, masterOnly: true },
   { grp: "Financeiro" },
   { k: "cobrancas", label: "Cobranças", icon: icCard },
   { k: "relatorios", label: "Relatórios", icon: icFile },
@@ -1414,7 +1512,7 @@ const NAV = [
   { k: "instaladores", label: "Instaladores", icon: icDownload },
   { k: "config", label: "Configurações", icon: icGear },
 ];
-const CRUMB = { inicio: "início", lojas: "início / lojas", nova: "início / nova loja", usuarios: "início / usuários", masters: "início / usuários master", solicitacoes: "início / solicitações", revendas: "início / revendas", catalogo: "recursos / catálogo", cobrancas: "financeiro / cobranças", relatorios: "financeiro / relatórios", instaladores: "recursos / instaladores", config: "recursos / configurações" };
+const CRUMB = { inicio: "início", lojas: "início / lojas", nova: "início / nova loja", usuarios: "início / usuários", masters: "início / usuários master", solicitacoes: "início / solicitações", revendas: "início / revendas", transferencias: "início / transferências", catalogo: "recursos / catálogo", cobrancas: "financeiro / cobranças", relatorios: "financeiro / relatórios", instaladores: "recursos / instaladores", config: "recursos / configurações" };
 
 function Modal({ modal, onClose }) {
   const [vals, setVals] = useState(() => Object.fromEntries((modal.fields || []).map((f) => [f.key, f.value != null ? f.value : ""])));
@@ -1525,6 +1623,7 @@ function Painel({ sess, onLogout }) {
           implantacaoPaga: e.implantacaoPaga, fase: e.fase, valorAtual: e.valorAtual,
           pagavel: e.pagavel !== false,
           dispositivos: e.dispositivos, appVersion: e.appVersion || null,
+          revendaCodigo: e.revendaCodigo || null, revendaNome: e.revendaNome || null, revendaPendente: e.revendaPendente || null,
         })));
       } else {
         const data = await api("/lojas", { token: sess.token });
@@ -1629,6 +1728,29 @@ function Painel({ sess, onLogout }) {
         onConfirm: () => runAction(adminReq(l, impl ? "implantacao/paga" : "mensalidade/paga", undefined), "Pagamento registrado. Loja liberada."),
       });
     },
+    async moverRevenda(l) {
+      let revs;
+      try { revs = await api("/revendas", { base: ADMIN_API, token: sess.token }) || []; }
+      catch (err) { mostrarToast(err.message, false); return; }
+      setModal({
+        title: "Mover de revenda", icon: { d: icUsers, cls: "ic-blue" },
+        desc: `Para qual revenda vai “${l.nome}”? Hoje: ${l.revendaCodigo ? (l.revendaNome || l.revendaCodigo) : "venda direta"}.`,
+        fields: [{
+          key: "codigo", label: "Revenda", type: "select", value: l.revendaCodigo || "",
+          options: [{ v: "", t: "Venda direta (sem revenda)" }, ...revs.map((r) => ({ v: r.codigo, t: `${r.nome} · ${r.codigo}` }))],
+        }],
+        confirmLabel: "Mover",
+        onConfirm: (v) => runAction(adminReq(l, "revenda", { codigo: v.codigo }), v.codigo ? "Loja movida de revenda." : "Loja virou venda direta."),
+      });
+    },
+    removerRevenda(l) {
+      setModal({
+        title: "Remover da revenda", icon: { d: icTrash, cls: "ic-red" },
+        desc: `Tirar “${l.nome}” da revenda ${l.revendaNome || l.revendaCodigo}? A loja fica sem dono e, na próxima instalação, entra na revenda de quem instalar.`,
+        confirmLabel: "Remover", danger: true,
+        onConfirm: () => runAction(adminReq(l, "revenda", { codigo: "" }), "Loja removida da revenda."),
+      });
+    },
   };
 
   // grupos: organiza lojas (ex.: um cliente com varias lojas). Master e revendedor.
@@ -1684,7 +1806,7 @@ function Painel({ sess, onLogout }) {
     },
   };
 
-  const props = { onSolicitacoes: setNSolic, lojas, sess, onAtivar: ativar, ativando, goto: setView, onLogout, mostrarToast, isMaster, master, rev: revenda, onGrupo: definirGrupo, onHist: verHistorico };
+  const props = { recarregar: carregar, onSolicitacoes: setNSolic, lojas, sess, onAtivar: ativar, ativando, goto: setView, onLogout, mostrarToast, isMaster, master, rev: revenda, onGrupo: definirGrupo, onHist: verHistorico };
   const conteudo = () => {
     switch (view) {
       case "lojas": return <ViewLojas {...props} />;
@@ -1693,6 +1815,7 @@ function Painel({ sess, onLogout }) {
       case "masters": return <ViewMasters {...props} />;
       case "solicitacoes": return <ViewSolicitacoes {...props} />;
       case "revendas": return <ViewRevendas {...props} />;
+      case "transferencias": return <ViewTransferencias {...props} />;
       case "catalogo": return <ViewCatalogo {...props} />;
       case "cobrancas": return <ViewCobrancas {...props} />;
       case "relatorios": return <ViewRelatorios {...props} />;
@@ -1702,6 +1825,7 @@ function Painel({ sess, onLogout }) {
     }
   };
   const pend = lojas.filter((l) => l.status === "aguardando").length;
+  const nTransf = lojas.filter((l) => l.revendaPendente).length;
 
   return (
     <div className="app">
@@ -1717,6 +1841,7 @@ function Painel({ sess, onLogout }) {
                 <Ic d={it.icon} /> {it.label}
                 {it.k === "cobrancas" && pend > 0 && <span className="nav-badge">{pend}</span>}
                 {it.k === "solicitacoes" && nSolic > 0 && <span className="nav-badge">{nSolic}</span>}
+                {it.k === "transferencias" && nTransf > 0 && <span className="nav-badge">{nTransf}</span>}
               </button>
           )}
         </nav>
