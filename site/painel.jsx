@@ -1090,8 +1090,12 @@ function ViewTransferencias({ sess, mostrarToast, recarregar }) {
             {itens.map((t) => (
               <div className="urow" key={t.cnpj} style={{ flexWrap: "wrap", alignItems: "flex-start" }}>
                 <div className="uinfo" style={{ flex: "1 1 100%" }}>
+                  <div className="ue" style={{ textTransform: "uppercase", letterSpacing: ".04em" }}>Cliente</div>
                   <div className="un">{t.nome || "Loja sem nome"}</div>
                   <div className="ue">{fmtCnpj(t.cnpj)}</div>
+                  <div style={{ margin: "8px 0 2px" }}>
+                    <b style={{ color: "var(--mg)" }}>{t.nova.nome || t.nova.codigo}</b> quer pegar o cliente <b>{t.nome || fmtCnpj(t.cnpj)}</b>, que hoje é da revenda <b>{t.atual.nome || t.atual.codigo}</b>.
+                  </div>
                   <div className="umeta">
                     <span className={"on-dot " + (t.online ? "on" : "off")}><i></i> {t.online ? "online" : "offline"}</span>
                     <span className="grp-chip"><Ic d={icClock} /> pediu em {quando(t.pedidoEm)}</span>
@@ -1414,6 +1418,14 @@ function ViewRevendas({ sess, mostrarToast }) {
                 <div className="uinfo">
                   <div className="un">{r.nome} {r.ativo === false && <span className="pill pill-block" style={{ marginLeft: 6 }}>Inativa</span>}</div>
                   <div className="ue">{r.cpfCnpj || "sem CNPJ"}{r.codigo ? " · cód " + r.codigo : ""} · {r.qtdMasters || 0} master{(r.qtdMasters || 0) === 1 ? "" : "s"}</div>
+                  <div className="umeta">
+                    <span className="grp-chip" style={{ fontWeight: 700 }}><Ic d={icUsers} /> {r.qtdClientes || 0} cliente{(r.qtdClientes || 0) === 1 ? "" : "s"}</span>
+                    {(r.clientes || []).map((c) => (
+                      <span className="grp-chip" key={c.cnpj} title={fmtCnpj(c.cnpj)}>
+                        <span className={"on-dot " + (c.online ? "on" : "off")}><i></i></span>{c.nome || fmtCnpj(c.cnpj)}{c.bloqueada ? " (bloqueada)" : ""}
+                      </span>
+                    ))}
+                  </div>
                 </div>
                 <div className="uactions">
                   <button className="btn btn-mg btn-sm" onClick={() => abrir(r)}><Ic d={icUsers} /> Masters</button>
