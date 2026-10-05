@@ -1041,7 +1041,7 @@ function ViewTransferencias({ sess, mostrarToast, recarregar }) {
     setBusy(t.cnpj + acao);
     try {
       await api("/transferencias/" + t.cnpj + "/" + acao, { method: "POST", base: ADMIN_API, token: sess.token });
-      mostrarToast(acao === "aprovar" ? "Loja transferida para " + (t.nova.nome || t.nova.codigo) + "." : "Transferência recusada.");
+      mostrarToast(acao === "aprovar" ? "Loja transferida para " + (t.nova.nome || t.nova.codigo) + ". Ela ativa no painel dela." : "Transferência recusada.");
       await carregar(); if (recarregar) await recarregar();
     } catch (e) { mostrarToast(e.message, false); }
     setBusy("");
@@ -1752,7 +1752,7 @@ function Painel({ sess, onLogout }) {
           options: [{ v: "", t: "Venda direta (sem revenda)" }, ...revs.map((r) => ({ v: r.codigo, t: `${r.nome} · ${r.codigo}` }))],
         }],
         confirmLabel: "Mover",
-        onConfirm: (v) => runAction(adminReq(l, "revenda", { codigo: v.codigo }), v.codigo ? "Loja movida de revenda." : "Loja virou venda direta."),
+        onConfirm: (v) => runAction(adminReq(l, "revenda", { codigo: v.codigo }), v.codigo ? "Loja movida. A revenda precisa ativar no painel dela." : "Loja virou venda direta."),
       });
     },
     removerRevenda(l) {
