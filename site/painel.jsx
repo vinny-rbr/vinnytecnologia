@@ -181,8 +181,8 @@ function Auth({ onAuth }) {
         )}
 
         <div className="field">
-          <label>E-mail</label>
-          <input type="email" value={f.email} onChange={set("email")} placeholder="voce@email.com" required />
+          <label>{modo === "login" ? "E-mail, CPF ou CNPJ" : "E-mail"}</label>
+          <input type={modo === "login" ? "text" : "email"} value={f.email} onChange={set("email")} placeholder={modo === "login" ? "voce@email.com ou só números" : "voce@email.com"} autoComplete="username" required />
         </div>
         <div className="field">
           <label>Senha</label>
