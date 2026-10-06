@@ -297,8 +297,9 @@ function Linha({ l, onAtivar, busy, m, onGrupo, rev, onHist, sel, onSel }) {
             {!l.implantacaoPaga && <button className="iconbtn" title="Vencimento da implantação" disabled={busy} onClick={() => m.definirImplantacaoVence(l)}><Ic d={icClock} /></button>}
             <button className="iconbtn" title="Grupo" disabled={busy} onClick={() => onGrupo(l)}><Ic d={icFolder} /></button>
             <button className="iconbtn" title="Mover para outra revenda" disabled={busy} onClick={() => m.moverRevenda(l)}><Ic d={icUsers} /></button>
-            {l.revendaCodigo && <button className="iconbtn" title="Remover da revenda (pra reinstalar)" disabled={busy} onClick={() => m.removerRevenda(l)}><Ic d={icTrash} /></button>}
+            {l.revendaCodigo && <button className="iconbtn" title="Remover da revenda (pra reinstalar)" disabled={busy} onClick={() => m.removerRevenda(l)}><Ic d={icLogout} /></button>}
             <button className="iconbtn" title="Parcelas pagas" disabled={busy} onClick={() => onHist(l)}><Ic d={icFile} /></button>
+            <button className="iconbtn iconbtn-danger" title="Excluir loja" disabled={busy} onClick={() => m.excluir(l)}><Ic d={icTrash} /></button>
           </div>
         </td>
       </tr>
@@ -1761,6 +1762,14 @@ function Painel({ sess, onLogout }) {
         desc: `Tirar “${l.nome}” da revenda ${l.revendaNome || l.revendaCodigo}? A loja fica sem dono e, na próxima instalação, entra na revenda de quem instalar.`,
         confirmLabel: "Remover", danger: true,
         onConfirm: () => runAction(adminReq(l, "revenda", { codigo: "" }), "Loja removida da revenda."),
+      });
+    },
+    excluir(l) {
+      setModal({
+        title: "Excluir loja", icon: { d: icTrash, cls: "ic-red" },
+        desc: `Excluir “${l.nome}” (${fmtCnpj(l.cnpj)}) do painel? Some da lista e da cobrança.` + (l.online ? " Atenção: o agente está online e a loja volta a aparecer quando ele reconectar. Desinstale o agente antes." : ""),
+        confirmLabel: "Excluir", danger: true,
+        onConfirm: () => runAction(() => api(`/lojas/${l.cnpj}`, { method: "DELETE", base: ADMIN_API, token: sess.token }), "Loja excluída."),
       });
     },
   };

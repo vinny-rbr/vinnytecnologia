@@ -144,6 +144,7 @@ tbody tr:hover{background:var(--surface)}
 .iconbtn{width:32px;height:32px;border-radius:8px;background:var(--ink-2);border:1px solid var(--line);display:grid;place-items:center;color:var(--muted);cursor:pointer;transition:color .15s,border-color .15s}
 .iconbtn:hover{color:var(--text);border-color:var(--mg)}
 .iconbtn svg{width:15px;height:15px}
+.iconbtn-danger:hover{color:var(--neg);border-color:var(--neg)}
 
 .foot{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;color:var(--muted-2);font-size:13px;gap:12px;flex-wrap:wrap}
 .foot .mono{font-size:12.5px}
