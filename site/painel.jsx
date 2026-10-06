@@ -315,6 +315,7 @@ function Linha({ l, onAtivar, busy, m, onGrupo, rev, onHist, sel, onSel }) {
       <td>
         <StatusPill l={l} />
         {l.status !== "aguardando" && l.pago === false && <span className="pill pill-wait" style={{ marginLeft: 6 }}>R$ {Number(l.valorAPagar) || 30} a pagar</span>}
+        {l.liberadaAte && !l.bloqueada && <span className="pill pill-wait" style={{ marginLeft: 6 }} title="Depois disso a loja bloqueia até o pagamento">liberada até {new Date(l.liberadaAte).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>}
       </td>
       <td>
         <div className="row-actions">
@@ -1673,7 +1674,7 @@ function Painel({ sess, onLogout }) {
       title: liberar ? "Liberar loja" : "Ativar loja",
       icon: { d: liberar ? icUnlock : icCheck, cls: "ic-green" },
       desc: liberar ? `Liberar novamente “${l.nome}”? O lojista volta a ter acesso.`
-        : `Ativar “${l.nome}” por R$ 30? A loja fica Ativa e o lojista passa a ter acesso ao app. Depois é só gerar o boleto/Pix. Se ativar do dia 1 ao 4, os R$ 30 já cobrem o dia 5 deste mês; do dia 20 em diante, no próximo dia 5 você paga só R$ 20.`,
+        : `Ativar “${l.nome}” por R$ 30? A loja fica Ativa e o lojista passa a ter acesso ao app. A loja funciona por 2 horas sem pagamento; depois bloqueia até você pagar o boleto/Pix. Se ativar do dia 1 ao 4, os R$ 30 já cobrem o dia 5 deste mês; do dia 20 em diante, no próximo dia 5 você paga só R$ 20.`,
       confirmLabel: liberar ? "Liberar" : "Ativar · R$ 30",
       onConfirm: () => runAction(() => api(`/lojas/${l.cnpj}/ativar`, { method: "POST", token: sess.token }), liberar ? "Loja liberada." : "Loja ativada!"),
     });
