@@ -208,7 +208,7 @@ function Auth({ onAuth }) {
 
 /* ================= peças ================= */
 function Kpis({ lojas, isMaster }) {
-  const ativas = lojas.filter((l) => l.status === "ativa").length;
+  const ativas = lojas.filter((l) => l.status === "ativa" && !l.cortesia).length;
   const aguardando = lojas.filter((l) => l.status === "aguardando").length;
   const bloqueadas = lojas.filter((l) => l.status === "bloqueada").length;
   const aVencer = lojas.filter(vencendoEmBreve).length;
@@ -315,11 +315,12 @@ function Linha({ l, onAtivar, busy, m, onGrupo, rev, onHist, sel, onSel }) {
       <td>
         <StatusPill l={l} />
         {l.status !== "aguardando" && l.pago === false && <span className="pill pill-wait" style={{ marginLeft: 6 }}>R$ {Number(l.valorAPagar) || 30} a pagar</span>}
+        {l.cortesia && <span className="pill pill-ok" style={{ marginLeft: 6 }} title="Mesmo CNPJ da sua revenda: não é cobrada">Sua · sem cobrança</span>}
         {l.liberadaAte && !l.bloqueada && <span className="pill pill-wait" style={{ marginLeft: 6 }} title="Depois disso a loja bloqueia até o pagamento">liberada até {new Date(l.liberadaAte).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>}
       </td>
       <td>
         <div className="row-actions">
-          {l.status !== "aguardando" && (
+          {l.status !== "aguardando" && !l.cortesia && (
             <input type="checkbox" className="chk" title="Selecionar pra pagar junto" checked={sel && sel.has(l.cnpj)} onChange={() => onSel && onSel(l.cnpj)} />
           )}
           {l.status === "aguardando" ? (
@@ -547,7 +548,7 @@ function ViewNova({ sess, goto, isMaster }) {
 }
 
 function ViewCobrancas({ lojas, onAtivar, ativando, isMaster, master }) {
-  const ativas = lojas.filter((l) => l.status === "ativa");
+  const ativas = lojas.filter((l) => l.status === "ativa" && !l.cortesia);
   const pend = lojas.filter((l) => l.status === "aguardando");
   if (isMaster) {
     const bloqueadas = lojas.filter((l) => l.status === "bloqueada");
@@ -609,7 +610,7 @@ function ViewCobrancas({ lojas, onAtivar, ativando, isMaster, master }) {
 }
 
 function ViewRelatorios({ lojas, isMaster }) {
-  const ativas = lojas.filter((l) => l.status === "ativa").length;
+  const ativas = lojas.filter((l) => l.status === "ativa" && !l.cortesia).length;
   const aguardando = lojas.filter((l) => l.status === "aguardando").length;
   const bloqueadas = lojas.filter((l) => l.status === "bloqueada").length;
   const online = lojas.filter((l) => l.online).length;
