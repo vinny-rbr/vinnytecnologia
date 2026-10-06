@@ -46,6 +46,8 @@ const iniciais = (nome) =>
 const fmtCnpj = (v) => {
   const d = (v || "").replace(/\D/g, "");
   if (d.length === 14) return d.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
+  // mesmo CNPJ em outra instalacao: chave = CNPJ + 2 digitos
+  if (d.length === 16) return fmtCnpj(d.slice(0, 14)) + " · loja " + Number(d.slice(14));
   if (d.length === 11) return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
   return v;
 };
