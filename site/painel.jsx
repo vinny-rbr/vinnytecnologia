@@ -263,7 +263,7 @@ function Linha({ l, onAtivar, busy, m, onGrupo, rev, onHist, sel, onSel }) {
   const nomeCell = (
     <td className="loja">
       <div className="nm">{l.nome || "Loja sem nome"}</div>
-      <div className="cnpj">{fmtCnpj(l.cnpj)}{l.grupo && <span className="grp-chip"><Ic d={icFolder} /> {l.grupo}</span>}</div>
+      <div className="cnpj">{fmtCnpj(l.cnpj)}{l.sistema && <span className="sis-chip" title="Sistema do PDV">{l.sistema}</span>}{l.grupo && <span className="grp-chip"><Ic d={icFolder} /> {l.grupo}</span>}</div>
       {m && (
         <div className="dev-line">
           <Ic d={icUsers} /> {l.revendaCodigo ? (l.revendaNome || l.revendaCodigo) : "Venda direta"}
