@@ -776,6 +776,33 @@ const ESTOQUE = ["produtos", "contagem"];
 const ehSoEstoque = (p) => p && p.length === ESTOQUE.length && ESTOQUE.every((k) => p.includes(k));
 const resumoPerms = (p) => !p || p.length === 0 ? "Vê tudo" : ehSoEstoque(p) ? "Só estoque" : p.length + (p.length === 1 ? " tela" : " telas");
 
+/* Lojas do usuário: busca por nome ou CNPJ/CPF e marca várias. */
+function LojasPicker({ lojas, sel, onChange }) {
+  const [q, setQ] = useState("");
+  const marcadas = sel || new Set();
+  const t = q.trim().toLowerCase(), dig = q.replace(/\D/g, "");
+  const lista = lojas.filter((l) => !t || (l.nome || "").toLowerCase().includes(t) || (dig && (l.cnpj || "").includes(dig)));
+  const toggle = (c) => { const n = new Set(marcadas); n.has(c) ? n.delete(c) : n.add(c); onChange(n); };
+  return (
+    <div className="field">
+      <label>Lojas {marcadas.size > 0 && <span style={{ color: "var(--mg)" }}>· {marcadas.size} marcada(s)</span>}</label>
+      <input type="text" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar por nome, CNPJ ou CPF" />
+      <div style={{ maxHeight: 190, overflowY: "auto", marginTop: 6, border: "1px solid var(--line)", borderRadius: 10, padding: "4px 0" }}>
+        {lista.length === 0 && <div style={{ padding: "8px 12px", color: "var(--muted)", fontSize: 13 }}>Nenhuma loja encontrada.</div>}
+        {lista.map((l) => (
+          <label key={l.cnpj} className="chk-row" style={{ padding: "6px 12px", margin: 0, cursor: "pointer", alignItems: "center" }}>
+            <input type="checkbox" checked={marcadas.has(l.cnpj)} onChange={() => toggle(l.cnpj)} />
+            <span style={{ display: "flex", flexDirection: "column", lineHeight: 1.25 }}>
+              <span>{l.nome || fmtCnpj(l.cnpj)}</span>
+              <span style={{ fontSize: 11.5, color: "var(--muted)", fontFamily: "var(--mono, monospace)" }}>{fmtCnpj(l.cnpj)}</span>
+            </span>
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function ViewUsuarios({ sess, lojas, mostrarToast }) {
   const [users, setUsers] = useState(null);
   const [erro, setErro] = useState("");
@@ -792,12 +819,12 @@ function ViewUsuarios({ sess, lojas, mostrarToast }) {
 
   function novo() {
     if (lojas.length === 0) { mostrarToast("Você precisa ter ao menos uma loja para criar usuários.", false); return; }
-    setForm({ modo: "novo", nome: "", email: "", login: "", senha: "", cnpj: lojas[0].cnpj, sessaoUnica: false, deviceLock: false, consultaPreco: false, preset: "tudo", perms: new Set() });
+    setForm({ modo: "novo", nome: "", email: "", login: "", senha: "", cnpjs: new Set(lojas.length === 1 ? [lojas[0].cnpj] : []), sessaoUnica: false, deviceLock: false, consultaPreco: false, preset: "tudo", perms: new Set() });
   }
   function editar(u) {
     const perms = new Set(u.permissoes || []);
     const preset = (u.permissoes || []).length === 0 ? "tudo" : ehSoEstoque(u.permissoes) ? "estoque" : "custom";
-    setForm({ modo: "editar", id: u.id, nome: u.nome || "", email: u.email, login: u.login || "", ativo: u.ativo !== false, sessaoUnica: u.sessaoUnica === true, deviceLock: u.deviceLock === true, consultaPreco: u.consultaPreco === true, preset, perms });
+    setForm({ modo: "editar", id: u.id, nome: u.nome || "", email: u.email, login: u.login || "", cnpjs: new Set((u.empresas || []).map((e) => e.cnpj)), ativo: u.ativo !== false, sessaoUnica: u.sessaoUnica === true, deviceLock: u.deviceLock === true, consultaPreco: u.consultaPreco === true, preset, perms });
   }
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
   const togglePerm = (k) => setForm((f) => { const p = new Set(f.perms); p.has(k) ? p.delete(k) : p.add(k); return { ...f, perms: p, preset: "custom" }; });
@@ -817,10 +844,12 @@ function ViewUsuarios({ sess, lojas, mostrarToast }) {
     try {
       if (f.modo === "novo") {
         if ((!f.email.trim() && !f.login.trim()) || !f.senha.trim()) { mostrarToast("Preencha o e-mail ou o usuário, e a senha.", false); setBusy(false); return; }
-        await api("/usuarios", { method: "POST", token: sess.token, body: { nome: f.nome, email: f.email, login: f.login, senha: f.senha, cnpj: f.cnpj, sessaoUnica: !!f.sessaoUnica, deviceLock: !!f.deviceLock, consultaPreco: !!f.consultaPreco, permissoes: permsFinais(f) } });
+        if (!f.cnpjs || f.cnpjs.size === 0) { mostrarToast("Marque ao menos uma loja.", false); setBusy(false); return; }
+        await api("/usuarios", { method: "POST", token: sess.token, body: { nome: f.nome, email: f.email, login: f.login, senha: f.senha, cnpjs: [...f.cnpjs], sessaoUnica: !!f.sessaoUnica, deviceLock: !!f.deviceLock, consultaPreco: !!f.consultaPreco, permissoes: permsFinais(f) } });
         mostrarToast("Usuário criado.");
       } else if (f.modo === "editar") {
-        await api("/usuarios/" + f.id, { method: "POST", token: sess.token, body: { nome: f.nome, login: f.login, ativo: f.ativo, sessaoUnica: !!f.sessaoUnica, deviceLock: !!f.deviceLock, consultaPreco: !!f.consultaPreco, permissoes: permsFinais(f) } });
+        if (!f.cnpjs || f.cnpjs.size === 0) { mostrarToast("Marque ao menos uma loja.", false); setBusy(false); return; }
+        await api("/usuarios/" + f.id, { method: "POST", token: sess.token, body: { nome: f.nome, login: f.login, ativo: f.ativo, cnpjs: [...f.cnpjs], sessaoUnica: !!f.sessaoUnica, deviceLock: !!f.deviceLock, consultaPreco: !!f.consultaPreco, permissoes: permsFinais(f) } });
         mostrarToast("Usuário atualizado.");
       } else if (f.modo === "senha") {
         if (!f.senha.trim()) { mostrarToast("Digite a nova senha.", false); setBusy(false); return; }
@@ -915,10 +944,7 @@ function ViewUsuarios({ sess, lojas, mostrarToast }) {
                       <div className="hint" style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>A pessoa entra com o e-mail ou com esse usuário. Não pode repetir.</div></div>
                     <div className="field"><label>Senha</label>
                       <input type="text" value={form.senha} onChange={(e) => set({ senha: e.target.value })} placeholder="mín. 4 caracteres" /></div>
-                    <div className="field"><label>Loja</label>
-                      <select className="sel" value={form.cnpj} onChange={(e) => set({ cnpj: e.target.value })}>
-                        {lojas.map((l) => <option key={l.cnpj} value={l.cnpj}>{l.nome || fmtCnpj(l.cnpj)}</option>)}
-                      </select></div>
+                    <LojasPicker lojas={lojas} sel={form.cnpjs} onChange={(cnpjs) => set({ cnpjs })} />
                   </>
                 ) : (
                   <>
@@ -927,6 +953,7 @@ function ViewUsuarios({ sess, lojas, mostrarToast }) {
                     <div className="field"><label>Usuário (pra entrar no app)</label>
                       <input type="text" value={form.login} onChange={(e) => set({ login: e.target.value.toLowerCase() })} placeholder="ex.: preco bentevi" />
                       <div className="hint" style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>A pessoa entra com o e-mail ou com esse usuário. Não pode repetir.</div></div>
+                    <LojasPicker lojas={lojas} sel={form.cnpjs} onChange={(cnpjs) => set({ cnpjs })} />
                     <label className="chk-row" style={{ marginBottom: 10 }}>
                       <input type="checkbox" checked={form.ativo} onChange={(e) => set({ ativo: e.target.checked })} /> <span>Usuário ativo (pode entrar no app)</span>
                     </label>
