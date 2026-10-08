@@ -210,8 +210,10 @@ function Auth({ onAuth }) {
 function Kpis({ lojas, isMaster }) {
   const ativas = lojas.filter((l) => l.status === "ativa").length;
   // pagantes: ativas que geram mensalidade (fora as do próprio CNPJ da revenda e as que a revenda ainda não ativou)
-  const pagantes = lojas.filter((l) => l.status === "ativa" && !l.cortesia
-    && !(l.situacaoRevenda && l.situacaoRevenda.tipo === "aguardando"));
+  // receita/mês: todas as lojas com mensalidade, menos as sem cobrança e as bloqueadas por falta
+  // de pagamento (bloqueio feito pela própria revenda continua pagando ao master)
+  const pagantes = lojas.filter((l) => !l.cortesia && l.status !== "aguardando"
+    && (!l.bloqueada || /^Bloqueado pela revenda/i.test(l.motivo || "")));
   const aguardando = lojas.filter((l) => l.status === "aguardando").length;
   const bloqueadas = lojas.filter((l) => l.status === "bloqueada").length;
   const aVencer = lojas.filter(vencendoEmBreve).length;
@@ -1661,6 +1663,7 @@ function Painel({ sess, onLogout }) {
           dispositivos: e.dispositivos, appVersion: e.appVersion || null,
           revendaCodigo: e.revendaCodigo || null, revendaNome: e.revendaNome || null, revendaPendente: e.revendaPendente || null,
           sistema: e.sistema || null, cortesia: !!e.cortesia, situacaoRevenda: e.situacaoRevenda || null,
+          motivo: e.motivo || null,
         })));
       } else {
         const data = await api("/lojas", { token: sess.token });
