@@ -208,21 +208,24 @@ function Auth({ onAuth }) {
 
 /* ================= peças ================= */
 function Kpis({ lojas, isMaster }) {
-  const ativas = lojas.filter((l) => l.status === "ativa" && !l.cortesia).length;
+  const ativas = lojas.filter((l) => l.status === "ativa").length;
+  // pagantes: ativas que geram mensalidade (fora as do próprio CNPJ da revenda e as que a revenda ainda não ativou)
+  const pagantes = lojas.filter((l) => l.status === "ativa" && !l.cortesia
+    && !(l.situacaoRevenda && l.situacaoRevenda.tipo === "aguardando"));
   const aguardando = lojas.filter((l) => l.status === "aguardando").length;
   const bloqueadas = lojas.filter((l) => l.status === "bloqueada").length;
   const aVencer = lojas.filter(vencendoEmBreve).length;
-  const receitaMaster = lojas.filter((l) => l.status === "ativa").reduce((s, l) => s + (Number(l.mensalidade) || 0), 0);
+  const receitaMaster = pagantes.reduce((s, l) => s + (Number(l.mensalidade) || 0), 0);
   const cards = isMaster ? [
     { ic: icUsers, cls: "ic-blue", l: "Lojas", v: lojas.length, s: `${ativas} ativas` },
     { ic: icCheck, cls: "ic-green", l: "Ativas", v: ativas, s: "com acesso liberado" },
     { ic: icLock, cls: "ic-red", l: "Bloqueadas", v: bloqueadas, s: "sem acesso", vcls: bloqueadas ? { color: "var(--neg)" } : undefined },
-    { ic: icMoney, cls: "ic-amber", l: "Receita/mês", v: "R$ " + receitaMaster.toFixed(0), s: `${ativas} mensalidades` },
+    { ic: icMoney, cls: "ic-amber", l: "Receita/mês", v: "R$ " + receitaMaster.toFixed(0), s: `${pagantes.length} mensalidades` },
   ] : [
     { ic: icCheck, cls: "ic-green", l: "Lojas ativas", v: ativas, s: `de ${lojas.length} no total` },
     { ic: icClock, cls: "ic-amber", l: "Aguardando ativação", v: aguardando, s: "R$ 30 cada pra liberar", vcls: { color: "var(--mg)" } },
     { ic: icAlert, cls: "ic-red", l: "A vencer (7 dias)", v: aVencer, s: "mensalidade a receber" },
-    { ic: icMoney, cls: "ic-blue", l: "Receita do mês", v: "R$ " + ativas * PRECO, s: `${ativas} lojas × R$ 30` },
+    { ic: icMoney, cls: "ic-blue", l: "Receita do mês", v: "R$ " + pagantes.length * PRECO, s: `${pagantes.length} lojas × R$ 30` },
   ];
   return (
     <div className="kpis">
