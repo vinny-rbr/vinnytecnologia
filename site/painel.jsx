@@ -286,17 +286,17 @@ function Linha({ l, onAtivar, busy, m, onGrupo, rev, onHist, sel, onSel }) {
         <td><span className={"on-dot " + (l.online ? "on" : "off")}><i></i> {l.online ? "online" : "offline"}</span></td>
         <td className="mono" style={{ fontWeight: 600 }}>R$ {(Number(l.mensalidade) || 0).toFixed(0)}</td>
         <td className={"venc" + (soon ? " soon" : "")}>{l.vencimento ? fmtData(l.vencimento) : "—"}</td>
-        <td><StatusPill l={l} /></td>
+        <td><StatusPill l={l} />{l.situacaoRevenda && <SituacaoRevenda s={l.situacaoRevenda} />}</td>
         <td>
           <div className="row-actions">
-            <button className="btn btn-mg btn-sm" title={l.fase !== "implantacao" && l.pagavel === false ? "Abre 10 dias antes do vencimento" : "Registrar pagamento em dinheiro/Pix"} disabled={busy || (l.fase !== "implantacao" && l.pagavel === false)} onClick={() => m.marcarPago(l)}><Ic d={icCheck} strokeWidth="3" /> Pago</button>
+            {!l.revendaCodigo && <button className="btn btn-mg btn-sm" title={l.fase !== "implantacao" && l.pagavel === false ? "Abre 10 dias antes do vencimento" : "Registrar pagamento em dinheiro/Pix"} disabled={busy || (l.fase !== "implantacao" && l.pagavel === false)} onClick={() => m.marcarPago(l)}><Ic d={icCheck} strokeWidth="3" /> Pago</button>}
             {l.bloqueada
               ? <button className="btn btn-ghost btn-sm" disabled={busy} onClick={() => m.toggleBloqueio(l)}><Ic d={icUnlock} /> Liberar</button>
               : <button className="btn btn-ghost btn-sm" disabled={busy} onClick={() => m.toggleBloqueio(l)}><Ic d={icLock} /> Bloquear</button>}
             <button className="iconbtn" title="Mensalidade" disabled={busy} onClick={() => m.editarMensalidade(l)}><Ic d={icMoney} /></button>
             <button className="iconbtn" title="Dia de vencimento" disabled={busy} onClick={() => m.editarVencimento(l)}><Ic d={icCalendar} /></button>
             <button className="iconbtn" title="Data de início (base da cobrança)" disabled={busy} onClick={() => m.definirAtivacao(l)}><Ic d={icEdit} /></button>
-            {!l.implantacaoPaga && <button className="iconbtn" title="Vencimento da implantação" disabled={busy} onClick={() => m.definirImplantacaoVence(l)}><Ic d={icClock} /></button>}
+            {!l.implantacaoPaga && !l.revendaCodigo && <button className="iconbtn" title="Vencimento da implantação" disabled={busy} onClick={() => m.definirImplantacaoVence(l)}><Ic d={icClock} /></button>}
             <button className="iconbtn" title="Grupo" disabled={busy} onClick={() => onGrupo(l)}><Ic d={icFolder} /></button>
             <button className="iconbtn" title="Mover para outra revenda" disabled={busy} onClick={() => m.moverRevenda(l)}><Ic d={icUsers} /></button>
             {l.revendaCodigo && <button className="iconbtn" title="Remover da revenda (pra reinstalar)" disabled={busy} onClick={() => m.removerRevenda(l)}><Ic d={icLogout} /></button>}
@@ -1906,6 +1906,29 @@ function Painel({ sess, onLogout }) {
       {modal && <Modal modal={modal} onClose={() => setModal(null)} />}
     </div>
   );
+}
+
+/* Situação da cobrança de uma loja de revenda (painel master): pago, teste e quanto falta, a pagar... */
+function SituacaoRevenda({ s }) {
+  const dt = (iso) => iso ? fmtData(iso.slice(0, 10)) : "";
+  let cls = "pill-wait", txt = "", tip = "";
+  if (s.tipo === "cortesia") { cls = "pill-ok"; txt = "Sem cobrança"; tip = "Mesmo CNPJ da revenda"; }
+  else if (s.tipo === "aguardando") { txt = "Revenda não ativou"; tip = "Instalada, aguardando a revenda clicar em Ativar"; }
+  else if (s.tipo === "teste") {
+    const ms = new Date(s.testeAte) - new Date();
+    const h = Math.max(0, Math.floor(ms / 3600000)), min = Math.max(0, Math.floor((ms % 3600000) / 60000));
+    txt = ms > 0 ? `Teste · falta ${h}h${String(min).padStart(2, "0")}` : "Teste acabou";
+    tip = "Sem pagamento ainda. Bloqueia em " + new Date(s.testeAte).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+  } else if (s.tipo === "bloqueada") { cls = "pill-block"; txt = "Bloqueada · não pagou"; }
+  else if (s.tipo === "pago") {
+    cls = "pill-ok"; txt = "Pago · próx. " + dt(s.proximoVencimento);
+    tip = s.ultimoPagamentoEm ? `Último pagamento: ${dt(s.ultimoPagamentoEm)} (R$ ${Number(s.ultimoPagamentoValor || 0).toFixed(2).replace(".", ",")})` : "";
+  } else if (s.tipo === "apagar") {
+    txt = `R$ ${Number(s.valor || 30).toFixed(0)} a pagar · vence ${dt(s.vencimento)}`;
+    tip = "Bloqueia em " + dt(s.bloqueiaEm) + (s.ultimoPagamentoEm ? ` · último pagamento ${dt(s.ultimoPagamentoEm)}` : " · nunca pagou");
+  }
+  if (!txt) return null;
+  return <span className={"pill " + cls} style={{ marginLeft: 6 }} title={tip}>{txt}</span>;
 }
 
 /* ================= ROOT ================= */
