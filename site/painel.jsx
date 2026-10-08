@@ -427,9 +427,12 @@ function ViewLojas({ lojas, onAtivar, ativando, isMaster, master, rev, onGrupo, 
   const [tab, setTab] = useState("todas");
   const [q, setQ] = useState("");
   const [grupo, setGrupo] = useState("__todos");
+  const [revenda, setRevenda] = useState("__todas"); // master: filtra pela revenda dona
   const [sel, setSel] = useState(() => new Set());
   const toggleSel = (cnpj) => setSel((s) => { const n = new Set(s); n.has(cnpj) ? n.delete(cnpj) : n.add(cnpj); return n; });
   const grupos = [...new Set(lojas.map((l) => l.grupo).filter(Boolean))].sort();
+  const revendasLista = [...new Map(lojas.filter((l) => l.revendaCodigo)
+    .map((l) => [l.revendaCodigo, l.revendaNome || l.revendaCodigo])).entries()].sort((a, b) => a[1].localeCompare(b[1]));
   const cont = {
     todas: lojas.length,
     ativas: lojas.filter((l) => l.status === "ativa").length,
@@ -442,6 +445,8 @@ function ViewLojas({ lojas, onAtivar, ativando, isMaster, master, rev, onGrupo, 
     if (tab === "aguardando" && l.status !== "aguardando") return false;
     if (tab === "bloqueadas" && l.status !== "bloqueada") return false;
     if (tab === "vencer" && !vencendoEmBreve(l)) return false;
+    if (revenda === "__direta" && l.revendaCodigo) return false;
+    if (revenda !== "__todas" && revenda !== "__direta" && l.revendaCodigo !== revenda) return false;
     if (grupo === "__sem" && l.grupo) return false;
     if (grupo !== "__todos" && grupo !== "__sem" && l.grupo !== grupo) return false;
     if (q.trim()) {
@@ -467,6 +472,13 @@ function ViewLojas({ lojas, onAtivar, ativando, isMaster, master, rev, onGrupo, 
               <button key={k} className={"tab" + (tab === k ? " on" : "")} onClick={() => setTab(k)}>{label} <span className="c">{c}</span></button>
             ))}
           </div>
+          {isMaster && revendasLista.length > 0 && (
+            <select className="sel sel-grp" aria-label="Filtrar por revenda" value={revenda} onChange={(e) => setRevenda(e.target.value)}>
+              <option value="__todas">Todas as revendas</option>
+              {revendasLista.map(([cod, nome]) => <option key={cod} value={cod}>{nome} ({lojas.filter((l) => l.revendaCodigo === cod).length})</option>)}
+              <option value="__direta">Venda direta ({lojas.filter((l) => !l.revendaCodigo).length})</option>
+            </select>
+          )}
           {grupos.length > 0 && (
             <select className="sel sel-grp" aria-label="Filtrar por grupo" value={grupo} onChange={(e) => setGrupo(e.target.value)}>
               <option value="__todos">Todos os grupos</option>
@@ -1641,6 +1653,7 @@ function Painel({ sess, onLogout }) {
           pagavel: e.pagavel !== false,
           dispositivos: e.dispositivos, appVersion: e.appVersion || null,
           revendaCodigo: e.revendaCodigo || null, revendaNome: e.revendaNome || null, revendaPendente: e.revendaPendente || null,
+          sistema: e.sistema || null, cortesia: !!e.cortesia, situacaoRevenda: e.situacaoRevenda || null,
         })));
       } else {
         const data = await api("/lojas", { token: sess.token });
