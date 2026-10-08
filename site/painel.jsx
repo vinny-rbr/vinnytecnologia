@@ -436,22 +436,26 @@ function ViewLojas({ lojas, onAtivar, ativando, isMaster, master, rev, onGrupo, 
   const grupos = [...new Set(lojas.map((l) => l.grupo).filter(Boolean))].sort();
   const revendasLista = [...new Map(lojas.filter((l) => l.revendaCodigo)
     .map((l) => [l.revendaCodigo, l.revendaNome || l.revendaCodigo])).entries()].sort((a, b) => a[1].localeCompare(b[1]));
-  const cont = {
-    todas: lojas.length,
-    ativas: lojas.filter((l) => l.status === "ativa").length,
-    aguardando: lojas.filter((l) => l.status === "aguardando").length,
-    vencer: lojas.filter(vencendoEmBreve).length,
-    bloqueadas: lojas.filter((l) => l.status === "bloqueada").length,
-  };
-  const filtradas = lojas.filter((l) => {
-    if (tab === "ativas" && l.status !== "ativa") return false;
-    if (tab === "aguardando" && l.status !== "aguardando") return false;
-    if (tab === "bloqueadas" && l.status !== "bloqueada") return false;
-    if (tab === "vencer" && !vencendoEmBreve(l)) return false;
+  // base = lojas da revenda/grupo escolhidos: cards e contagem das abas seguem o filtro
+  const base = lojas.filter((l) => {
     if (revenda === "__direta" && l.revendaCodigo) return false;
     if (revenda !== "__todas" && revenda !== "__direta" && l.revendaCodigo !== revenda) return false;
     if (grupo === "__sem" && l.grupo) return false;
     if (grupo !== "__todos" && grupo !== "__sem" && l.grupo !== grupo) return false;
+    return true;
+  });
+  const cont = {
+    todas: base.length,
+    ativas: base.filter((l) => l.status === "ativa").length,
+    aguardando: base.filter((l) => l.status === "aguardando").length,
+    vencer: base.filter(vencendoEmBreve).length,
+    bloqueadas: base.filter((l) => l.status === "bloqueada").length,
+  };
+  const filtradas = base.filter((l) => {
+    if (tab === "ativas" && l.status !== "ativa") return false;
+    if (tab === "aguardando" && l.status !== "aguardando") return false;
+    if (tab === "bloqueadas" && l.status !== "bloqueada") return false;
+    if (tab === "vencer" && !vencendoEmBreve(l)) return false;
     if (q.trim()) {
       const t = q.toLowerCase();
       if (!((l.nome || "").toLowerCase().includes(t) || (l.cnpj || "").includes(q.replace(/\D/g, "")))) return false;
@@ -466,7 +470,7 @@ function ViewLojas({ lojas, onAtivar, ativando, isMaster, master, rev, onGrupo, 
       <div className="head-row">
         <div><h1>Lojas</h1><p className="sub">{isMaster ? "Todas as lojas do Meu Giro. Libere/bloqueie, defina mensalidade e vencimento." : "As lojas onde você instalou o Meu Giro. Ative, libere e acompanhe."}</p></div>
       </div>
-      <Kpis lojas={lojas} isMaster={isMaster} />
+      <Kpis lojas={base} isMaster={isMaster} />
       {!isMaster && <Pendentes lojas={lojas} />}
       <div className="panel">
         <div className="p-tools">
