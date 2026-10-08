@@ -1537,7 +1537,7 @@ const NAV = [
   { k: "inicio", label: "Início", icon: icHome },
   { k: "lojas", label: "Lojas", icon: icUsers },
   { k: "nova", label: "Nova loja", icon: icPlus },
-  { k: "usuarios", label: "Usuários", icon: icKey, revOnly: true },
+  { k: "usuarios", label: "Usuários", icon: icKey },
   { k: "masters", label: "Usuários master", icon: icUsers, revOnly: true },
   { k: "solicitacoes", label: "Solicitações", icon: icKey },
   { k: "revendas", label: "Revendas", icon: icUsers, masterOnly: true },
