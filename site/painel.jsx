@@ -807,6 +807,7 @@ function ViewUsuarios({ sess, lojas, mostrarToast }) {
   const [users, setUsers] = useState(null);
   const [erro, setErro] = useState("");
   const [form, setForm] = useState(null);
+  const [busca, setBusca] = useState("");
   const [busy, setBusy] = useState(false);
 
   const carregar = useCallback(async () => {
@@ -874,14 +875,33 @@ function ViewUsuarios({ sess, lojas, mostrarToast }) {
       {erro && <div className="erro-inline"><Ic d={icAlert} /> {erro}</div>}
 
       <div className="panel">
-        <div className="p-head"><span className="p-title"><Ic d={icUsers} /> Usuários das suas lojas</span></div>
+        <div className="p-head" style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          <span className="p-title"><Ic d={icUsers} /> Usuários das suas lojas</span>
+          {users && users.length > 0 && (
+            <div className="search" style={{ marginLeft: "auto", minWidth: 260 }}>
+              <Ic d={icSearch} />
+              <input placeholder="Buscar por nome, e-mail, usuário ou loja…" value={busca} onChange={(e) => setBusca(e.target.value)} aria-label="Buscar usuário" />
+            </div>
+          )}
+        </div>
         {users === null ? (
           <div className="mini-empty">Carregando…</div>
         ) : users.length === 0 ? (
           <div className="mini-empty">Nenhum usuário ainda. Clique em <b>Novo usuário</b> para criar o acesso de um cliente.</div>
         ) : (
           <div className="ulist">
-            {users.map((u) => (
+            {(() => {
+              const t = busca.trim().toLowerCase(), dig = busca.replace(/\D/g, "");
+              const vis = users.filter((u) => !t
+                || [u.nome, u.email, u.login].some((x) => (x || "").toLowerCase().includes(t))
+                || (u.empresas || []).some((e) => (e.nome || nomeLoja(e.cnpj) || "").toLowerCase().includes(t) || (dig.length >= 3 && (e.cnpj || "").includes(dig))));
+              return vis.length === 0 ? <div className="mini-empty">Nenhum usuário com “{busca}”.</div> : null;
+            })()}
+            {users.filter((u) => {
+              const t = busca.trim().toLowerCase(), dig = busca.replace(/\D/g, "");
+              return !t || [u.nome, u.email, u.login].some((x) => (x || "").toLowerCase().includes(t))
+                || (u.empresas || []).some((e) => (e.nome || nomeLoja(e.cnpj) || "").toLowerCase().includes(t) || (dig.length >= 3 && (e.cnpj || "").includes(dig)));
+            }).map((u) => (
               <div className="urow" key={u.id}>
                 <div className="uav">{iniciais(u.nome || u.email)}</div>
                 <div className="uinfo">
