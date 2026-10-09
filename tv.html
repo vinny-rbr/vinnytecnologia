@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel de Pedidos</title>
+<link rel="icon" href="vinny-mark.svg">
+<style>
+  :root {
+    --bg: #0b1322; --card: #121e33; --line: #1f2f4d; --text: #eef3fa; --muted: #8aa1c4;
+    --orange: #f7941d; --green: #33c15a; --blue: #3aa0e8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); overflow: hidden;
+    font-family: "Segoe UI", Roboto, Arial, sans-serif; }
+  #app { height: 100%; display: flex; flex-direction: column; }
+
+  header { display: flex; align-items: center; justify-content: space-between;
+    padding: 1.6vh 2.5vw; border-bottom: 1px solid var(--line); }
+  header .loja { font-size: 3.2vh; font-weight: 800; letter-spacing: .02em; }
+  header .hora { font-size: 3.2vh; font-weight: 700; color: var(--muted); }
+
+  .cols { flex: 1; display: flex; min-height: 0; }
+  .col { flex: 1; display: flex; flex-direction: column; padding: 2.4vh 2.5vw; min-height: 0; }
+  .col + .col { border-left: 1px solid var(--line); }
+  .col h2 { font-size: 4.2vh; letter-spacing: .12em; margin-bottom: 2vh; display: flex; align-items: center; }
+  .col h2 .dot { width: 2vh; height: 2vh; border-radius: 50%; margin-right: 1.2vw; }
+  .prep h2 { color: var(--orange); } .prep .dot { background: var(--orange); animation: pisca 1.4s infinite; }
+  .pront h2 { color: var(--green); } .pront .dot { background: var(--green); }
+  .lista { flex: 1; overflow: hidden; }
+
+  .item { display: flex; align-items: center; background: var(--card); border-radius: 1.6vh;
+    padding: 1.6vh 1.4vw; margin-bottom: 1.4vh; border-left: .8vh solid var(--orange);
+    animation: entra .5s ease-out; }
+  .item .num { font-size: 4.4vh; font-weight: 900; min-width: 7vw; color: var(--orange); }
+  .item .nome { font-size: 4vh; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .pront .item { border-left-color: var(--green); background: rgba(51,193,90,.12); padding: 2.2vh 1.4vw; }
+  .pront .item .num { color: var(--green); font-size: 6vh; }
+  .pront .item .nome { font-size: 5.4vh; font-weight: 800; }
+  .pront .item.novo { animation: entra .5s ease-out, brilho 1.2s ease-in-out 3; }
+
+  .vazio { color: var(--muted); font-size: 3vh; margin-top: 2vh; }
+
+  footer { padding: 1vh 2.5vw; color: var(--muted); font-size: 1.8vh; display: flex; justify-content: space-between; }
+  footer .off { color: var(--orange); font-weight: 700; }
+
+  /* chamada grande quando fica pronto */
+  #chamada { position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+    flex-direction: column; background: rgba(6,12,22,.92); z-index: 10; text-align: center; }
+  #chamada.on { display: flex; animation: fundo .4s ease-out; }
+  #chamada .tag { font-size: 5vh; font-weight: 800; color: var(--green); letter-spacing: .3em; margin-bottom: 3vh; }
+  #chamada .nome { font-size: 13vh; font-weight: 900; line-height: 1.05; padding: 0 4vw;
+    animation: pop .7s cubic-bezier(.2,1.6,.4,1); }
+  #chamada .num { margin-top: 4vh; font-size: 6vh; font-weight: 800; color: var(--text);
+    background: var(--green); border-radius: 2vh; padding: 1.4vh 3vw; animation: pop .7s .15s both cubic-bezier(.2,1.6,.4,1); }
+  #chamada .ring { position: absolute; width: 40vh; height: 40vh; border-radius: 50%;
+    border: 1vh solid var(--green); opacity: 0; animation: onda 2s ease-out infinite; }
+  #chamada .ring.r2 { animation-delay: 1s; }
+
+  /* tela de ligar */
+  #ligar { position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+    flex-direction: column; text-align: center; background: var(--bg); z-index: 20; padding: 4vw; }
+  #ligar.on { display: flex; }
+  #ligar img { height: 9vh; margin-bottom: 4vh; }
+  #ligar .t { font-size: 3.6vh; color: var(--muted); max-width: 70vw; line-height: 1.4; }
+  #ligar .cod { font-size: 16vh; font-weight: 900; letter-spacing: .12em; margin: 4vh 0; color: var(--blue); }
+  #ligar .s { font-size: 2.4vh; color: var(--muted); }
+
+  #aviso { position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+    font-size: 4vh; color: var(--orange); background: var(--bg); z-index: 15; text-align: center; padding: 6vw; }
+  #aviso.on { display: flex; }
+
+  @keyframes entra { from { opacity: 0; transform: translateY(2vh); } to { opacity: 1; transform: none; } }
+  @keyframes brilho { 50% { background: rgba(51,193,90,.35); } }
+  @keyframes pisca { 50% { opacity: .3; } }
+  @keyframes pop { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }
+  @keyframes fundo { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes onda { from { opacity: .8; transform: scale(.5); } to { opacity: 0; transform: scale(2.6); } }
+</style>
+</head>
+<body>
+<div id="app">
+  <header><div class="loja" id="loja">Painel de pedidos</div><div class="hora" id="hora"></div></header>
+  <div class="cols">
+    <div class="col prep"><h2><span class="dot"></span>PREPARANDO</h2><div class="lista" id="prep"></div></div>
+    <div class="col pront"><h2><span class="dot"></span>PRONTOS</h2><div class="lista" id="pront"></div></div>
+  </div>
+  <footer><span>Meu Giro · Vinny Tecnologia</span><span id="status"></span></footer>
+</div>
+
+<div id="chamada"><div class="ring"></div><div class="ring r2"></div>
+  <div class="tag">PEDIDO PRONTO</div><div class="nome" id="cNome"></div><div class="num" id="cNum"></div></div>
+
+<div id="ligar">
+  <img src="meugiro-logo.png" alt="">
+  <div class="t">No app Meu Giro, abra <b>Painel TV</b>, toque no ícone da TV e digite este código:</div>
+  <div class="cod" id="codigo">······</div>
+  <div class="s">Esta tela fica ligada à loja até ser removida no app.</div>
+</div>
+
+<div id="aviso"></div>
+
+<script>
+(function () {
+  var API = "https://raizestecnologia-relay.onrender.com/api/tv";
+  var CHAVE = "meugiro_tv_token";
+  var token = null;
+  var conhecidos = null;   // ids de prontos ja vistos (null = primeira carga, nao anuncia)
+  var fila = [], anunciando = false;
+  var falhas = 0;
+
+  function $(id) { return document.getElementById(id); }
+  function ler() { try { return window.localStorage.getItem(CHAVE); } catch (e) { return null; } }
+  function gravar(v) { try { if (v) localStorage.setItem(CHAVE, v); else localStorage.removeItem(CHAVE); } catch (e) {} }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+  function req(metodo, url, cb) {
+    var x = new XMLHttpRequest();
+    x.open(metodo, url, true);
+    x.timeout = 15000;
+    x.onreadystatechange = function () {
+      if (x.readyState !== 4) return;
+      var j = null;
+      try { j = JSON.parse(x.responseText); } catch (e) {}
+      cb(x.status, j);
+    };
+    x.send();
+  }
+
+  function relogio() {
+    var d = new Date();
+    $("hora").innerHTML = (d.getHours() < 10 ? "0" : "") + d.getHours() + ":" + (d.getMinutes() < 10 ? "0" : "") + d.getMinutes();
+  }
+
+  function nomeDe(p) { return p.nome ? p.nome : "Atendimento " + (p.numero == null ? "" : p.numero); }
+
+  function render(d) {
+    $("loja").innerHTML = esc(d.loja || "Painel de pedidos");
+    var prep = d.preparando || [], pront = d.prontos || [];
+    var h = "";
+    for (var i = 0; i < prep.length; i++) {
+      h += '<div class="item"><div class="num">' + esc(prep[i].numero) + '</div><div class="nome">' + esc(nomeDe(prep[i])) + "</div></div>";
+    }
+    $("prep").innerHTML = h || '<div class="vazio">Nenhum pedido em preparo</div>';
+
+    var novos = [], ids = {};
+    h = "";
+    for (i = 0; i < pront.length; i++) {
+      var p = pront[i], novo = conhecidos !== null && !conhecidos[p.id];
+      ids[p.id] = true;
+      if (novo) novos.push(p);
+      h += '<div class="item' + (novo ? " novo" : "") + '"><div class="num">' + esc(p.numero) + '</div><div class="nome">' + esc(nomeDe(p)) + "</div></div>";
+    }
+    $("pront").innerHTML = h || '<div class="vazio">Aguardando...</div>';
+    conhecidos = ids;
+    // o mais antigo primeiro
+    for (i = novos.length - 1; i >= 0; i--) fila.push(novos[i]);
+    anunciar();
+
+    $("status").innerHTML = d.online === false ? '<span class="off">Loja offline · tentando de novo</span>' : "Atualizado " + $("hora").innerHTML;
+  }
+
+  function anunciar() {
+    if (anunciando || !fila.length) return;
+    anunciando = true;
+    var p = fila.shift();
+    $("cNome").innerHTML = esc(nomeDe(p));
+    $("cNum").innerHTML = p.numero == null ? "" : "Nº " + esc(p.numero);
+    var c = $("chamada");
+    c.className = "";
+    void c.offsetWidth; // reinicia a animacao
+    c.className = "on";
+    som();
+    falar(nomeDe(p));
+    setTimeout(function () { c.className = ""; anunciando = false; setTimeout(anunciar, 400); }, 7000);
+  }
+
+  var ctx = null;
+  function som() {
+    try {
+      ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+      var notas = [880, 1175, 1568], t = ctx.currentTime;
+      for (var i = 0; i < notas.length; i++) {
+        var o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = "sine"; o.frequency.value = notas[i];
+        g.gain.setValueAtTime(0.0001, t + i * 0.18);
+        g.gain.exponentialRampToValueAtTime(0.4, t + i * 0.18 + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.18 + 0.5);
+        o.connect(g); g.connect(ctx.destination);
+        o.start(t + i * 0.18); o.stop(t + i * 0.18 + 0.55);
+      }
+    } catch (e) {}
+  }
+  function falar(nome) {
+    try {
+      if (!window.speechSynthesis) return;
+      var u = new SpeechSynthesisUtterance(nome + ", seu pedido está pronto");
+      u.lang = "pt-BR"; u.rate = 0.95;
+      setTimeout(function () { speechSynthesis.speak(u); }, 700);
+    } catch (e) {}
+  }
+
+  function novaTv() {
+    req("POST", API + "/nova", function (st, j) {
+      if (st === 200 && j && j.data) { token = j.data.token; gravar(token); }
+      setTimeout(ciclo, 1000);
+    });
+  }
+
+  function ciclo() {
+    if (!token) { novaTv(); return; }
+    req("GET", API + "/" + token, function (st, j) {
+      if (st === 404) { token = null; gravar(null); conhecidos = null; novaTv(); return; }
+      if (st !== 200 || !j || !j.data) {
+        falhas++;
+        if (falhas > 3) $("status").innerHTML = '<span class="off">Sem conexão · tentando de novo</span>';
+        setTimeout(ciclo, 5000);
+        return;
+      }
+      falhas = 0;
+      var d = j.data;
+      $("ligar").className = d.ligada ? "" : "on";
+      if (!d.ligada) $("codigo").innerHTML = esc(d.codigo || "");
+      if (d.bloqueada) { $("aviso").innerHTML = "Painel suspenso. Fale com o suporte."; $("aviso").className = "on"; }
+      else { $("aviso").className = ""; if (d.ligada) render(d); }
+      setTimeout(ciclo, 3000);
+    });
+  }
+
+  // toque/clique: tela cheia e libera o som (alguns navegadores so tocam depois de um toque)
+  document.addEventListener("click", function () {
+    try { ctx = ctx || new (window.AudioContext || window.webkitAudioContext)(); ctx.resume && ctx.resume(); } catch (e) {}
+    var el = document.documentElement, f = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (f) try { f.call(el); } catch (e) {}
+  });
+
+  relogio();
+  setInterval(relogio, 10000);
+  token = ler();
+  ciclo();
+})();
+</script>
+</body>
+</html>
