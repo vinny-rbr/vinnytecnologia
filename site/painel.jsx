@@ -263,7 +263,34 @@ function StatusPill({ l }) {
   return <span className="pill pill-ok"><Ic d={icCheck} strokeWidth="3" /> Ativa</span>;
 }
 
-function Linha({ l, onAtivar, busy, m, onGrupo, rev, onHist, sel, onSel }) {
+// Recursos extras por sistema: Link = restaurante (Salão, Painel TV); Host = Força de vendas.
+const RECURSOS = [
+  { id: "salao", nome: "Salão", sis: "Link" },
+  { id: "painel_tv", nome: "Painel TV", sis: "Link" },
+  { id: "forca_vendas", nome: "Força de vendas", sis: "Host" },
+];
+
+function RecursosChips({ l, busy, onRecurso }) {
+  const lista = RECURSOS.filter((r) => !l.sistema || l.sistema === r.sis);
+  if (!lista.length || !onRecurso) return null;
+  const ativos = new Set(l.recursos || []);
+  return (
+    <div className="rec-line">
+      {lista.map((r) => {
+        const on = ativos.has(r.id);
+        return (
+          <button key={r.id} className={"rec-chip" + (on ? " on" : "")} disabled={busy}
+            title={on ? `${r.nome} ativado no app. Clique para desativar.` : `Clique para ativar ${r.nome} no app desta loja.`}
+            onClick={() => onRecurso(l, r, !on)}>
+            {on ? <Ic d={icCheck} strokeWidth="3" /> : <span className="rec-off"></span>} {r.nome}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function Linha({ l, onAtivar, busy, m, onGrupo, rev, onHist, sel, onSel, onRecurso }) {
   const soon = vencendoEmBreve(l);
   const nomeCell = (
     <td className="loja">
@@ -275,6 +302,7 @@ function Linha({ l, onAtivar, busy, m, onGrupo, rev, onHist, sel, onSel }) {
           {l.revendaPendente && <span className="ver-chip" style={{ color: "var(--mg)" }}>transferência pendente</span>}
         </div>
       )}
+      <RecursosChips l={l} busy={busy} onRecurso={onRecurso} />
       {l.dispositivos != null && (
         <div className="dev-line">
           <Ic d={icPhone} /> {l.dispositivos} {l.dispositivos === 1 ? "aparelho" : "aparelhos"}
@@ -345,7 +373,7 @@ function Linha({ l, onAtivar, busy, m, onGrupo, rev, onHist, sel, onSel }) {
   );
 }
 
-function TabelaLojas({ lojas, onAtivar, ativando, vazio, m, onGrupo, rev, onHist, sel, onSel }) {
+function TabelaLojas({ lojas, onAtivar, ativando, vazio, m, onGrupo, rev, onHist, sel, onSel, onRecurso }) {
   if (lojas.length === 0) {
     return <div className="state"><div className="big">{vazio.t}</div>{vazio.s}</div>;
   }
@@ -360,7 +388,7 @@ function TabelaLojas({ lojas, onAtivar, ativando, vazio, m, onGrupo, rev, onHist
           </tr>
         </thead>
         <tbody>
-          {lojas.map((l) => <Linha key={l.cnpj} l={l} busy={ativando === l.cnpj} onAtivar={onAtivar} m={m} rev={rev} onGrupo={onGrupo} onHist={onHist} sel={sel} onSel={onSel} />)}
+          {lojas.map((l) => <Linha key={l.cnpj} l={l} busy={ativando === l.cnpj} onAtivar={onAtivar} m={m} rev={rev} onGrupo={onGrupo} onHist={onHist} sel={sel} onSel={onSel} onRecurso={onRecurso} />)}
         </tbody>
       </table>
     </div>
@@ -428,7 +456,7 @@ function ViewInicio({ lojas, sess, onAtivar, ativando, goto, isMaster }) {
   );
 }
 
-function ViewLojas({ lojas, onAtivar, ativando, isMaster, master, rev, onGrupo, onHist }) {
+function ViewLojas({ lojas, onAtivar, ativando, isMaster, master, rev, onGrupo, onHist, onRecurso }) {
   const [tab, setTab] = useState("todas");
   const [q, setQ] = useState("");
   const [grupo, setGrupo] = useState("__todos");
@@ -508,7 +536,7 @@ function ViewLojas({ lojas, onAtivar, ativando, isMaster, master, rev, onGrupo, 
           </div>
         )}
         <TabelaLojas lojas={filtradas} onAtivar={onAtivar} ativando={ativando} m={isMaster ? master : null} rev={rev} onGrupo={onGrupo}
-          onHist={onHist} sel={isMaster ? null : sel} onSel={isMaster ? null : toggleSel}
+          onHist={onHist} sel={isMaster ? null : sel} onSel={isMaster ? null : toggleSel} onRecurso={onRecurso}
           vazio={{ t: lojas.length === 0 ? "Nenhuma loja ainda" : "Nada nesse filtro", s: lojas.length === 0 ? (isMaster ? "Nenhuma loja conectou ainda." : "Instale o agente com o seu código de revenda numa loja e ela aparece aqui.") : "Tente outro filtro ou limpe a busca." }} />
         <div className="foot">
           <span>Mostrando <b style={{ color: "var(--text)" }}>{filtradas.length}</b> de <b style={{ color: "var(--text)" }}>{lojas.length}</b> lojas</span>
@@ -1709,7 +1737,7 @@ function Painel({ sess, onLogout }) {
           pagavel: e.pagavel !== false,
           dispositivos: e.dispositivos, appVersion: e.appVersion || null,
           revendaCodigo: e.revendaCodigo || null, revendaNome: e.revendaNome || null, revendaPendente: e.revendaPendente || null,
-          sistema: e.sistema || null, cortesia: !!e.cortesia, situacaoRevenda: e.situacaoRevenda || null,
+          sistema: e.sistema || null, cortesia: !!e.cortesia, situacaoRevenda: e.situacaoRevenda || null, recursos: e.recursos || [],
           motivo: e.motivo || null,
         })));
       } else {
@@ -1848,6 +1876,18 @@ function Painel({ sess, onLogout }) {
     },
   };
 
+  // recursos extras do app (Salão / Painel TV / Força de vendas): liga e desliga na hora.
+  async function alternarRecurso(l, r, ativo) {
+    try {
+      await api(`/lojas/${l.cnpj}/recursos`, { method: "POST", base: isMaster ? ADMIN_API : API, token: sess.token, body: { recurso: r.id, ativo } });
+      await carregar();
+      mostrarToast(`${r.nome} ${ativo ? "ativado" : "desativado"} em ${l.nome || "loja"}.`);
+    } catch (err) {
+      if (err.status === 401) { onLogout(); return; }
+      mostrarToast(err.message, false);
+    }
+  }
+
   // grupos: organiza lojas (ex.: um cliente com varias lojas). Master e revendedor.
   function definirGrupo(l) {
     const grupos = [...new Set(lojas.map((x) => x.grupo).filter(Boolean))];
@@ -1901,7 +1941,7 @@ function Painel({ sess, onLogout }) {
     },
   };
 
-  const props = { recarregar: carregar, onSolicitacoes: setNSolic, lojas, sess, onAtivar: ativar, ativando, goto: setView, onLogout, mostrarToast, isMaster, master, rev: revenda, onGrupo: definirGrupo, onHist: verHistorico };
+  const props = { recarregar: carregar, onSolicitacoes: setNSolic, lojas, sess, onAtivar: ativar, ativando, goto: setView, onLogout, mostrarToast, isMaster, master, rev: revenda, onGrupo: definirGrupo, onHist: verHistorico, onRecurso: alternarRecurso };
   const conteudo = () => {
     switch (view) {
       case "lojas": return <ViewLojas {...props} />;

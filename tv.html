@@ -223,7 +223,10 @@
       var d = j.data;
       $("ligar").className = d.ligada ? "" : "on";
       if (!d.ligada) $("codigo").innerHTML = esc(d.codigo || "");
-      if (d.bloqueada) { $("aviso").innerHTML = "Painel suspenso. Fale com o suporte."; $("aviso").className = "on"; }
+      if (d.bloqueada || d.desativado) {
+        $("aviso").innerHTML = d.bloqueada ? "Painel suspenso. Fale com o suporte." : "Painel TV não está ativado nesta loja. Fale com a sua revenda.";
+        $("aviso").className = "on";
+      }
       else { $("aviso").className = ""; if (d.ligada) render(d); }
       setTimeout(ciclo, 3000);
     });

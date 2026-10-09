@@ -287,3 +287,12 @@ tbody tr:hover{background:var(--surface)}
 .dev-pend svg{color:var(--mg);flex:none}
 .dev-reset{margin-top:8px;background:none;border:none;color:var(--muted);font-size:12.5px;cursor:pointer;padding:0;text-decoration:underline}
 .dev-reset:hover{color:var(--mg)}
+
+/* recursos extras do app por loja (Salão / Painel TV / Força de vendas) */
+.rec-line{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.rec-chip{display:inline-flex;align-items:center;gap:5px;font-family:var(--font);font-size:11px;font-weight:600;color:var(--muted,#8aa1c4);background:transparent;border:1px dashed color-mix(in srgb,currentColor 45%,transparent);border-radius:999px;padding:2px 9px;cursor:pointer;line-height:1.6}
+.rec-chip:hover{color:var(--text)}
+.rec-chip.on{color:#3fd47a;background:rgba(51,193,90,.13);border:1px solid rgba(51,193,90,.45)}
+.rec-chip svg{width:11px;height:11px}
+.rec-chip:disabled{opacity:.5;cursor:default}
+.rec-off{width:7px;height:7px;border-radius:50%;border:1.5px solid currentColor}
