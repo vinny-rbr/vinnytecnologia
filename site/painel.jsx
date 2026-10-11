@@ -322,6 +322,10 @@ function Linha({ l, onAtivar, busy, m, onGrupo, rev, onHist, sel, onSel, onRecur
         <td><StatusPill l={l} />{l.situacaoRevenda && <SituacaoRevenda s={l.situacaoRevenda} />}</td>
         <td>
           <div className="row-actions">
+            {!l.revendaCodigo && !l.cortesia && (
+              <input type="checkbox" className="chk" title={l.pagavel === false ? "Abre 10 dias antes do vencimento" : "Selecionar pra gerar boleto/Pix junto"}
+                disabled={l.pagavel === false} checked={!!(sel && sel.has(l.cnpj))} onChange={() => onSel && onSel(l.cnpj)} />
+            )}
             {!l.revendaCodigo && <button className="btn btn-mg btn-sm" title={l.fase !== "implantacao" && l.pagavel === false ? "Abre 10 dias antes do vencimento" : "Registrar pagamento em dinheiro/Pix"} disabled={busy || (l.fase !== "implantacao" && l.pagavel === false)} onClick={() => m.marcarPago(l)}><Ic d={icCheck} strokeWidth="3" /> Pago</button>}
             {l.bloqueada
               ? <button className="btn btn-ghost btn-sm" disabled={busy} onClick={() => m.toggleBloqueio(l)}><Ic d={icUnlock} /> Liberar</button>
@@ -528,15 +532,15 @@ function ViewLojas({ lojas, onAtivar, ativando, isMaster, master, rev, onGrupo, 
             <input placeholder="Buscar por nome ou CNPJ…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Buscar" />
           </div>
         </div>
-        {!isMaster && sel.size > 0 && (
+        {sel.size > 0 && (
           <div className="sel-bar">
-            <span><b>{sel.size}</b> selecionada(s) · <b>R$ {lojas.filter((x) => sel.has(x.cnpj)).reduce((t, x) => t + (Number(x.valorAPagar) || PRECO), 0)}</b></span>
+            <span><b>{sel.size}</b> selecionada(s) · <b>R$ {lojas.filter((x) => sel.has(x.cnpj)).reduce((t, x) => t + (isMaster ? (Number(x.valorAtual) || Number(x.mensalidade) || 0) : (Number(x.valorAPagar) || PRECO)), 0).toFixed(2).replace(".", ",")}</b></span>
             <button className="link" onClick={() => setSel(new Set())}>limpar</button>
-            <button className="btn btn-mg btn-sm" onClick={() => rev.pagarLote([...sel])}><Ic d={icCard} /> Gerar boleto / Pix</button>
+            <button className="btn btn-mg btn-sm" onClick={() => (isMaster ? master : rev).pagarLote([...sel], () => setSel(new Set()))}><Ic d={icCard} /> Gerar boleto / Pix</button>
           </div>
         )}
         <TabelaLojas lojas={filtradas} onAtivar={onAtivar} ativando={ativando} m={isMaster ? master : null} rev={rev} onGrupo={onGrupo}
-          onHist={onHist} sel={isMaster ? null : sel} onSel={isMaster ? null : toggleSel} onRecurso={onRecurso}
+          onHist={onHist} sel={sel} onSel={toggleSel} onRecurso={onRecurso}
           vazio={{ t: lojas.length === 0 ? "Nenhuma loja ainda" : "Nada nesse filtro", s: lojas.length === 0 ? (isMaster ? "Nenhuma loja conectou ainda." : "Instale o agente com o seu código de revenda numa loja e ela aparece aqui.") : "Tente outro filtro ou limpe a busca." }} />
         <div className="foot">
           <span>Mostrando <b style={{ color: "var(--text)" }}>{filtradas.length}</b> de <b style={{ color: "var(--text)" }}>{lojas.length}</b> lojas</span>
@@ -1781,6 +1785,18 @@ function Painel({ sess, onLogout }) {
 
   // ---- acoes de master (usam os endpoints /api/admin ja existentes) ----
   const master = {
+    async pagarLote(cnpjs, limpar) {
+      if (!cnpjs || cnpjs.length === 0) { mostrarToast("Selecione ao menos uma loja.", false); return; }
+      try {
+        const r = await api("/pagar-lote", { method: "POST", base: ADMIN_API, token: sess.token, body: { cnpjs } });
+        limpar && limpar();
+        setModal({
+          title: "Boleto / Pix gerado", icon: { d: icCard, cls: "ic-green" },
+          desc: `${r.lojas} loja(s) · R$ ${Number(r.valor).toFixed(2)} · vence ${fmtData(r.vencimento)}. Mande o link pro cliente; quando ele pagar, as lojas são liberadas sozinhas.`,
+          link: r.linkPagamento || "",
+        });
+      } catch (err) { mostrarToast(err.message, false); }
+    },
     toggleBloqueio(l) {
       const bloquear = !l.bloqueada;
       setModal({
