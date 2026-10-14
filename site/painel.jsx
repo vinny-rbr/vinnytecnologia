@@ -835,6 +835,54 @@ function LojasPicker({ lojas, sel, onChange }) {
   );
 }
 
+/* Usuário do sistema da loja (ex.: LinkPro) ligado ao usuário do app, por loja. O que a pessoa
+   grava pelo app fica no nome desse usuário no sistema. A lista vem do agente da loja. */
+function UsuarioSistemaPicker({ sess, cnpjs, nomeLoja, valor, onChange }) {
+  const [listas, setListas] = useState({}); // cnpj -> { carregando } | { itens } | { erro }
+  const chave = cnpjs.join(",");
+  useEffect(() => {
+    cnpjs.forEach((c) => {
+      if (listas[c] && !listas[c].erro) return;
+      setListas((l) => ({ ...l, [c]: { carregando: true } }));
+      api("/lojas/" + c + "/usuarios-sistema", { token: sess.token })
+        .then((itens) => setListas((l) => ({ ...l, [c]: { itens: itens || [] } })))
+        .catch((e) => setListas((l) => ({ ...l, [c]: { erro: e.status === 503 ? "Loja offline agora: tente de novo com o agente ligado." : e.message } })));
+    });
+  }, [chave, sess.token]);
+  if (cnpjs.length === 0) return null;
+  const nomeUs = (it) => (it.nome || it.login) + (it.login && it.nome && it.login.toLowerCase() !== it.nome.toLowerCase() ? " (" + it.login + ")" : "");
+  return (
+    <div className="field">
+      <label>Usuário no sistema da loja</label>
+      <div className="hint" style={{ fontSize: 12, color: "var(--muted)", marginBottom: 6 }}>O que essa pessoa gravar pelo app (nota, estoque, produto) fica no nome desse usuário no sistema da loja.</div>
+      {cnpjs.map((c) => {
+        const st = listas[c] || { carregando: true };
+        const atual = valor[c];
+        return (
+          <div key={c} style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 6, flexWrap: "wrap" }}>
+            {cnpjs.length > 1 && <span style={{ minWidth: 130, fontSize: 13 }}>{nomeLoja(c)}</span>}
+            {st.carregando ? (
+              <span style={{ fontSize: 13, color: "var(--muted)" }}>Carregando usuários da loja…</span>
+            ) : st.erro ? (
+              <span style={{ fontSize: 13, color: "var(--muted)" }}>{atual ? "Ligado a " + atual.nome + ". " : ""}{st.erro}</span>
+            ) : (
+              <select className="sel" style={{ flex: 1, minWidth: 180 }} aria-label={"Usuário no sistema: " + nomeLoja(c)}
+                value={atual ? String(atual.id) : ""}
+                onChange={(e) => {
+                  const it = st.itens.find((x) => String(x.id) === e.target.value);
+                  onChange({ ...valor, [c]: it ? { id: it.id, nome: it.nome || it.login } : null });
+                }}>
+                <option value="">Não ligar (grava como Meu Giro)</option>
+                {st.itens.map((it) => <option key={it.id} value={String(it.id)}>{nomeUs(it)}</option>)}
+              </select>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function ViewUsuarios({ sess, lojas, mostrarToast }) {
   const [users, setUsers] = useState(null);
   const [erro, setErro] = useState("");
@@ -852,16 +900,20 @@ function ViewUsuarios({ sess, lojas, mostrarToast }) {
 
   function novo() {
     if (lojas.length === 0) { mostrarToast("Você precisa ter ao menos uma loja para criar usuários.", false); return; }
-    setForm({ modo: "novo", nome: "", email: "", login: "", senha: "", cnpjs: new Set(lojas.length === 1 ? [lojas[0].cnpj] : []), sessaoUnica: false, deviceLock: false, consultaPreco: false, preset: "tudo", perms: new Set() });
+    setForm({ modo: "novo", nome: "", email: "", login: "", senha: "", cnpjs: new Set(lojas.length === 1 ? [lojas[0].cnpj] : []), sessaoUnica: false, deviceLock: false, consultaPreco: false, preset: "tudo", perms: new Set(), usSis: {} });
   }
   function editar(u) {
     const perms = new Set(u.permissoes || []);
     const preset = (u.permissoes || []).length === 0 ? "tudo" : ehSoEstoque(u.permissoes) ? "estoque" : "custom";
-    setForm({ modo: "editar", id: u.id, nome: u.nome || "", email: u.email, login: u.login || "", cnpjs: new Set((u.empresas || []).map((e) => e.cnpj)), ativo: u.ativo !== false, sessaoUnica: u.sessaoUnica === true, deviceLock: u.deviceLock === true, consultaPreco: u.consultaPreco === true, preset, perms });
+    const usSis = {};
+    (u.empresas || []).forEach((e) => { if (e.usuarioSistemaId) usSis[e.cnpj] = { id: e.usuarioSistemaId, nome: e.usuarioSistemaNome || "" }; });
+    setForm({ modo: "editar", id: u.id, nome: u.nome || "", email: u.email, login: u.login || "", cnpjs: new Set((u.empresas || []).map((e) => e.cnpj)), ativo: u.ativo !== false, sessaoUnica: u.sessaoUnica === true, deviceLock: u.deviceLock === true, consultaPreco: u.consultaPreco === true, preset, perms, usSis });
   }
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
   const togglePerm = (k) => setForm((f) => { const p = new Set(f.perms); p.has(k) ? p.delete(k) : p.add(k); return { ...f, perms: p, preset: "custom" }; });
   const permsFinais = (f) => f.preset === "tudo" ? [] : f.preset === "estoque" ? ESTOQUE : [...f.perms];
+  // só as lojas marcadas; null = sem vínculo
+  const usuariosSistema = (f) => Object.fromEntries([...f.cnpjs].map((c) => [c, (f.usSis || {})[c] || null]));
 
   async function liberarAparelho(u) {
     try { await api("/usuarios/" + u.id + "/liberar-aparelho", { method: "POST", token: sess.token }); mostrarToast("Aparelho liberado."); await carregar(); }
@@ -878,11 +930,11 @@ function ViewUsuarios({ sess, lojas, mostrarToast }) {
       if (f.modo === "novo") {
         if ((!f.email.trim() && !f.login.trim()) || !f.senha.trim()) { mostrarToast("Preencha o e-mail ou o usuário, e a senha.", false); setBusy(false); return; }
         if (!f.cnpjs || f.cnpjs.size === 0) { mostrarToast("Marque ao menos uma loja.", false); setBusy(false); return; }
-        await api("/usuarios", { method: "POST", token: sess.token, body: { nome: f.nome, email: f.email, login: f.login, senha: f.senha, cnpjs: [...f.cnpjs], sessaoUnica: !!f.sessaoUnica, deviceLock: !!f.deviceLock, consultaPreco: !!f.consultaPreco, permissoes: permsFinais(f) } });
+        await api("/usuarios", { method: "POST", token: sess.token, body: { nome: f.nome, email: f.email, login: f.login, senha: f.senha, cnpjs: [...f.cnpjs], sessaoUnica: !!f.sessaoUnica, deviceLock: !!f.deviceLock, consultaPreco: !!f.consultaPreco, permissoes: permsFinais(f), usuariosSistema: usuariosSistema(f) } });
         mostrarToast("Usuário criado.");
       } else if (f.modo === "editar") {
         if (!f.cnpjs || f.cnpjs.size === 0) { mostrarToast("Marque ao menos uma loja.", false); setBusy(false); return; }
-        await api("/usuarios/" + f.id, { method: "POST", token: sess.token, body: { nome: f.nome, login: f.login, ativo: f.ativo, cnpjs: [...f.cnpjs], sessaoUnica: !!f.sessaoUnica, deviceLock: !!f.deviceLock, consultaPreco: !!f.consultaPreco, permissoes: permsFinais(f) } });
+        await api("/usuarios/" + f.id, { method: "POST", token: sess.token, body: { nome: f.nome, login: f.login, ativo: f.ativo, cnpjs: [...f.cnpjs], sessaoUnica: !!f.sessaoUnica, deviceLock: !!f.deviceLock, consultaPreco: !!f.consultaPreco, permissoes: permsFinais(f), usuariosSistema: usuariosSistema(f) } });
         mostrarToast("Usuário atualizado.");
       } else if (f.modo === "senha") {
         if (!f.senha.trim()) { mostrarToast("Digite a nova senha.", false); setBusy(false); return; }
@@ -942,6 +994,9 @@ function ViewUsuarios({ sess, lojas, mostrarToast }) {
                   <div className="umeta">
                     <span className="grp-chip"><Ic d={icUsers} /> {(u.empresas || []).map((e) => e.nome || nomeLoja(e.cnpj)).join(", ") || "—"}</span>
                     <span className="grp-chip"><Ic d={icLock} /> {resumoPerms(u.permissoes)}</span>
+                    {(u.empresas || []).some((e) => e.usuarioSistemaNome) && (
+                      <span className="grp-chip" title="Usuário no sistema da loja"><Ic d={icKey} /> no sistema: {(u.empresas || []).filter((e) => e.usuarioSistemaNome).map((e) => e.usuarioSistemaNome).join(", ")}</span>
+                    )}
                     {u.sessaoUnica && <span className="grp-chip"><Ic d={icPhone} /> sessão única</span>}
                     {u.deviceLock && <span className="grp-chip"><Ic d={icPhone} /> {u.deviceAtualNome ? u.deviceAtualNome : "sem aparelho"}</span>}
                   </div>
@@ -997,6 +1052,7 @@ function ViewUsuarios({ sess, lojas, mostrarToast }) {
                     <div className="field"><label>Senha</label>
                       <input type="text" value={form.senha} onChange={(e) => set({ senha: e.target.value })} placeholder="mín. 4 caracteres" /></div>
                     <LojasPicker lojas={lojas} sel={form.cnpjs} onChange={(cnpjs) => set({ cnpjs })} />
+                    <UsuarioSistemaPicker sess={sess} cnpjs={[...form.cnpjs]} nomeLoja={nomeLoja} valor={form.usSis || {}} onChange={(usSis) => set({ usSis })} />
                   </>
                 ) : (
                   <>
@@ -1006,6 +1062,7 @@ function ViewUsuarios({ sess, lojas, mostrarToast }) {
                       <input type="text" value={form.login} onChange={(e) => set({ login: e.target.value.toLowerCase() })} placeholder="ex.: preco bentevi" />
                       <div className="hint" style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>A pessoa entra com o e-mail ou com esse usuário. Não pode repetir.</div></div>
                     <LojasPicker lojas={lojas} sel={form.cnpjs} onChange={(cnpjs) => set({ cnpjs })} />
+                    <UsuarioSistemaPicker sess={sess} cnpjs={[...form.cnpjs]} nomeLoja={nomeLoja} valor={form.usSis || {}} onChange={(usSis) => set({ usSis })} />
                     <label className="chk-row" style={{ marginBottom: 10 }}>
                       <input type="checkbox" checked={form.ativo} onChange={(e) => set({ ativo: e.target.checked })} /> <span>Usuário ativo (pode entrar no app)</span>
                     </label>
