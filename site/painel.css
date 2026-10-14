@@ -156,7 +156,7 @@ tbody tr:hover{background:var(--surface)}
 
 /* ---- modal ---- */
 .modal-back{position:fixed;inset:0;background:rgba(4,6,10,.62);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);display:grid;place-items:center;z-index:100;padding:20px;animation:mfade .14s ease}
-.modal{width:100%;max-width:430px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px;box-shadow:0 40px 90px -30px rgba(0,0,0,.85);animation:mpop .17s cubic-bezier(.2,.9,.3,1)}
+.modal{width:100%;max-width:430px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px;box-shadow:0 40px 90px -30px rgba(0,0,0,.85);animation:mpop .17s cubic-bezier(.2,.9,.3,1);max-height:calc(100vh - 40px);max-height:calc(100dvh - 40px);overflow-y:auto}
 @keyframes mfade{from{opacity:0}}
 @keyframes mpop{from{opacity:0;transform:translateY(10px) scale(.98)}}
 .modal-h{display:flex;align-items:center;gap:13px;margin-bottom:8px}
@@ -171,7 +171,7 @@ tbody tr:hover{background:var(--surface)}
 .modal input::placeholder{color:var(--muted-2)}
 .modal input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.75);cursor:pointer;opacity:.8}
 .modal input[type=date]:focus::-webkit-calendar-picker-indicator{opacity:1}
-.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:22px}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:22px;position:sticky;bottom:-24px;background:var(--card);padding:12px 0 24px;margin-bottom:-24px;z-index:1}
 .btn-danger{background:var(--neg);color:#2a0810;box-shadow:0 8px 22px -12px var(--neg)}
 .btn-danger:hover:not(:disabled){background:#ff8a98}
 .btn-block{width:100%;justify-content:center}
