@@ -8,79 +8,122 @@
 <link rel="icon" type="image/svg+xml" href="vinny-mark.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #0b1322; --card: #121e33; --card2: #0f1a2c; --field: #16233c; --line: #1f2f4d;
-    --text: #eef3fa; --soft: #cfdbec; --muted: #8aa1c4; --blue: #3aa0e8; --orange: #f5a623;
-    --green: #33c15a; --red: #ec6a6a;
-  }
+  html, body { margin: 0; background: #0a1020; color: #e6edf7; font-family: Manrope, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
   * { box-sizing: border-box; }
-  html, body { margin: 0; background: var(--bg); color: var(--text); font-family: "Space Grotesk", "Segoe UI", Roboto, Arial, sans-serif; }
-  button { font-family: inherit; cursor: pointer; }
-  input, select { font-family: inherit; }
-  .top { display: flex; align-items: center; gap: 12px; padding: 12px 18px; border-bottom: 1px solid var(--line); background: var(--card2); position: sticky; top: 0; z-index: 5; }
-  .top .marca { font-weight: 700; font-size: 18px; }
-  .top .marca small { color: var(--orange); letter-spacing: .14em; font-size: 10px; display: block; }
-  .top .esp { flex: 1; }
-  .sel, .inp { background: var(--field); border: 1px solid var(--line); color: var(--text); border-radius: 10px; padding: 10px 12px; font-size: 15px; outline: none; }
-  .inp:focus, .sel:focus { border-color: var(--blue); }
-  .btn { border: 0; border-radius: 10px; padding: 11px 16px; font-size: 15px; font-weight: 700; color: #fff; background: var(--blue); }
-  .btn:disabled { opacity: .5; cursor: default; }
-  .btn.verde { background: var(--green); }
-  .btn.laranja { background: var(--orange); color: #1b1300; }
-  .btn.ghost { background: transparent; border: 1px solid var(--line); color: var(--soft); }
-  .btn.peq { padding: 7px 11px; font-size: 13px; }
-  .wrap { max-width: 1280px; margin: 0 auto; padding: 16px; }
-  .login { max-width: 380px; margin: 10vh auto; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 26px; }
-  .login h1 { margin: 0 0 4px; font-size: 22px; }
-  .login p { color: var(--muted); margin: 0 0 18px; font-size: 14px; }
-  .login .inp { width: 100%; margin-bottom: 10px; }
-  .erro { color: var(--red); font-size: 14px; margin: 6px 0; }
-  .grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
-  .mesa { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; text-align: left; color: var(--text); min-height: 110px; display: flex; flex-direction: column; }
-  .mesa.ocupada { border-color: rgba(245,166,35,.55); }
-  .mesa.livre { border-color: rgba(51,193,90,.45); }
-  .mesa .n { font-size: 18px; font-weight: 700; }
-  .mesa .c { color: var(--soft); font-size: 13px; margin-top: auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .mesa .v { font-weight: 700; font-size: 17px; }
-  .mesa.ocupada .v { color: var(--orange); } .mesa.livre .v { color: var(--green); }
-  .cols { display: grid; grid-template-columns: 1fr 1.1fr; gap: 16px; align-items: start; }
-  @media (max-width: 860px) { .cols { grid-template-columns: 1fr; } }
-  .painel { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
-  .painel h3 { margin: 0 0 10px; font-size: 15px; display: flex; justify-content: space-between; }
-  .painel h3 span { color: var(--orange); }
-  .linha { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); }
-  .linha:last-child { border-bottom: 0; }
-  .linha .q { color: var(--blue); font-weight: 700; min-width: 34px; }
-  .linha .d { flex: 1; font-size: 14px; color: var(--soft); }
-  .linha .d small { display: block; color: var(--orange); font-style: italic; }
-  .preco { text-align: right; font-weight: 700; white-space: nowrap; }
-  .preco s { display: block; color: var(--muted); font-weight: 400; font-size: 12px; }
-  .preco.desc { color: var(--green); }
-  .cli { display: flex; align-items: center; gap: 10px; background: var(--card2); border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin-bottom: 12px; cursor: pointer; }
-  .cli b { display: block; } .cli small { color: var(--muted); }
-  .chips { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
-  .chip { border: 0; border-radius: 20px; padding: 7px 13px; background: var(--field); color: var(--soft); font-weight: 600; font-size: 13px; }
-  .chip.on { background: var(--blue); color: #fff; }
-  .prods { max-height: 60vh; overflow: auto; }
-  .prod { display: flex; align-items: center; gap: 10px; width: 100%; background: transparent; border: 0; border-bottom: 1px solid var(--line); color: var(--text); padding: 10px 4px; text-align: left; }
-  .prod:hover { background: rgba(58,160,232,.08); }
-  .qtdbox { display: flex; align-items: center; gap: 6px; }
-  .qtdbox button { width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--line); background: var(--field); color: var(--text); font-weight: 700; }
-  .fundo { position: fixed; inset: 0; background: rgba(4,6,10,.65); display: grid; place-items: center; z-index: 20; padding: 16px; }
-  .modal { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 20px; width: 100%; max-width: 460px; max-height: calc(100vh - 32px); overflow: auto; }
-  .modal h2 { margin: 0 0 12px; font-size: 19px; }
-  .tot { display: flex; justify-content: space-between; font-size: 15px; margin: 4px 0; }
-  .tot b { font-size: 17px; }
-  .forma { display: grid; grid-template-columns: 110px 1fr 34px; gap: 8px; align-items: center; margin-bottom: 8px; }
-  .forma .inp { width: 100%; }
-  .formas-add { display: flex; gap: 8px; flex-wrap: wrap; margin: 6px 0 14px; }
-  .acoes { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
-  .ok { color: var(--green); } .vermelho { color: var(--red); }
-  .vazio { color: var(--muted); padding: 14px 0; }
-  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--green); color: #fff; padding: 12px 18px; border-radius: 12px; font-weight: 600; z-index: 30; max-width: 90vw; }
-  .toast.err { background: var(--red); }
+  button { font-family: Manrope, system-ui, sans-serif; }
+  input::placeholder { color: #5e7398; }
+  ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-thumb { background: #22304f; border-radius: 8px; } ::-webkit-scrollbar-track { background: transparent; }
+  .sora { font-family: Sora, Manrope, sans-serif; }
+  .fundo-app { min-height: 100vh; display: flex; flex-direction: column; background: radial-gradient(1200px 500px at 50% -200px, #13203d 0%, #0a1020 70%); }
+
+  /* header */
+  .hdr { height: 64px; flex: none; display: flex; align-items: center; gap: 16px; padding: 0 24px; border-bottom: 1px solid #1a2541; background: rgba(14,22,41,.85); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 10; }
+  .logo { width: 36px; height: 36px; border-radius: 10px; background: #13233f; border: 1px solid #1f3256; display: flex; align-items: center; justify-content: center; font: 700 12px Sora; color: #3b9be8; flex: none; }
+  .marca { display: flex; flex-direction: column; line-height: 1.1; }
+  .marca b { font: 700 16px Sora; color: #f2f6fc; }
+  .marca small { font-size: 10px; font-weight: 700; letter-spacing: .16em; color: #f5a524; }
+  .sep { width: 1px; height: 28px; background: #1f2b48; }
+  .hbtn { display: flex; flex: none; white-space: nowrap; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border-radius: 10px; border: 1px solid #1f2b48; background: #111b31; color: #c9d6ea; font-weight: 600; font-size: 13px; cursor: pointer; }
+  .hbtn:hover { background: #16223d; color: #fff; }
+  .hbtn.ghost { background: transparent; }
+  .loja { display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 6px 0 8px; border-radius: 10px; border: 1px solid #1f2b48; background: #111b31; font-size: 13px; color: #c9d6ea; }
+  .loja .av { width: 22px; height: 22px; border-radius: 50%; background: #1d3a63; color: #8cc6f5; font: 700 10px Sora; display: flex; align-items: center; justify-content: center; flex: none; }
+  .loja select { background: transparent; border: 0; color: #c9d6ea; font: 600 13px Manrope; outline: none; max-width: 220px; cursor: pointer; }
+  .loja select option { background: #101a30; }
+  @media (max-width: 640px) { .hdr { padding: 0 12px; gap: 10px; } .marca { display: none; } .loja select { max-width: 120px; } }
+
+  /* mesas */
+  .main-mesas { flex: 1; width: 100%; max-width: 1400px; margin: 0 auto; padding: 32px 24px 48px; display: flex; flex-direction: column; gap: 24px; }
+  .h1 { margin: 0; font: 700 28px Sora; letter-spacing: -.02em; color: #f2f6fc; }
+  .resumo { font-size: 14px; color: #8aa0c2; }
+  .filtros { display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: #0f182c; border: 1px solid #1a2541; }
+  .filtros button { display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px; border: 0; border-radius: 9px; font-weight: 600; font-size: 13px; cursor: pointer; }
+  .filtros .dot { width: 7px; height: 7px; border-radius: 50%; }
+  .filtros .cnt { font-family: Sora; font-size: 12px; opacity: .7; }
+  .grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 14px; }
+  .card { position: relative; text-align: left; display: flex; flex-direction: column; justify-content: space-between; gap: 18px; min-height: 148px; padding: 16px; border-radius: 16px; color: #e6edf7; cursor: pointer; overflow: hidden; transition: transform .15s, border-color .15s; }
+  .card:hover { transform: translateY(-2px); border-color: #2f4570 !important; }
+  .card .barra { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; opacity: .9; }
+  .rot { font-size: 10px; font-weight: 700; letter-spacing: .14em; color: #6f86ab; }
+  .num { font: 700 34px Sora; line-height: 1; letter-spacing: -.03em; color: #f2f6fc; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px; border-radius: 999px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .pill i { width: 6px; height: 6px; border-radius: 50%; }
+
+  /* mesa */
+  .main-mesa { flex: 1; width: 100%; max-width: 1440px; margin: 0 auto; padding: 24px; display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.2fr); gap: 20px; height: calc(100vh - 64px); }
+  .col { display: flex; flex-direction: column; gap: 14px; min-height: 0; overflow: auto; padding-right: 4px; }
+  @media (max-width: 900px) { .main-mesa { grid-template-columns: 1fr; height: auto; } .col { overflow: visible; } .prodbox { max-height: 75vh; } }
+  .box { border-radius: 16px; border: 1px solid #1c2846; background: #101a30; display: flex; flex-direction: column; }
+  .boxh { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; }
+  .boxh .t { font-weight: 700; font-size: 15px; color: #f2f6fc; }
+  .boxh .s { font-size: 12px; color: #7189b0; margin-left: 8px; }
+  .boxh .v { font: 700 18px Sora; color: #f5a524; }
+  .vazio { margin: 0 16px 16px; padding: 22px; border-radius: 12px; border: 1px dashed #22304f; text-align: center; font-size: 14px; color: #7f9cc9; }
+  .cli { width: 100%; display: flex; align-items: center; gap: 14px; padding: 14px 16px; border: 0; background: transparent; color: inherit; text-align: left; cursor: pointer; border-radius: 16px; }
+  .cli:hover { background: #131f39; }
+  .cli .av { width: 42px; height: 42px; flex: none; border-radius: 12px; display: flex; align-items: center; justify-content: center; font: 700 14px Sora; }
+  .cliop { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 12px; border: 0; border-radius: 10px; background: transparent; color: #dbe5f3; font-weight: 600; font-size: 13px; cursor: pointer; text-align: left; }
+  .cliop:hover { background: #16223d; }
+  .ped { padding: 4px 16px 10px; border-top: 1px solid #172340; }
+  .pedh { display: flex; align-items: center; gap: 8px; padding: 10px 0 6px; font-size: 11px; font-weight: 700; letter-spacing: .1em; color: #6f86ab; }
+  .pedh .ln { flex: 1; height: 1px; background: #172340; }
+  .lin { display: grid; grid-template-columns: 36px minmax(0,1fr) auto; gap: 10px; align-items: baseline; padding: 6px 0; }
+  .q { font: 700 13px Sora; color: #3b9be8; }
+  .nm { font-size: 14px; font-weight: 600; color: #dbe5f3; }
+  .obs { font-size: 12px; color: #f5a524; }
+  .val { font: 600 14px Sora; color: #e6edf7; text-align: right; white-space: nowrap; }
+  .val s { display: block; font: 500 11px Manrope; color: #6f86ab; }
+  .val.desc { color: #22c55e; }
+  .rodape { display: flex; justify-content: flex-end; gap: 10px; padding: 12px 16px 16px; border-top: 1px solid #172340; }
+  .bt { height: 46px; padding: 0 22px; border: 0; border-radius: 12px; font-weight: 700; font-size: 15px; cursor: pointer; white-space: nowrap; }
+  .bt:disabled { opacity: .55; cursor: not-allowed; }
+  .bt.laranja { background: #f5a524; color: #1a1204; box-shadow: 0 6px 20px -8px rgba(245,165,36,.6); }
+  .bt.laranja:hover { background: #ffb53d; }
+  .bt.verde { background: #22c55e; color: #04210f; box-shadow: 0 6px 20px -8px rgba(34,197,94,.6); }
+  .bt.verde:hover:not(:disabled) { background: #34d46d; }
+  .bt.cont { background: transparent; border: 1px solid #22304f; color: #a9badb; font-weight: 600; font-size: 14px; padding: 0 16px; }
+  .bt.cont:hover { color: #fff; background: #16223d; }
+  .cartl { display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 14px; align-items: start; padding: 12px 16px; border-top: 1px solid #172340; }
+  .stepper { display: flex; align-items: center; height: 36px; border-radius: 10px; border: 1px solid #22304f; background: #0c1426; }
+  .stepper button { width: 34px; height: 34px; border: 0; background: transparent; color: #c9d6ea; font: 700 16px Sora; cursor: pointer; border-radius: 10px; }
+  .stepper button:hover { color: #fff; background: #16223d; }
+  .stepper span { min-width: 22px; text-align: center; font: 700 14px Sora; }
+  .inp { height: 34px; padding: 0 12px; border-radius: 9px; border: 1px solid #1f2b48; background: #0c1426; color: #e6edf7; font: 500 13px Manrope; outline: none; width: 100%; }
+  .inp:focus { border-color: #3b9be8; }
+  .prodbox { display: flex; flex-direction: column; min-height: 0; border-radius: 18px; border: 1px solid #1c2846; background: #101a30; overflow: hidden; }
+  .busca { position: relative; }
+  .busca span { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #5e7398; font-size: 15px; }
+  .busca input { width: 100%; height: 44px; padding: 0 14px 0 38px; border-radius: 12px; border: 1px solid #1f2b48; background: #0c1426; color: #e6edf7; font: 500 14px Manrope; outline: none; }
+  .busca input:focus { border-color: #3b9be8; }
+  .chip { height: 32px; padding: 0 14px; border-radius: 999px; font-weight: 700; font-size: 12px; letter-spacing: .02em; cursor: pointer; }
+  .prod { width: 100%; display: grid; grid-template-columns: minmax(0,1fr) auto auto; gap: 14px; align-items: center; padding: 12px 10px; border: 0; border-bottom: 1px solid #152038; background: transparent; color: inherit; text-align: left; cursor: pointer; border-radius: 10px; }
+  .prod:hover { background: #14203a; }
+  .prod .add { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font: 700 13px Sora; }
+
+  /* login */
+  .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; background: radial-gradient(900px 500px at 50% -120px, #13203d 0%, #0a1020 70%); }
+  .login { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 28px; }
+  .lcard { display: flex; flex-direction: column; gap: 16px; padding: 24px; border-radius: 20px; border: 1px solid #1c2846; background: #101a30; box-shadow: 0 30px 80px -30px rgba(0,0,0,.6); }
+  .campo { display: flex; flex-direction: column; gap: 6px; }
+  .campo > span { font-size: 12px; font-weight: 700; color: #a9badb; }
+  .campo input { width: 100%; height: 46px; padding: 0 14px; border-radius: 12px; background: #0c1426; color: #f2f6fc; font: 600 15px Manrope; outline: none; }
+  .campo input:focus { border-color: #3b9be8 !important; }
+
+  /* modal receber */
+  .fundo { position: fixed; inset: 0; z-index: 50; background: rgba(4,8,18,.72); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .modal { width: 100%; max-width: 480px; max-height: calc(100vh - 48px); overflow: auto; border-radius: 20px; border: 1px solid #22304f; background: #101a30; box-shadow: 0 30px 80px -20px rgba(0,0,0,.7); display: flex; flex-direction: column; }
+  .metodos { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; padding: 4px; border-radius: 12px; background: #0c1426; border: 1px solid #1a2541; }
+  .metodos button { height: 36px; border: 0; border-radius: 9px; font-weight: 700; font-size: 13px; cursor: pointer; }
+  .rapido { flex: none; white-space: nowrap; height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid #1f2b48; background: transparent; color: #c9d6ea; font-weight: 600; font-size: 12px; cursor: pointer; }
+  .rapido:hover { background: #16223d; color: #fff; }
+  .pl { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; background: #0c1426; border: 1px solid #1a2541; }
+  .x { width: 32px; height: 32px; border-radius: 9px; border: 1px solid #1f2b48; background: transparent; color: #a9badb; font-size: 16px; cursor: pointer; }
+  .x:hover { background: #16223d; color: #fff; }
+  .toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 60; display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-radius: 12px; background: #12233a; color: #e6edf7; font-weight: 600; font-size: 14px; box-shadow: 0 16px 40px -12px rgba(0,0,0,.6); max-width: 92vw; }
+  .toast .ic { width: 20px; height: 20px; border-radius: 50%; color: #04210f; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex: none; }
+  .carreg { color: #7f9cc9; padding: 40px; text-align: center; font-size: 14px; }
 </style>
 </head>
 <body>
@@ -89,23 +132,27 @@
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
 <script type="text/babel">
-/* Mesas (web): o garçom/caixa do restaurante pelo navegador, com o mesmo login do app Meu Giro.
-   Abre mesa, escolhe o cliente (tabela de preço), lança itens e recebe (dinheiro com troco, Pix,
-   débito, crédito, várias formas), fechando no caixa do LinkPro. Fala com o relay -> agente Link. */
+/* Mesas (web): garçom e caixa do restaurante pelo navegador, com o mesmo login do app Meu Giro.
+   Abre mesa, cliente com tabela de preço, lança itens e recebe (dinheiro com troco, Pix, débito,
+   crédito, várias formas), fechando no caixa do LinkPro. Relay -> agente Link (/api/salao/garcom). */
 const { useState, useEffect, useCallback, useRef } = React;
 const API = "https://raizestecnologia-relay.onrender.com/api";
 const LS_TOKEN = "mg_mesas_token", LS_LOJA = "mg_mesas_loja", LS_DEV = "mg_mesas_device";
 
+const store = {
+  get(k) { try { return localStorage.getItem(k) || sessionStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v, manter = true) {
+    try {
+      localStorage.removeItem(k); sessionStorage.removeItem(k);
+      if (v != null) (manter ? localStorage : sessionStorage).setItem(k, v);
+    } catch (e) {}
+  },
+};
 function deviceId() {
-  try {
-    let d = localStorage.getItem(LS_DEV);
-    if (!d) { d = "web-" + Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem(LS_DEV, d); }
-    return d;
-  } catch (e) { return "web"; }
+  let d = store.get(LS_DEV);
+  if (!d) { d = "web-" + Math.random().toString(36).slice(2) + Date.now().toString(36); store.set(LS_DEV, d); }
+  return d;
 }
-const ls = { get: (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } },
-  set: (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} } };
-
 async function api(path, { method = "GET", body, token, loja } = {}) {
   const res = await fetch(API + path, {
     method,
@@ -114,353 +161,522 @@ async function api(path, { method = "GET", body, token, loja } = {}) {
   });
   let json = {};
   try { json = await res.json(); } catch (e) {}
-  if (!res.ok || json.success === false) {
-    const e = new Error(json.message || "Falha na conexão (" + res.status + ")");
-    e.status = res.status; throw e;
-  }
-  return json.data;
+  if (!res.ok || json.success === false) { const e = new Error(json.message || "Falha na conexão (" + res.status + ")"); e.status = res.status; throw e; }
+  return { data: json.data, message: json.message };
 }
-const num = (v) => (typeof v === "number" ? v : parseFloat(String(v ?? "").replace(",", ".")) || 0);
-const moeda = (v) => num(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-const qtdTxt = (q) => (Number.isInteger(num(q)) ? String(num(q)) : String(num(q)).replace(".", ","));
+const num = (v) => { if (typeof v === "number") return v; let t = String(v ?? "").replace(/[^\d.,-]/g, ""); if (t.includes(",")) t = t.replace(/\./g, "").replace(",", "."); return parseFloat(t) || 0; };
+const nnum = (v) => (typeof v === "number" ? v : parseFloat(v) || 0); // vindo da API (ponto decimal)
+const brl = (v) => "R$ " + (Math.round(v * 100) / 100).toFixed(2).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+const pad = (n) => String(n).padStart(2, "0");
+const hhmm = (iso) => { const d = new Date(iso); return isNaN(d) ? "" : pad(d.getHours()) + ":" + pad(d.getMinutes()); };
+const ago = (iso) => { const t = new Date(iso).getTime(); if (isNaN(t)) return ""; const m = Math.max(1, Math.round((Date.now() - t) / 60000)); return m < 60 ? m + " min" : Math.floor(m / 60) + "h" + pad(m % 60); };
+const qtdTxt = (q) => (Number.isInteger(nnum(q)) ? String(nnum(q)) : String(nnum(q)).replace(".", ","));
+const iniciais = (n) => (n || "?").trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 
-function Preco({ preco, normal, qtd = 1 }) {
-  const d = num(normal) > 0 && Math.abs(num(normal) - num(preco)) >= 0.005;
-  return <div className={"preco" + (d ? " desc" : "")}>{d && <s>{moeda(num(normal) * qtd)}</s>}{moeda(num(preco) * qtd)}</div>;
+function Val({ preco, normal, qtd = 1, cls = "val" }) {
+  const d = nnum(normal) > 0 && Math.abs(nnum(normal) - nnum(preco)) >= 0.005;
+  return <span className={cls + (d ? " desc" : "")}>{d && <s>{brl(nnum(normal) * qtd)}</s>}{brl(nnum(preco) * qtd)}</span>;
 }
 
+/* ------------------------------------------------------------------ app */
 function App() {
-  const [token, setToken] = useState(ls.get(LS_TOKEN));
-  const [nome, setNome] = useState("");
+  const [token, setToken] = useState(store.get(LS_TOKEN));
   const [lojas, setLojas] = useState(null);
-  const [loja, setLoja] = useState(ls.get(LS_LOJA));
-  const [mesa, setMesa] = useState(null); // {idMesa, numero, idAtendimento}
+  const [loja, setLoja] = useState(store.get(LS_LOJA));
+  const [mesa, setMesa] = useState(null);
   const [toast, setToast] = useState(null);
-  const avisar = (msg, err = false) => { setToast({ msg, err }); setTimeout(() => setToast(null), 3800); };
-  const sair = () => { ls.set(LS_TOKEN, null); setToken(null); setLojas(null); setMesa(null); };
+  const tt = useRef(null);
+  const avisar = (msg, err = false) => { clearTimeout(tt.current); setToast({ msg, err }); tt.current = setTimeout(() => setToast(null), 3200); };
+  const sair = () => { store.set(LS_TOKEN, null); setToken(null); setLojas(null); setMesa(null); };
 
   useEffect(() => {
     if (!token) return;
-    api("/empresas", { token }).then((l) => {
-      setLojas(l || []);
-      if (!loja || !(l || []).some((x) => x.cnpj === loja)) { const p = (l || [])[0]; if (p) { setLoja(p.cnpj); ls.set(LS_LOJA, p.cnpj); } }
+    api("/empresas", { token }).then(({ data }) => {
+      const l = data || [];
+      setLojas(l);
+      if (!loja || !l.some((x) => x.cnpj === loja)) { const p = l[0]; if (p) { setLoja(p.cnpj); store.set(LS_LOJA, p.cnpj); } }
     }).catch((e) => { if (e.status === 401) sair(); else avisar(e.message, true); });
   }, [token]);
 
-  if (!token) return <Login onOk={(t, n) => { ls.set(LS_TOKEN, t); setToken(t); setNome(n); }} />;
+  if (!token) return <Login onOk={(t, manter) => { store.set(LS_TOKEN, t, manter); setToken(t); }} />;
+  const lojaAtual = (lojas || []).find((l) => l.cnpj === loja);
   const ctx = { token, loja, avisar };
   return (
-    <>
-      <div className="top">
-        <img src="vinny-mark.svg" width="28" height="28" alt="" />
-        <div className="marca">Meu Giro<small>MESAS</small></div>
-        {mesa && <button className="btn ghost peq" onClick={() => setMesa(null)}>← Mesas</button>}
-        <div className="esp" />
-        {lojas && lojas.length > 1 && (
-          <select className="sel" value={loja || ""} onChange={(e) => { setLoja(e.target.value); ls.set(LS_LOJA, e.target.value); setMesa(null); }}>
-            {lojas.map((l) => <option key={l.cnpj} value={l.cnpj}>{l.nome || l.cnpj}{l.online ? "" : " (offline)"}</option>)}
-          </select>
+    <div className="fundo-app">
+      <header className="hdr">
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div className="logo">&lt;v/&gt;</div>
+          <div className="marca"><b>Meu Giro</b><small>MESAS</small></div>
+        </div>
+        {mesa && (<><div className="sep" /><button className="hbtn" onClick={() => setMesa(null)}>← Mesas</button></>)}
+        <div style={{ flex: 1 }} />
+        {lojas && lojas.length > 0 && (
+          <div className="loja">
+            <span className="av">{iniciais(lojaAtual ? lojaAtual.nome : "")}</span>
+            <select value={loja || ""} onChange={(e) => { setLoja(e.target.value); store.set(LS_LOJA, e.target.value); setMesa(null); }}>
+              {lojas.map((l) => <option key={l.cnpj} value={l.cnpj}>{(l.nome || l.cnpj) + (l.online ? "" : " (offline)")}</option>)}
+            </select>
+          </div>
         )}
-        <button className="btn ghost peq" onClick={sair}>Sair</button>
-      </div>
-      <div className="wrap">
-        {!loja ? <div className="vazio">Carregando lojas…</div>
-          : mesa ? <Comanda key={mesa.idMesa + "-" + (mesa.idAtendimento || 0)} {...ctx} mesa={mesa} voltar={() => setMesa(null)} />
-          : <Mesas {...ctx} abrir={setMesa} />}
-      </div>
-      {toast && <div className={"toast" + (toast.err ? " err" : "")}>{toast.msg}</div>}
-    </>
-  );
-}
-
-function Login({ onOk }) {
-  const [email, setEmail] = useState(""), [senha, setSenha] = useState("");
-  const [erro, setErro] = useState(""), [busy, setBusy] = useState(false);
-  async function entrar(e) {
-    e.preventDefault(); setBusy(true); setErro("");
-    try {
-      const d = await api("/auth/login", { method: "POST", body: { email: email.trim(), senha, deviceId: deviceId(), deviceNome: "Navegador (Mesas)" } });
-      onOk(d.token, d.name);
-    } catch (er) { setErro(er.message); }
-    setBusy(false);
-  }
-  return (
-    <form className="login" onSubmit={entrar}>
-      <h1>Mesas</h1>
-      <p>Entre com o mesmo usuário do app Meu Giro.</p>
-      <input className="inp" placeholder="E-mail ou usuário" value={email} onChange={(e) => setEmail(e.target.value)} autoFocus />
-      <input className="inp" type="password" placeholder="Senha" value={senha} onChange={(e) => setSenha(e.target.value)} />
-      {erro && <div className="erro">{erro}</div>}
-      <button className="btn" style={{ width: "100%" }} disabled={busy}>{busy ? "Entrando…" : "Entrar"}</button>
-    </form>
-  );
-}
-
-function Mesas({ token, loja, avisar, abrir }) {
-  const [mesas, setMesas] = useState(null), [erro, setErro] = useState("");
-  const carregar = useCallback(async () => {
-    try { const d = await api("/salao/garcom/mesas", { token, loja }); setMesas(d.mesas || []); setErro(""); }
-    catch (e) { setErro(e.status === 404 ? "Esta loja não tem o restaurante (agente Link) ou o agente precisa ser atualizado." : e.message); }
-  }, [token, loja]);
-  useEffect(() => { setMesas(null); carregar(); const t = setInterval(carregar, 15000); return () => clearInterval(t); }, [carregar]);
-  if (erro && !mesas) return <div className="erro">{erro}</div>;
-  if (!mesas) return <div className="vazio">Carregando mesas…</div>;
-  if (!mesas.length) return <div className="vazio">Nenhuma mesa ativa. Ative as mesas no LinkPro.</div>;
-  return (
-    <div className="grade">
-      {mesas.map((m) => {
-        const oc = !!m.idAtendimento;
-        return (
-          <button key={m.idMesa} className={"mesa " + (oc ? "ocupada" : "livre")} onClick={() => abrir(m)}>
-            <div className="n">Mesa {m.numero}</div>
-            {oc ? <><div className="c">{m.cliente || "sem cliente"}</div><div className="v">{moeda(m.total)}</div></> : <div className="v" style={{ marginTop: "auto" }}>Livre</div>}
-          </button>
-        );
-      })}
+        <button className="hbtn ghost" onClick={sair}>Sair</button>
+      </header>
+      {!loja ? <div className="carreg">Carregando lojas…</div>
+        : mesa ? <Mesa key={mesa.idMesa} {...ctx} mesa={mesa} voltar={() => setMesa(null)} />
+        : <Salao {...ctx} abrir={setMesa} />}
+      {toast && (
+        <div className="toast" style={{ border: "1px solid " + (toast.err ? "#6b2a2a" : "#1f6b3e") }}>
+          <span className="ic" style={{ background: toast.err ? "#f05252" : "#22c55e" }}>{toast.err ? "!" : "✓"}</span>{toast.msg}
+        </div>
+      )}
     </div>
   );
 }
 
-function Comanda({ token, loja, avisar, mesa, voltar }) {
+/* ------------------------------------------------------------------ login */
+function Login({ onOk }) {
+  const [user, setUser] = useState(""), [pass, setPass] = useState("");
+  const [show, setShow] = useState(false), [manter, setManter] = useState(true);
+  const [erro, setErro] = useState(""), [busy, setBusy] = useState(false);
+  async function entrar(e) {
+    e.preventDefault();
+    if (!user.trim() || !pass) { setErro("Preencha usuário e senha."); return; }
+    setBusy(true); setErro("");
+    try {
+      const { data } = await api("/auth/login", { method: "POST", body: { email: user.trim(), senha: pass, deviceId: deviceId(), deviceNome: "Navegador (Mesas)" } });
+      onOk(data.token, manter);
+    } catch (er) { setErro(er.message); }
+    setBusy(false);
+  }
+  const borda = "1px solid " + (erro ? "#6b2a2a" : "#1f2b48");
+  return (
+    <div className="login-wrap">
+      <form className="login" onSubmit={entrar}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, textAlign: "center" }}>
+          <div className="logo" style={{ width: 56, height: 56, borderRadius: 16, fontSize: 16 }}>&lt;v/&gt;</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <span className="sora" style={{ fontWeight: 700, fontSize: 26, letterSpacing: "-.02em", color: "#f2f6fc" }}>Meu Giro</span>
+            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".16em", color: "#f5a524" }}>MESAS</span>
+          </div>
+        </div>
+        <div className="lcard">
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <span className="sora" style={{ fontWeight: 700, fontSize: 18, color: "#f2f6fc" }}>Entrar</span>
+            <span style={{ fontSize: 13, color: "#7f9cc9" }}>Use o mesmo usuário e senha do app Meu Giro.</span>
+          </div>
+          <label className="campo"><span>Usuário</span>
+            <input value={user} onChange={(e) => { setUser(e.target.value); setErro(""); }} placeholder="usuário ou e-mail" autoComplete="username" style={{ border: borda }} autoFocus />
+          </label>
+          <label className="campo"><span>Senha</span>
+            <div style={{ position: "relative" }}>
+              <input type={show ? "text" : "password"} value={pass} onChange={(e) => { setPass(e.target.value); setErro(""); }} placeholder="••••••" autoComplete="current-password" style={{ border: borda, paddingRight: 72 }} />
+              <button type="button" onClick={() => setShow(!show)} style={{ position: "absolute", right: 6, top: 6, height: 34, padding: "0 10px", border: 0, borderRadius: 9, background: "transparent", color: "#5aaef0", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>{show ? "Ocultar" : "Mostrar"}</button>
+            </div>
+          </label>
+          {erro && <span style={{ fontSize: 13, fontWeight: 600, color: "#f05252" }}>{erro}</span>}
+          <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 13, color: "#c9d6ea" }} onClick={(e) => { e.preventDefault(); setManter(!manter); }}>
+            <span style={{ width: 20, height: 20, flex: "none", borderRadius: 6, border: "1px solid " + (manter ? "#22c55e" : "#2a3a5c"), background: manter ? "#22c55e" : "#0c1426", color: "#04210f", fontSize: 12, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>{manter ? "✓" : ""}</span>
+            Manter conectado neste dispositivo
+          </label>
+          <button type="submit" className="bt verde" disabled={busy} style={{ height: 48 }}>{busy ? "Entrando…" : "Entrar"}</button>
+        </div>
+        <span style={{ textAlign: "center", fontSize: 13, color: "#7189b0" }}>Esqueceu a senha? Fale com o gerente da loja.</span>
+      </form>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ salão (grade de mesas) */
+function Salao({ token, loja, avisar, abrir }) {
+  const [mesas, setMesas] = useState(null), [erro, setErro] = useState(""), [filtro, setFiltro] = useState("Todas");
+  const carregar = useCallback(async () => {
+    try { const { data } = await api("/salao/garcom/mesas", { token, loja }); setMesas(data.mesas || []); setErro(""); }
+    catch (e) { setErro(e.status === 404 ? "Esta loja não tem o restaurante (agente Link) ou o agente precisa ser atualizado." : e.message); }
+  }, [token, loja]);
+  useEffect(() => { setMesas(null); carregar(); const t = setInterval(carregar, 15000); return () => clearInterval(t); }, [carregar]);
+
+  if (erro && !mesas) return <div className="carreg" style={{ color: "#f05252" }}>{erro}</div>;
+  if (!mesas) return <div className="carreg">Carregando mesas…</div>;
+  const ocupadas = mesas.filter((m) => m.idAtendimento);
+  const aberto = ocupadas.reduce((s, m) => s + nnum(m.total), 0);
+  const filtros = [["Todas", mesas.length, "#3b9be8"], ["Livres", mesas.length - ocupadas.length, "#22c55e"], ["Ocupadas", ocupadas.length, "#f5a524"]];
+  const vis = mesas.filter((m) => filtro === "Todas" || (filtro === "Livres" ? !m.idAtendimento : !!m.idAtendimento));
+  return (
+    <main className="main-mesas">
+      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <h1 className="h1">Salão</h1>
+          <span className="resumo">{ocupadas.length} de {mesas.length} mesas ocupadas · {brl(aberto)} em aberto</span>
+        </div>
+        <div className="filtros">
+          {filtros.map(([l, c, dot]) => (
+            <button key={l} onClick={() => setFiltro(l)} style={{ background: filtro === l ? "#1a2846" : "transparent", color: filtro === l ? "#fff" : "#a9badb" }}>
+              <span className="dot" style={{ background: dot }} />{l}<span className="cnt">{c}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+      {!mesas.length ? <div className="vazio" style={{ margin: 0 }}>Nenhuma mesa ativa. Ative as mesas no LinkPro.</div> : (
+        <div className="grade">
+          {vis.map((m) => {
+            const oc = !!m.idAtendimento, ac = oc ? "#f5a524" : "#22c55e";
+            const itens = nnum(m.itens);
+            return (
+              <button key={m.idMesa} className="card" onClick={() => abrir(m)}
+                style={{ border: "1px solid " + (oc ? "#3a3220" : "#173a2b"), background: oc ? "linear-gradient(180deg,#16203a,#111a30)" : "#0f1830" }}>
+                <div className="barra" style={{ background: ac }} />
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                    <span className="rot">MESA</span>
+                    <span className="num">{pad(m.numero)}</span>
+                  </div>
+                  <span className="pill" style={{ background: oc ? "rgba(245,165,36,.12)" : "rgba(34,197,94,.12)", color: ac }}><i style={{ background: ac }} />{oc ? "Ocupada" : "Livre"}</span>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 3, minWidth: 0 }}>
+                  <span className="sora" style={{ fontWeight: 600, fontSize: 17, color: oc ? "#f2f6fc" : "#7f9cc9" }}>{oc ? brl(nnum(m.total)) : "Disponível"}</span>
+                  <span style={{ fontSize: 12, color: "#7189b0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {oc ? [m.cliente, itens ? qtdTxt(itens) + (itens > 1 ? " itens" : " item") : "", m.abertura ? "há " + ago(m.abertura) : ""].filter(Boolean).join(" · ") : "Toque para abrir"}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </main>
+  );
+}
+
+/* ------------------------------------------------------------------ mesa */
+function Mesa({ token, loja, avisar, mesa, voltar }) {
   const [idAt, setIdAt] = useState(mesa.idAtendimento || null);
   const [com, setCom] = useState(null);
-  const [cliente, setCliente] = useState({ id: null, nome: "", tabela: "" });
-  const [novos, setNovos] = useState([]);
+  const [cli, setCli] = useState({ id: null, nome: "", tabela: "" });
+  const [cliAberto, setCliAberto] = useState(false);
+  const [cart, setCart] = useState([]);
   const [busy, setBusy] = useState(false);
-  const [modal, setModal] = useState(null); // 'cliente' | 'receber'
+  const [pagar, setPagar] = useState(false);
 
   const carregar = useCallback(async (id = idAt) => {
     if (!id) return;
     try {
-      const c = await api("/salao/garcom/atendimento/" + id, { token, loja });
-      setCom(c); setCliente((x) => ({ ...x, id: c.idCliente ?? null, nome: c.cliente || "" }));
+      const { data } = await api("/salao/garcom/atendimento/" + id, { token, loja });
+      setCom(data); setCli((x) => ({ ...x, id: data.idCliente ?? null, nome: data.cliente || "" }));
     } catch (e) { avisar(e.message, true); }
   }, [idAt, token, loja]);
   useEffect(() => { carregar(); }, []);
 
+  const itens = ((com && com.itens) || []).filter((i) => !i.cancelado);
+  const total = itens.reduce((s, i) => s + nnum(i.qtd) * nnum(i.preco), 0);
+  const qtdItens = itens.reduce((s, i) => s + nnum(i.qtd), 0);
+  // agrupa por envio (codigo_pedido), na ordem em que chegaram
+  const pedidos = [];
+  itens.forEach((i) => {
+    let p = pedidos.find((x) => x.k === (i.pedido || i.id));
+    if (!p) { p = { k: i.pedido || i.id, hora: i.hora, linhas: [] }; pedidos.push(p); }
+    p.linhas.push(i);
+  });
+  const aberta = !com || com.aberto !== false;
+  const cartTotal = cart.reduce((s, c) => s + c.qtd * c.preco, 0);
+  const cartQtd = cart.reduce((s, c) => s + c.qtd, 0);
+  const ocupada = !!idAt && itens.length > 0;
+  const ac = ocupada ? "#f5a524" : "#22c55e";
+
   async function precosDoCarrinho(idCli) {
-    if (!novos.length) return;
+    if (!cart.length) return;
     try {
-      const ids = [...new Set(novos.map((n) => n.id))].join(",");
-      const l = await api("/salao/garcom/produtos?ids=" + ids + (idCli ? "&idCliente=" + idCli : ""), { token, loja });
-      const m = Object.fromEntries((l || []).map((p) => [p.id, p]));
-      setNovos((ns) => ns.map((n) => (m[n.id] ? { ...n, preco: num(m[n.id].preco), normal: num(m[n.id].precoNormal) } : n)));
+      const ids = [...new Set(cart.map((c) => c.id))].join(",");
+      const { data } = await api("/salao/garcom/produtos?ids=" + ids + (idCli ? "&idCliente=" + idCli : ""), { token, loja });
+      const m = Object.fromEntries((data || []).map((p) => [p.id, p]));
+      setCart((cs) => cs.map((c) => (m[c.id] ? { ...c, preco: nnum(m[c.id].preco), normal: nnum(m[c.id].precoNormal) } : c)));
     } catch (e) {}
   }
   async function escolherCliente(c) {
-    setModal(null);
+    setCliAberto(false);
     const id = c ? c.id : null;
-    if (id === cliente.id) return;
+    if (id === cli.id) return;
     try {
       if (idAt) await api("/salao/garcom/atendimento/" + idAt + "/cliente", { method: "POST", token, loja, body: { idCliente: id } });
-      setCliente({ id, nome: c ? c.nome : "", tabela: c ? c.tabela : "" });
+      setCli({ id, nome: c ? c.nome : "", tabela: c ? c.tabela : "" });
       await precosDoCarrinho(id); await carregar();
     } catch (e) { avisar(e.message, true); }
   }
   function add(p) {
-    setNovos((ns) => {
-      const i = ns.findIndex((n) => n.id === p.id && !n.obs);
-      if (i >= 0) { const c = [...ns]; c[i] = { ...c[i], qtd: c[i].qtd + 1 }; return c; }
-      return [...ns, { id: p.id, descricao: p.descricao, preco: num(p.preco), normal: num(p.precoNormal), qtd: 1, obs: "" }];
+    setCart((cs) => {
+      const i = cs.findIndex((c) => c.id === p.id && !c.obs);
+      if (i >= 0) { const n = [...cs]; n[i] = { ...n[i], qtd: n[i].qtd + 1 }; return n; }
+      return [...cs, { id: p.id, nome: p.descricao, preco: nnum(p.preco), normal: nnum(p.precoNormal), qtd: 1, obs: "" }];
     });
   }
-  const totalNovos = novos.reduce((s, n) => s + n.qtd * n.preco, 0);
   async function enviar() {
-    if (!novos.length) return;
+    if (!cart.length) return;
     setBusy(true);
     try {
-      const d = await api("/salao/garcom/pedido", { method: "POST", token, loja, body: {
-        idAtendimento: idAt || undefined, idMesa: idAt ? undefined : mesa.idMesa, idCliente: cliente.id || undefined,
-        itens: novos.map((n) => ({ idProduto: n.id, qtd: n.qtd, ...(n.obs ? { obs: n.obs } : {}) })) } });
-      setIdAt(d.idAtendimento); setNovos([]); avisar("Pedido enviado pra mesa " + mesa.numero + ".");
-      await carregar(d.idAtendimento);
+      const { data } = await api("/salao/garcom/pedido", { method: "POST", token, loja, body: {
+        idAtendimento: idAt || undefined, idMesa: idAt ? undefined : mesa.idMesa, idCliente: cli.id || undefined,
+        itens: cart.map((c) => ({ idProduto: c.id, qtd: c.qtd, ...(c.obs.trim() ? { obs: c.obs.trim() } : {}) })) } });
+      setIdAt(data.idAtendimento); setCart([]); avisar("Pedido enviado · Mesa " + pad(mesa.numero));
+      await carregar(data.idAtendimento);
     } catch (e) { avisar(e.message, true); }
     setBusy(false);
   }
-  const itens = ((com && com.itens) || []).filter((i) => !i.cancelado);
-  const aberta = !com || com.aberto !== false;
 
   return (
-    <>
-      <h2 style={{ margin: "4px 0 14px" }}>Mesa {mesa.numero}</h2>
-      <div className="cols">
-        <div>
-          <div className="cli" onClick={() => aberta && setModal("cliente")}>
-            <span style={{ fontSize: 22 }}>👤</span>
-            <div style={{ flex: 1 }}>
-              <b>{cliente.id ? cliente.nome : "Sem cliente"}</b>
-              <small>{cliente.id ? (cliente.tabela ? "Tabela de preço: " + cliente.tabela : "Preços pela tabela do cliente") : "Clique pra escolher o cliente (aplica a tabela de preço dele)"}</small>
-            </div>
+    <main className="main-mesa">
+      <section className="col">
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          <h1 className="h1">Mesa {pad(mesa.numero)}</h1>
+          <span className="pill" style={{ height: 26, fontSize: 12, padding: "0 10px", background: ocupada ? "rgba(245,165,36,.12)" : "rgba(34,197,94,.12)", color: ac }}><i style={{ background: ac }} />{aberta ? (ocupada ? "Ocupada" : "Livre") : "Fechada"}</span>
+          {com && com.abertura && <span style={{ fontSize: 13, color: "#7189b0" }}>{qtdItens ? qtdTxt(qtdItens) + (qtdItens > 1 ? " itens · " : " item · ") : ""}há {ago(com.abertura)}</span>}
+        </div>
+
+        <ClienteBox cli={cli} aberto={cliAberto} podeMexer={aberta} token={token} loja={loja}
+          toggle={() => setCliAberto(!cliAberto)} escolher={escolherCliente} />
+
+        <div className="box">
+          <div className="boxh">
+            <div style={{ display: "flex", alignItems: "center" }}><span className="t">Na mesa</span><span className="s">{qtdItens ? qtdTxt(qtdItens) + (qtdItens > 1 ? " itens" : " item") : ""}</span></div>
+            <span className="v">{brl(total)}</span>
           </div>
-          <div className="painel" style={{ marginBottom: 14 }}>
-            <h3>Na mesa <span>{moeda(com ? com.total : 0)}</span></h3>
-            {!itens.length ? <div className="vazio">Nada lançado ainda.</div> : itens.map((i) => (
-              <div className="linha" key={i.id}>
-                <div className="q">{qtdTxt(i.qtd)}×</div>
-                <div className="d">{i.descricao}{i.obs && <small>{i.obs}</small>}</div>
-                <Preco preco={i.preco} normal={i.precoNormal} qtd={num(i.qtd)} />
-              </div>
-            ))}
-            {aberta && itens.length > 0 && !novos.length && (
-              <div className="acoes"><button className="btn laranja" onClick={() => setModal("receber")}>Receber e fechar</button></div>
-            )}
-            {!aberta && <div className="ok" style={{ marginTop: 10 }}>Mesa fechada no caixa.</div>}
-          </div>
-          {aberta && (
-            <div className="painel">
-              <h3>Pedido novo <span>{novos.length ? moeda(totalNovos) : ""}</span></h3>
-              {!novos.length ? <div className="vazio">Escolha os produtos ao lado.</div> : novos.map((n, idx) => (
-                <div className="linha" key={idx}>
-                  <div className="qtdbox">
-                    <button onClick={() => setNovos((ns) => ns.flatMap((x, j) => (j !== idx ? [x] : x.qtd > 1 ? [{ ...x, qtd: x.qtd - 1 }] : [])))}>−</button>
-                    <b>{qtdTxt(n.qtd)}</b>
-                    <button onClick={() => setNovos((ns) => ns.map((x, j) => (j === idx ? { ...x, qtd: x.qtd + 1 } : x)))}>+</button>
+          {!itens.length ? <div className="vazio">Nada lançado ainda.</div> : pedidos.map((p, i) => (
+            <div className="ped" key={p.k}>
+              <div className="pedh"><span>PEDIDO {i + 1}</span><span className="ln" /><span style={{ fontWeight: 600, letterSpacing: 0 }}>{hhmm(p.hora)}</span></div>
+              {p.linhas.map((l) => (
+                <div className="lin" key={l.id}>
+                  <span className="q">{qtdTxt(l.qtd)}×</span>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
+                    <span className="nm">{l.descricao}</span>
+                    {l.obs && <span className="obs">{l.obs}</span>}
                   </div>
-                  <div className="d">{n.descricao}
-                    <input className="inp" style={{ marginTop: 5, width: "100%", padding: "6px 9px", fontSize: 13 }} placeholder="observação (ex.: sem gelo)"
-                      value={n.obs} onChange={(e) => setNovos((ns) => ns.map((x, j) => (j === idx ? { ...x, obs: e.target.value } : x)))} />
-                  </div>
-                  <Preco preco={n.preco} normal={n.normal} qtd={n.qtd} />
+                  <Val preco={l.preco} normal={l.precoNormal} qtd={nnum(l.qtd)} />
                 </div>
               ))}
-              {novos.length > 0 && (
-                <div className="acoes"><button className="btn verde" disabled={busy} onClick={enviar}>{busy ? "Enviando…" : "Enviar pedido (" + moeda(totalNovos) + ")"}</button></div>
-              )}
             </div>
+          ))}
+          {aberta && itens.length > 0 && (
+            <div className="rodape"><button className="bt laranja" onClick={() => setPagar(true)} disabled={cart.length > 0} title={cart.length ? "Envie ou limpe o pedido novo antes" : ""}>Receber e fechar</button></div>
           )}
+          {!aberta && <div className="rodape" style={{ justifyContent: "flex-start", color: "#22c55e", fontWeight: 600 }}>Mesa fechada no caixa.</div>}
         </div>
-        {aberta && <Produtos token={token} loja={loja} idCliente={cliente.id} onAdd={add} />}
-      </div>
-      {modal === "cliente" && <ClienteModal token={token} loja={loja} onClose={() => setModal(null)} onPick={escolherCliente} />}
-      {modal === "receber" && idAt && (
-        <ReceberModal token={token} loja={loja} idAt={idAt} total={num(com && com.total)} onClose={() => setModal(null)}
-          onFim={async (r) => {
-            setModal(null);
-            if (r.finalizado) { avisar("Mesa " + mesa.numero + " fechada. Venda " + (r.vendaCodigo || "") + (num(r.troco) > 0 ? " · troco " + moeda(r.troco) : "")); voltar(); }
-            else { avisar(r.mensagem || "Pagamento registrado.", !!r.motivo); await carregar(); }
+
+        {aberta && (
+          <div className="box" style={{ borderColor: cart.length ? "#1f5a3a" : "#1c2846" }}>
+            <div className="boxh">
+              <div style={{ display: "flex", alignItems: "center" }}><span className="t">Pedido novo</span><span className="s">{cartQtd ? cartQtd + (cartQtd > 1 ? " itens" : " item") : ""}</span></div>
+              <span className="v">{brl(cartTotal)}</span>
+            </div>
+            {!cart.length ? <div className="vazio">Escolha os produtos ao lado.</div> : cart.map((c, idx) => (
+              <div className="cartl" key={idx}>
+                <div className="stepper">
+                  <button onClick={() => setCart((cs) => cs.flatMap((x, j) => (j !== idx ? [x] : x.qtd > 1 ? [{ ...x, qtd: x.qtd - 1 }] : [])))}>−</button>
+                  <span>{c.qtd}</span>
+                  <button onClick={() => setCart((cs) => cs.map((x, j) => (j === idx ? { ...x, qtd: x.qtd + 1 } : x)))}>+</button>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, minWidth: 0 }}>
+                  <span className="nm" style={{ paddingTop: 8 }}>{c.nome}</span>
+                  <input className="inp" value={c.obs} placeholder="observação (ex.: sem gelo)" maxLength={200}
+                    onChange={(e) => { const v = e.target.value; setCart((cs) => cs.map((x, j) => (j === idx ? { ...x, obs: v } : x))); }} />
+                </div>
+                <Val preco={c.preco} normal={c.normal} qtd={c.qtd} cls="val" />
+              </div>
+            ))}
+            {cart.length > 0 && (
+              <div className="rodape" style={{ justifyContent: "space-between" }}>
+                <button className="bt cont" onClick={() => setCart([])}>Limpar</button>
+                <button className="bt verde" onClick={enviar} disabled={busy}>{busy ? "Enviando…" : "Enviar pedido · " + brl(cartTotal)}</button>
+              </div>
+            )}
+          </div>
+        )}
+      </section>
+
+      {aberta ? <Produtos token={token} loja={loja} idCliente={cli.id} cart={cart} onAdd={add} /> : <div />}
+
+      {pagar && idAt && (
+        <Receber token={token} loja={loja} idAt={idAt} mesa={mesa} total={total} fechar={() => setPagar(false)}
+          fim={async (r, msg) => {
+            setPagar(false);
+            if (r.finalizado) { avisar("Mesa " + pad(mesa.numero) + " fechada · " + brl(total) + (nnum(r.troco) > 0 ? " · troco " + brl(nnum(r.troco)) : "")); voltar(); }
+            else { avisar(msg || "Pagamento registrado.", !!r.motivo); await carregar(); }
           }} />
       )}
-    </>
+    </main>
   );
 }
 
-function Produtos({ token, loja, idCliente, onAdd }) {
+function ClienteBox({ cli, aberto, podeMexer, token, loja, toggle, escolher }) {
+  const [q, setQ] = useState(""), [lista, setLista] = useState(null);
+  const deb = useRef(null);
+  useEffect(() => {
+    clearTimeout(deb.current);
+    if (!aberto || q.trim().length < 2) { setLista(null); return; }
+    deb.current = setTimeout(async () => {
+      try { setLista((await api("/salao/garcom/clientes?q=" + encodeURIComponent(q.trim()), { token, loja })).data || []); } catch (e) { setLista([]); }
+    }, 300);
+  }, [q, aberto]);
+  const tem = !!cli.id;
+  return (
+    <div className="box">
+      <button className="cli" onClick={() => podeMexer && toggle()} style={{ cursor: podeMexer ? "pointer" : "default" }}>
+        <div className="av" style={{ background: tem ? "#2a1f4a" : "#16223d", color: tem ? "#b79bff" : "#7189b0" }}>{tem ? iniciais(cli.nome) : "?"}</div>
+        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 2 }}>
+          <span style={{ fontWeight: 700, fontSize: 15, color: "#f2f6fc" }}>{tem ? cli.nome : "Sem cliente"}</span>
+          <span style={{ fontSize: 13, color: "#7f9cc9" }}>{tem ? (cli.tabela ? "Aplicando tabela " + cli.tabela : "Preços pela tabela do cliente") : "Clique pra escolher o cliente (aplica a tabela de preço dele)"}</span>
+        </div>
+        {podeMexer && <span style={{ fontSize: 12, fontWeight: 700, color: "#5aaef0" }}>{aberto ? "Fechar" : tem ? "Trocar" : "Escolher"}</span>}
+      </button>
+      {aberto && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 2, padding: 6, borderTop: "1px solid #1c2846" }}>
+          <div style={{ padding: "4px 6px 6px" }}>
+            <input className="inp" style={{ height: 38 }} autoFocus placeholder="Buscar cliente: nome, apelido ou CPF/CNPJ" value={q} onChange={(e) => setQ(e.target.value)} />
+          </div>
+          {lista && !lista.length && <div style={{ padding: "8px 12px", fontSize: 13, color: "#7f9cc9" }}>Nenhum cliente encontrado.</div>}
+          {(lista || []).map((c) => (
+            <button key={c.id} className="cliop" onClick={() => escolher(c)}>
+              <span>{c.nome}{c.documento ? <span style={{ color: "#6f86ab", fontWeight: 500 }}> · {c.documento}</span> : null}</span>
+              <span style={{ fontSize: 12, fontWeight: 500, color: "#7189b0" }}>{c.tabela ? "Tabela " + c.tabela : "sem tabela"}</span>
+            </button>
+          ))}
+          {tem && <button className="cliop" onClick={() => escolher(null)}><span>Remover cliente</span><span style={{ fontSize: 12, fontWeight: 500, color: "#7189b0" }}>volta ao preço normal</span></button>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Produtos({ token, loja, idCliente, cart, onAdd }) {
   const [q, setQ] = useState(""), [grupos, setGrupos] = useState([]), [grupo, setGrupo] = useState(null);
   const [lista, setLista] = useState(null);
   const deb = useRef(null);
-  useEffect(() => { api("/salao/garcom/grupos", { token, loja }).then((g) => setGrupos(g || [])).catch(() => {}); }, [token, loja]);
+  useEffect(() => { api("/salao/garcom/grupos", { token, loja }).then(({ data }) => setGrupos(data || [])).catch(() => {}); }, [token, loja]);
   useEffect(() => {
     clearTimeout(deb.current);
     const t = q.trim();
     if (t.length === 1 && !/^\d$/.test(t)) return;
     deb.current = setTimeout(async () => {
       try {
-        const l = await api("/salao/garcom/produtos?q=" + encodeURIComponent(t) + (idCliente ? "&idCliente=" + idCliente : "") + (grupo ? "&grupo=" + grupo : ""), { token, loja });
-        setLista(l || []);
+        const { data } = await api("/salao/garcom/produtos?q=" + encodeURIComponent(t) + (idCliente ? "&idCliente=" + idCliente : "") + (grupo ? "&grupo=" + grupo : ""), { token, loja });
+        setLista(data || []);
       } catch (e) { setLista([]); }
     }, t ? 300 : 0);
   }, [q, grupo, idCliente, token, loja]);
+  const chip = (id, label) => {
+    const sel = grupo === id;
+    return <button key={label} className="chip" onClick={() => setGrupo(id)} style={{ border: "1px solid " + (sel ? "#3b9be8" : "#1f2b48"), background: sel ? "#3b9be8" : "#141f38", color: sel ? "#fff" : "#c9d6ea" }}>{label}</button>;
+  };
   return (
-    <div className="painel">
-      <h3>Produtos</h3>
-      <input className="inp" style={{ width: "100%" }} placeholder="Nome, código ou código de barras" value={q} onChange={(e) => setQ(e.target.value)} />
-      {grupos.length > 0 && (
-        <div className="chips">
-          <button className={"chip" + (grupo == null ? " on" : "")} onClick={() => setGrupo(null)}>Todos</button>
-          {grupos.map((g) => <button key={g.id} className={"chip" + (grupo === g.id ? " on" : "")} onClick={() => setGrupo(g.id)}>{g.nome}</button>)}
+    <section className="prodbox">
+      <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "16px 16px 12px", borderBottom: "1px solid #172340" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span style={{ fontWeight: 700, fontSize: 15, color: "#f2f6fc" }}>Produtos</span>
+          <span style={{ fontSize: 12, color: "#7189b0" }}>{lista ? lista.length + " produtos" : ""}</span>
         </div>
-      )}
-      <div className="prods">
-        {lista == null ? <div className="vazio">Carregando…</div> : !lista.length ? <div className="vazio">Nenhum produto.</div> : lista.map((p) => (
-          <button className="prod" key={p.id} onClick={() => onAdd(p)}>
-            <span style={{ flex: 1, fontSize: 14 }}>{p.descricao}</span>
-            <Preco preco={p.preco} normal={p.precoNormal} />
-          </button>
-        ))}
+        <div className="busca"><span>⌕</span><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nome, código ou código de barras" /></div>
+        {grupos.length > 0 && <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{chip(null, "Todos")}{grupos.map((g) => chip(g.id, g.nome))}</div>}
       </div>
-    </div>
+      <div style={{ flex: 1, minHeight: 0, overflow: "auto", padding: "6px 8px 10px" }}>
+        {lista == null ? <div className="carreg">Carregando…</div> : !lista.length ? <div className="carreg">Nenhum produto encontrado.</div> : lista.map((p) => {
+          const noCart = cart.filter((c) => c.id === p.id).reduce((s, c) => s + c.qtd, 0);
+          return (
+            <button key={p.id} className="prod" onClick={() => onAdd(p)}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 3, minWidth: 0 }}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: "#e6edf7" }}>{p.descricao}</span>
+                <span style={{ fontSize: 12, color: "#6f86ab" }}>{[p.codigo, p.grupo].filter(Boolean).join(" · ")}</span>
+              </div>
+              <Val preco={p.preco} normal={p.precoNormal} cls="val" />
+              <span className="add" style={{ background: noCart ? "#22c55e" : "#16223d", color: noCart ? "#04210f" : "#8cc6f5" }}>{noCart || "+"}</span>
+            </button>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
-function ClienteModal({ token, loja, onClose, onPick }) {
-  const [q, setQ] = useState(""), [lista, setLista] = useState(null);
-  const deb = useRef(null);
-  useEffect(() => {
-    clearTimeout(deb.current);
-    if (q.trim().length < 2) { setLista(null); return; }
-    deb.current = setTimeout(async () => {
-      try { setLista((await api("/salao/garcom/clientes?q=" + encodeURIComponent(q.trim()), { token, loja })) || []); } catch (e) { setLista([]); }
-    }, 300);
-  }, [q]);
-  return (
-    <div className="fundo" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h2>Cliente da mesa</h2>
-        <input className="inp" style={{ width: "100%" }} placeholder="Nome, apelido ou CPF/CNPJ" value={q} onChange={(e) => setQ(e.target.value)} autoFocus />
-        <button className="prod" onClick={() => onPick(null)}><span style={{ flex: 1 }}>Sem cliente <small style={{ color: "var(--muted)" }}>· volta os preços ao normal</small></span></button>
-        {lista && !lista.length && <div className="vazio">Nenhum cliente encontrado.</div>}
-        {(lista || []).map((c) => (
-          <button className="prod" key={c.id} onClick={() => onPick(c)}>
-            <span style={{ flex: 1 }}><b>{c.nome}</b><br /><small style={{ color: "var(--muted)" }}>{[c.documento, c.tabela ? "tabela " + c.tabela : "sem tabela de preço"].filter(Boolean).join(" · ")}</small></span>
-          </button>
-        ))}
-        <div className="acoes"><button className="btn ghost" onClick={onClose}>Fechar</button></div>
-      </div>
-    </div>
-  );
-}
-
-const FORMAS = [["dinheiro", "Dinheiro"], ["pix", "Pix"], ["debito", "Débito"], ["credito", "Crédito"]];
-function ReceberModal({ token, loja, idAt, total, onClose, onFim }) {
-  const [pags, setPags] = useState([{ forma: "dinheiro", valor: "" }]);
+/* ------------------------------------------------------------------ receber */
+const METODOS = [["dinheiro", "Dinheiro"], ["pix", "Pix"], ["debito", "Débito"], ["credito", "Crédito"]];
+function Receber({ token, loja, idAt, mesa, total, fechar, fim }) {
+  const [metodo, setMetodo] = useState("dinheiro");
+  const [entrada, setEntrada] = useState("");
+  const [pags, setPags] = useState([]);
   const [busy, setBusy] = useState(false), [erro, setErro] = useState("");
-  const soma = pags.reduce((s, p) => s + num(p.valor), 0);
-  const dinheiro = pags.filter((p) => p.forma === "dinheiro").reduce((s, p) => s + num(p.valor), 0);
-  const falta = Math.max(0, +(total - soma).toFixed(2));
-  const troco = Math.max(0, +(soma - total).toFixed(2));
+  const pago = pags.reduce((s, p) => s + p.valor, 0);
+  const dinheiro = pags.filter((p) => p.forma === "dinheiro").reduce((s, p) => s + p.valor, 0);
+  const resto = Math.round((total - pago) * 100) / 100;
+  const troco = Math.max(0, -resto);
   const trocoInvalido = troco > dinheiro + 0.004;
-  function addForma(f) {
-    setPags((ps) => [...ps, { forma: f, valor: falta > 0 ? falta.toFixed(2).replace(".", ",") : "" }]);
+  const pode = pags.length > 0 && resto <= 0.005 && !trocoInvalido;
+  const nomeMetodo = (k) => (METODOS.find((m) => m[0] === k) || [k, k])[1];
+
+  function adicionar(v) {
+    const valor = v != null ? v : (entrada ? num(entrada) : Math.max(resto, 0));
+    if (!(valor > 0)) return;
+    setPags((ps) => [...ps, { forma: metodo, valor: Math.round(valor * 100) / 100 }]);
+    setEntrada(""); setErro("");
   }
-  async function receber() {
+  async function confirmar() {
+    if (!pode || busy) return;
     setBusy(true); setErro("");
     try {
-      const pagamentos = pags.filter((p) => num(p.valor) > 0).map((p) => ({ forma: p.forma, valor: +num(p.valor).toFixed(2) }));
-      const res = await fetch(API + "/salao/garcom/atendimento/" + idAt + "/receber", {
-        method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token, "X-Empresa": loja },
-        body: JSON.stringify({ pagamentos, finalizar: true }) });
-      const j = await res.json().catch(() => ({}));
-      if (!res.ok || j.success === false) throw new Error(j.message || "Falha (" + res.status + ")");
-      onFim({ ...(j.data || {}), mensagem: j.message });
+      const { data, message } = await api("/salao/garcom/atendimento/" + idAt + "/receber", { method: "POST", token, loja,
+        body: { pagamentos: pags.map((p) => ({ forma: p.forma, valor: p.valor })), finalizar: true } });
+      fim(data || {}, message);
     } catch (e) { setErro(e.message); }
     setBusy(false);
   }
+  const corResto = resto > 0.005 ? "#f05252" : resto < -0.005 ? (trocoInvalido ? "#f05252" : "#f5a524") : "#22c55e";
+  const rotResto = resto > 0.005 ? "Falta" : resto < -0.005 ? (trocoInvalido ? "Troco maior que o dinheiro" : "Troco") : "Quitado";
   return (
-    <div className="fundo" onClick={() => !busy && onClose()}>
+    <div className="fundo" onClick={() => !busy && fechar()}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h2>Receber</h2>
-        <div className="tot"><span>Total da mesa</span><b>{moeda(total)}</b></div>
-        <div style={{ height: 10 }} />
-        {pags.map((p, i) => (
-          <div className="forma" key={i}>
-            <select className="sel" value={p.forma} onChange={(e) => setPags((ps) => ps.map((x, j) => (j === i ? { ...x, forma: e.target.value } : x)))}>
-              {FORMAS.map(([k, t]) => <option key={k} value={k}>{t}</option>)}
-            </select>
-            <input className="inp" inputMode="decimal" placeholder={p.forma === "dinheiro" ? "valor entregue" : "valor"} value={p.valor}
-              onChange={(e) => setPags((ps) => ps.map((x, j) => (j === i ? { ...x, valor: e.target.value } : x)))} autoFocus={i === pags.length - 1} />
-            <button className="btn ghost peq" onClick={() => setPags((ps) => ps.filter((_, j) => j !== i))} disabled={pags.length === 1}>✕</button>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4, padding: "20px 22px 18px", borderBottom: "1px solid #172340" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span className="sora" style={{ fontWeight: 700, fontSize: 20, color: "#f2f6fc" }}>Receber · Mesa {pad(mesa.numero)}</span>
+            <button className="x" onClick={fechar} disabled={busy}>×</button>
           </div>
-        ))}
-        <div className="formas-add">
-          {FORMAS.map(([k, t]) => <button key={k} className="btn ghost peq" onClick={() => addForma(k)}>+ {t}</button>)}
+          <span style={{ fontSize: 13, color: "#7f9cc9" }}>Total da mesa</span>
+          <span className="sora" style={{ fontWeight: 700, fontSize: 36, letterSpacing: "-.02em", color: "#f2f6fc" }}>{brl(total)}</span>
         </div>
-        <div className="tot"><span>Recebido</span><span>{moeda(soma)}</span></div>
-        {falta > 0 && <div className="tot vermelho"><span>Falta</span><b>{moeda(falta)}</b></div>}
-        {troco > 0 && <div className={"tot " + (trocoInvalido ? "vermelho" : "ok")}><span>{trocoInvalido ? "Troco maior que o dinheiro" : "Troco"}</span><b>{moeda(troco)}</b></div>}
-        {erro && <div className="erro">{erro}</div>}
-        <div className="acoes">
-          <button className="btn ghost" onClick={onClose} disabled={busy}>Cancelar</button>
-          <button className="btn verde" onClick={receber} disabled={busy || falta > 0 || trocoInvalido || soma <= 0}>{busy ? "Fechando…" : "Receber e fechar"}</button>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14, padding: "18px 22px" }}>
+          <div className="metodos">
+            {METODOS.map(([k, l]) => <button key={k} onClick={() => setMetodo(k)} style={{ background: metodo === k ? "#3b9be8" : "transparent", color: metodo === k ? "#fff" : "#a9badb" }}>{l}</button>)}
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <div style={{ flex: 1, position: "relative" }}>
+              <span className="sora" style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", fontWeight: 600, fontSize: 14, color: "#6f86ab" }}>R$</span>
+              <input value={entrada} onChange={(e) => setEntrada(e.target.value)} onKeyDown={(e) => e.key === "Enter" && adicionar()} inputMode="decimal"
+                placeholder={metodo === "dinheiro" ? "valor entregue" : "valor em " + nomeMetodo(metodo).toLowerCase()}
+                style={{ width: "100%", height: 48, padding: "0 14px 0 44px", borderRadius: 12, border: "1px solid #2a4a7a", background: "#0c1426", color: "#f2f6fc", font: "600 16px Sora", outline: "none" }} />
+            </div>
+            <button onClick={() => adicionar()} style={{ height: 48, padding: "0 18px", borderRadius: 12, border: "1px solid #2a4a7a", background: "#13233f", color: "#8cc6f5", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>Adicionar</button>
+          </div>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {[["Valor restante", Math.max(resto, 0)], ["R$ 20", 20], ["R$ 50", 50], ["R$ 100", 100]].map(([l, v]) => (
+              <button key={l} className="rapido" onClick={() => adicionar(v)}>{l}</button>
+            ))}
+          </div>
+          {pags.map((p, i) => (
+            <div className="pl" key={i}>
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e" }} />
+              <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: "#dbe5f3" }}>{nomeMetodo(p.forma)}</span>
+              <span className="sora" style={{ fontWeight: 600, fontSize: 14 }}>{brl(p.valor)}</span>
+              <button onClick={() => setPags((ps) => ps.filter((_, j) => j !== i))} style={{ width: 26, height: 26, border: 0, borderRadius: 7, background: "transparent", color: "#7189b0", cursor: "pointer", fontSize: 14 }}>×</button>
+            </div>
+          ))}
+          {erro && <span style={{ fontSize: 13, fontWeight: 600, color: "#f05252" }}>{erro}</span>}
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6, padding: "14px 22px", borderTop: "1px solid #172340", background: "#0d1629" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, color: "#a9badb" }}><span>Recebido</span><span className="sora" style={{ fontWeight: 600, color: "#e6edf7" }}>{brl(pago)}</span></div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: corResto }}>{rotResto}</span>
+            <span className="sora" style={{ fontWeight: 700, fontSize: 22, color: corResto }}>{brl(Math.abs(resto))}</span>
+          </div>
+        </div>
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, padding: "16px 22px 20px" }}>
+          <button className="bt cont" onClick={fechar} disabled={busy} style={{ height: 48, fontSize: 15, fontWeight: 700, color: "#c9d6ea" }}>Cancelar</button>
+          <button className="bt" onClick={confirmar} disabled={!pode || busy}
+            style={{ height: 48, padding: "0 24px", background: pode ? "#22c55e" : "#173a2b", color: pode ? "#04210f" : "#4f7d63", opacity: 1 }}>
+            {busy ? "Fechando…" : "Receber e fechar"}
+          </button>
         </div>
       </div>
     </div>
