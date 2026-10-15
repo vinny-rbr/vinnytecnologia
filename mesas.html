@@ -137,7 +137,11 @@
    crédito, várias formas), fechando no caixa do LinkPro. Relay -> agente Link (/api/salao/garcom). */
 const { useState, useEffect, useCallback, useRef } = React;
 const API = "https://raizestecnologia-relay.onrender.com/api";
-const LS_TOKEN = "mg_mesas_token", LS_LOJA = "mg_mesas_loja", LS_DEV = "mg_mesas_device";
+const LS_TOKEN = "mg_mesas_token", LS_LOJA = "mg_mesas_loja", LS_DEV = "mg_mesas_device", LS_PASSE = "mg_mesas_passe";
+// Modo LOCAL: página servida pelo agente da loja (http://IP-do-PC:8081/mesas). O login passa pelo relay
+// só pra pegar o passe assinado; o garçom fala direto com o agente pela rede (funciona sem internet).
+const LOCAL = location.pathname.startsWith("/api/local/");
+const AGENTE = location.origin + "/api";
 
 const store = {
   get(k) { try { return localStorage.getItem(k) || sessionStorage.getItem(k); } catch (e) { return null; } },
@@ -153,12 +157,18 @@ function deviceId() {
   if (!d) { d = "web-" + Math.random().toString(36).slice(2) + Date.now().toString(36); store.set(LS_DEV, d); }
   return d;
 }
+let aoPerderPasse = () => {};
 async function api(path, { method = "GET", body, token, loja } = {}) {
-  const res = await fetch(API + path, {
+  // no modo local o garçom vai direto pro agente, com o passe; login/passe continuam no relay
+  const direto = LOCAL && path.startsWith("/salao/");
+  const passe = direto ? store.get(LS_PASSE) : null;
+  const res = await fetch((direto ? AGENTE : API) + path, {
     method,
-    headers: { "Content-Type": "application/json", ...(token ? { Authorization: "Bearer " + token } : {}), ...(loja ? { "X-Empresa": loja } : {}) },
+    headers: { "Content-Type": "application/json",
+      ...(direto ? (passe ? { Authorization: "Passe " + passe } : {}) : { ...(token ? { Authorization: "Bearer " + token } : {}), ...(loja ? { "X-Empresa": loja } : {}) }) },
     body: body ? JSON.stringify(body) : undefined,
   });
+  if (direto && res.status === 401) aoPerderPasse();
   let json = {};
   try { json = await res.json(); } catch (e) {}
   if (!res.ok || json.success === false) { const e = new Error(json.message || "Falha na conexão (" + res.status + ")"); e.status = res.status; throw e; }
@@ -179,18 +189,38 @@ function Val({ preco, normal, qtd = 1, cls = "val" }) {
 }
 
 /* ------------------------------------------------------------------ app */
+/* pede o passe local ao relay (precisa de internet) */
+async function pegarPasse(token, loja, manter) {
+  const { data } = await api("/auth/passe-local", { method: "POST", token, loja });
+  store.set(LS_PASSE, data.passe, manter);
+  return data.passe;
+}
+
 function App() {
   const [token, setToken] = useState(store.get(LS_TOKEN));
   const [lojas, setLojas] = useState(null);
   const [loja, setLoja] = useState(store.get(LS_LOJA));
+  const [info, setInfo] = useState(null); // modo local: {loja, nome, pronto}
+  const [passe, setPasse] = useState(LOCAL ? store.get(LS_PASSE) : null);
+  aoPerderPasse = () => { store.set(LS_PASSE, null); setPasse(null); };
   const [mesa, setMesa] = useState(null);
   const [toast, setToast] = useState(null);
   const tt = useRef(null);
   const avisar = (msg, err = false) => { clearTimeout(tt.current); setToast({ msg, err }); tt.current = setTimeout(() => setToast(null), 3200); };
-  const sair = () => { store.set(LS_TOKEN, null); setToken(null); setLojas(null); setMesa(null); };
+  const sair = () => { store.set(LS_TOKEN, null); store.set(LS_PASSE, null); setToken(null); setPasse(null); setLojas(null); setMesa(null); };
+
+  // modo local: a loja é a do agente; renova o passe quando tem internet
+  useEffect(() => {
+    if (!LOCAL) return;
+    fetch(AGENTE + "/local/info").then((r) => r.json()).then((j) => {
+      const d = j.data || {};
+      setInfo(d); setLojas([{ cnpj: d.loja, nome: d.nome, online: true }]); setLoja(d.loja);
+      if (token && d.loja) pegarPasse(token, d.loja, true).then(setPasse).catch(() => {});
+    }).catch(() => setInfo({ erro: true }));
+  }, []);
 
   useEffect(() => {
-    if (!token) return;
+    if (!token || LOCAL) return;
     api("/empresas", { token }).then(({ data }) => {
       const l = data || [];
       setLojas(l);
@@ -198,7 +228,17 @@ function App() {
     }).catch((e) => { if (e.status === 401) sair(); else avisar(e.message, true); });
   }, [token]);
 
-  if (!token) return <Login onOk={(t, manter) => { store.set(LS_TOKEN, t, manter); setToken(t); }} />;
+  if (LOCAL && !info) return <div className="login-wrap"><div className="carreg">Conectando ao agente da loja…</div></div>;
+  if (LOCAL && (info.erro || !info.pronto)) return (
+    <div className="login-wrap"><div className="lcard" style={{ maxWidth: 420 }}>
+      <span className="sora" style={{ fontWeight: 700, fontSize: 18 }}>Modo local ainda não configurado</span>
+      <span style={{ fontSize: 14, color: "#7f9cc9" }}>O agente desta loja precisa conectar na internet uma vez pra receber a configuração. Confira a internet do computador do agente e recarregue a página.</span>
+    </div></div>
+  );
+  if (!token || (LOCAL && !passe)) return <Login onOk={async (t, manter) => {
+    if (LOCAL) { const p = await pegarPasse(t, info.loja, manter); setPasse(p); }
+    store.set(LS_TOKEN, t, manter); setToken(t);
+  }} />;
   const lojaAtual = (lojas || []).find((l) => l.cnpj === loja);
   const ctx = { token, loja, avisar };
   return (
@@ -210,10 +250,11 @@ function App() {
         </div>
         {mesa && (<><div className="sep" /><button className="hbtn" onClick={() => setMesa(null)}>← Mesas</button></>)}
         <div style={{ flex: 1 }} />
+        {LOCAL && <span className="pill" style={{ background: "rgba(59,155,232,.12)", color: "#5aaef0" }}><i style={{ background: "#3b9be8" }} />Rede local</span>}
         {lojas && lojas.length > 0 && (
           <div className="loja">
             <span className="av">{iniciais(lojaAtual ? lojaAtual.nome : "")}</span>
-            <select value={loja || ""} onChange={(e) => { setLoja(e.target.value); store.set(LS_LOJA, e.target.value); setMesa(null); }}>
+            <select disabled={LOCAL} value={loja || ""} onChange={(e) => { setLoja(e.target.value); store.set(LS_LOJA, e.target.value); setMesa(null); }}>
               {lojas.map((l) => <option key={l.cnpj} value={l.cnpj}>{(l.nome || l.cnpj) + (l.online ? "" : " (offline)")}</option>)}
             </select>
           </div>
@@ -243,8 +284,10 @@ function Login({ onOk }) {
     setBusy(true); setErro("");
     try {
       const { data } = await api("/auth/login", { method: "POST", body: { email: user.trim(), senha: pass, deviceId: deviceId(), deviceNome: "Navegador (Mesas)" } });
-      onOk(data.token, manter);
-    } catch (er) { setErro(er.message); }
+      await onOk(data.token, manter);
+    } catch (er) {
+      setErro(er instanceof TypeError ? "Sem internet: neste computador é preciso entrar uma vez com internet. Depois funciona sem." : er.message);
+    }
     setBusy(false);
   }
   const borda = "1px solid " + (erro ? "#6b2a2a" : "#1f2b48");
