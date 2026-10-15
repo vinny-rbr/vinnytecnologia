@@ -12,6 +12,8 @@ const IMPLANTACAO = 50;
 // revendedor no RaizesAgente.xml e devolve o zip pronto. Servido pelo relay (proxy do
 // release no GitHub) porque o relay ja responde com CORS aberto.
 const INSTALADOR_BASE = "https://raizestecnologia-relay.onrender.com/api/revenda/instalador-base";
+// Programa Meu Giro Mesas (Windows): garçom/caixa na rede da loja (modo local do agente Link).
+const MESAS_DESKTOP = "https://github.com/vinny-rbr/raizestecnologia-agente/releases/download/mesas-desktop/MeuGiroMesas.zip";
 const SISTEMAS = [
   { k: "host", label: "Host (TSD / Firebird)", asset: "agente-host.jar" },
   { k: "link", label: "Link (InkDB / Postgres)", asset: "agente-link.jar" },
@@ -770,6 +772,24 @@ function ViewInstaladores({ sess, mostrarToast }) {
           <li><span className="step-n">1</span><span>Escolha o sistema da loja acima e clique em <b>Baixar instalador</b>{sess.codigo ? <> - o seu código <b className="mono">{sess.codigo}</b> já vai embutido.</> : "."}</span></li>
           <li><span className="step-n">2</span><span>Descompacte no PC da loja, abra a pasta <b className="mono">MeuGiro-Agente</b> e rode <b className="mono">INSTALAR.bat</b> como administrador. Ele se instala sozinho em <b className="mono">C:\MeuGiroAgente-Link</b> (ou -Host, -Lider, -SysPDV). No Link ele pergunta a porta e, se tiver mais de um banco, em qual conectar.</span></li>
           <li><span className="step-n">3</span><span>O agente sobe sozinho, descobre o CNPJ e a loja aparece aqui na lista.</span></li>
+        </ol>
+      </div>
+
+      <div className="panel" style={{ marginTop: 18 }}>
+        <div className="p-head"><span className="p-title"><Ic d={icDownload} /> Meu Giro Mesas (computadores do salão e do caixa)</span></div>
+        <div className="inst-body">
+          <p className="sub" style={{ margin: 0, maxWidth: 560 }}>
+            Programa do garçom e do caixa do restaurante (Link). Fala direto com o agente pela rede da loja e
+            <b> funciona sem internet</b>. Vai nos outros computadores, não no servidor.
+          </p>
+          <a className="btn btn-mg" href={MESAS_DESKTOP} download>
+            <Ic d={icDownload} /> Baixar Meu Giro Mesas
+          </a>
+        </div>
+        <ol className="steps" style={{ marginTop: 4 }}>
+          <li><span className="step-n">1</span><span>Descompacte e abra a pasta <b className="mono">MeuGiroMesas</b>.</span></li>
+          <li><span className="step-n">2</span><span>Rode <b className="mono">1 - Configurar</b>: ele procura o servidor da loja na rede (ou digite o <b>nome do computador</b> do servidor ou o IP), testa e salva.</span></li>
+          <li><span className="step-n">3</span><span>Rode <b className="mono">2 - Instalar</b>: cria o atalho <b>Meu Giro Mesas</b> na Área de Trabalho e abre. Na 1ª vez entre com o usuário do app com internet; depois funciona sem.</span></li>
         </ol>
       </div>
     </>
