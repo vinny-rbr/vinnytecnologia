@@ -480,7 +480,7 @@ function Mesa({ token, loja, avisar, mesa, voltar }) {
     store.set(chaveCart, JSON.stringify({ itens: cart, codigo: pendente.current }));
     setBusy(true); setFalha(false);
     try {
-      const { data } = await api("/salao/garcom/pedido", { method: "POST", token, loja, timeout: 10000, body: {
+      const { data } = await api("/salao/garcom/pedido", { method: "POST", token, loja, timeout: 6000, body: {
         idAtendimento: idAt || undefined, idMesa: idAt ? undefined : mesa.idMesa, idCliente: cli.id || undefined,
         codigoPedido: pendente.current,
         itens: cart.map((c) => ({ idProduto: c.id, qtd: c.qtd, ...(c.obs.trim() ? { obs: c.obs.trim() } : {}) })) } });
