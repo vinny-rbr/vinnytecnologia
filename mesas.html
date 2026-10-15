@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mesas - Meu Giro</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="vinny-mark.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b1322; --card: #121e33; --card2: #0f1a2c; --field: #16233c; --line: #1f2f4d;
+    --text: #eef3fa; --soft: #cfdbec; --muted: #8aa1c4; --blue: #3aa0e8; --orange: #f5a623;
+    --green: #33c15a; --red: #ec6a6a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font-family: "Space Grotesk", "Segoe UI", Roboto, Arial, sans-serif; }
+  button { font-family: inherit; cursor: pointer; }
+  input, select { font-family: inherit; }
+  .top { display: flex; align-items: center; gap: 12px; padding: 12px 18px; border-bottom: 1px solid var(--line); background: var(--card2); position: sticky; top: 0; z-index: 5; }
+  .top .marca { font-weight: 700; font-size: 18px; }
+  .top .marca small { color: var(--orange); letter-spacing: .14em; font-size: 10px; display: block; }
+  .top .esp { flex: 1; }
+  .sel, .inp { background: var(--field); border: 1px solid var(--line); color: var(--text); border-radius: 10px; padding: 10px 12px; font-size: 15px; outline: none; }
+  .inp:focus, .sel:focus { border-color: var(--blue); }
+  .btn { border: 0; border-radius: 10px; padding: 11px 16px; font-size: 15px; font-weight: 700; color: #fff; background: var(--blue); }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .btn.verde { background: var(--green); }
+  .btn.laranja { background: var(--orange); color: #1b1300; }
+  .btn.ghost { background: transparent; border: 1px solid var(--line); color: var(--soft); }
+  .btn.peq { padding: 7px 11px; font-size: 13px; }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 16px; }
+  .login { max-width: 380px; margin: 10vh auto; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 26px; }
+  .login h1 { margin: 0 0 4px; font-size: 22px; }
+  .login p { color: var(--muted); margin: 0 0 18px; font-size: 14px; }
+  .login .inp { width: 100%; margin-bottom: 10px; }
+  .erro { color: var(--red); font-size: 14px; margin: 6px 0; }
+  .grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .mesa { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; text-align: left; color: var(--text); min-height: 110px; display: flex; flex-direction: column; }
+  .mesa.ocupada { border-color: rgba(245,166,35,.55); }
+  .mesa.livre { border-color: rgba(51,193,90,.45); }
+  .mesa .n { font-size: 18px; font-weight: 700; }
+  .mesa .c { color: var(--soft); font-size: 13px; margin-top: auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mesa .v { font-weight: 700; font-size: 17px; }
+  .mesa.ocupada .v { color: var(--orange); } .mesa.livre .v { color: var(--green); }
+  .cols { display: grid; grid-template-columns: 1fr 1.1fr; gap: 16px; align-items: start; }
+  @media (max-width: 860px) { .cols { grid-template-columns: 1fr; } }
+  .painel { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+  .painel h3 { margin: 0 0 10px; font-size: 15px; display: flex; justify-content: space-between; }
+  .painel h3 span { color: var(--orange); }
+  .linha { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+  .linha:last-child { border-bottom: 0; }
+  .linha .q { color: var(--blue); font-weight: 700; min-width: 34px; }
+  .linha .d { flex: 1; font-size: 14px; color: var(--soft); }
+  .linha .d small { display: block; color: var(--orange); font-style: italic; }
+  .preco { text-align: right; font-weight: 700; white-space: nowrap; }
+  .preco s { display: block; color: var(--muted); font-weight: 400; font-size: 12px; }
+  .preco.desc { color: var(--green); }
+  .cli { display: flex; align-items: center; gap: 10px; background: var(--card2); border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin-bottom: 12px; cursor: pointer; }
+  .cli b { display: block; } .cli small { color: var(--muted); }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+  .chip { border: 0; border-radius: 20px; padding: 7px 13px; background: var(--field); color: var(--soft); font-weight: 600; font-size: 13px; }
+  .chip.on { background: var(--blue); color: #fff; }
+  .prods { max-height: 60vh; overflow: auto; }
+  .prod { display: flex; align-items: center; gap: 10px; width: 100%; background: transparent; border: 0; border-bottom: 1px solid var(--line); color: var(--text); padding: 10px 4px; text-align: left; }
+  .prod:hover { background: rgba(58,160,232,.08); }
+  .qtdbox { display: flex; align-items: center; gap: 6px; }
+  .qtdbox button { width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--line); background: var(--field); color: var(--text); font-weight: 700; }
+  .fundo { position: fixed; inset: 0; background: rgba(4,6,10,.65); display: grid; place-items: center; z-index: 20; padding: 16px; }
+  .modal { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 20px; width: 100%; max-width: 460px; max-height: calc(100vh - 32px); overflow: auto; }
+  .modal h2 { margin: 0 0 12px; font-size: 19px; }
+  .tot { display: flex; justify-content: space-between; font-size: 15px; margin: 4px 0; }
+  .tot b { font-size: 17px; }
+  .forma { display: grid; grid-template-columns: 110px 1fr 34px; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .forma .inp { width: 100%; }
+  .formas-add { display: flex; gap: 8px; flex-wrap: wrap; margin: 6px 0 14px; }
+  .acoes { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+  .ok { color: var(--green); } .vermelho { color: var(--red); }
+  .vazio { color: var(--muted); padding: 14px 0; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--green); color: #fff; padding: 12px 18px; border-radius: 12px; font-weight: 600; z-index: 30; max-width: 90vw; }
+  .toast.err { background: var(--red); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+<script type="text/babel">
+/* Mesas (web): o garçom/caixa do restaurante pelo navegador, com o mesmo login do app Meu Giro.
+   Abre mesa, escolhe o cliente (tabela de preço), lança itens e recebe (dinheiro com troco, Pix,
+   débito, crédito, várias formas), fechando no caixa do LinkPro. Fala com o relay -> agente Link. */
+const { useState, useEffect, useCallback, useRef } = React;
+const API = "https://raizestecnologia-relay.onrender.com/api";
+const LS_TOKEN = "mg_mesas_token", LS_LOJA = "mg_mesas_loja", LS_DEV = "mg_mesas_device";
+
+function deviceId() {
+  try {
+    let d = localStorage.getItem(LS_DEV);
+    if (!d) { d = "web-" + Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem(LS_DEV, d); }
+    return d;
+  } catch (e) { return "web"; }
+}
+const ls = { get: (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set: (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} } };
+
+async function api(path, { method = "GET", body, token, loja } = {}) {
+  const res = await fetch(API + path, {
+    method,
+    headers: { "Content-Type": "application/json", ...(token ? { Authorization: "Bearer " + token } : {}), ...(loja ? { "X-Empresa": loja } : {}) },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  let json = {};
+  try { json = await res.json(); } catch (e) {}
+  if (!res.ok || json.success === false) {
+    const e = new Error(json.message || "Falha na conexão (" + res.status + ")");
+    e.status = res.status; throw e;
+  }
+  return json.data;
+}
+const num = (v) => (typeof v === "number" ? v : parseFloat(String(v ?? "").replace(",", ".")) || 0);
+const moeda = (v) => num(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const qtdTxt = (q) => (Number.isInteger(num(q)) ? String(num(q)) : String(num(q)).replace(".", ","));
+
+function Preco({ preco, normal, qtd = 1 }) {
+  const d = num(normal) > 0 && Math.abs(num(normal) - num(preco)) >= 0.005;
+  return <div className={"preco" + (d ? " desc" : "")}>{d && <s>{moeda(num(normal) * qtd)}</s>}{moeda(num(preco) * qtd)}</div>;
+}
+
+function App() {
+  const [token, setToken] = useState(ls.get(LS_TOKEN));
+  const [nome, setNome] = useState("");
+  const [lojas, setLojas] = useState(null);
+  const [loja, setLoja] = useState(ls.get(LS_LOJA));
+  const [mesa, setMesa] = useState(null); // {idMesa, numero, idAtendimento}
+  const [toast, setToast] = useState(null);
+  const avisar = (msg, err = false) => { setToast({ msg, err }); setTimeout(() => setToast(null), 3800); };
+  const sair = () => { ls.set(LS_TOKEN, null); setToken(null); setLojas(null); setMesa(null); };
+
+  useEffect(() => {
+    if (!token) return;
+    api("/empresas", { token }).then((l) => {
+      setLojas(l || []);
+      if (!loja || !(l || []).some((x) => x.cnpj === loja)) { const p = (l || [])[0]; if (p) { setLoja(p.cnpj); ls.set(LS_LOJA, p.cnpj); } }
+    }).catch((e) => { if (e.status === 401) sair(); else avisar(e.message, true); });
+  }, [token]);
+
+  if (!token) return <Login onOk={(t, n) => { ls.set(LS_TOKEN, t); setToken(t); setNome(n); }} />;
+  const ctx = { token, loja, avisar };
+  return (
+    <>
+      <div className="top">
+        <img src="vinny-mark.svg" width="28" height="28" alt="" />
+        <div className="marca">Meu Giro<small>MESAS</small></div>
+        {mesa && <button className="btn ghost peq" onClick={() => setMesa(null)}>← Mesas</button>}
+        <div className="esp" />
+        {lojas && lojas.length > 1 && (
+          <select className="sel" value={loja || ""} onChange={(e) => { setLoja(e.target.value); ls.set(LS_LOJA, e.target.value); setMesa(null); }}>
+            {lojas.map((l) => <option key={l.cnpj} value={l.cnpj}>{l.nome || l.cnpj}{l.online ? "" : " (offline)"}</option>)}
+          </select>
+        )}
+        <button className="btn ghost peq" onClick={sair}>Sair</button>
+      </div>
+      <div className="wrap">
+        {!loja ? <div className="vazio">Carregando lojas…</div>
+          : mesa ? <Comanda key={mesa.idMesa + "-" + (mesa.idAtendimento || 0)} {...ctx} mesa={mesa} voltar={() => setMesa(null)} />
+          : <Mesas {...ctx} abrir={setMesa} />}
+      </div>
+      {toast && <div className={"toast" + (toast.err ? " err" : "")}>{toast.msg}</div>}
+    </>
+  );
+}
+
+function Login({ onOk }) {
+  const [email, setEmail] = useState(""), [senha, setSenha] = useState("");
+  const [erro, setErro] = useState(""), [busy, setBusy] = useState(false);
+  async function entrar(e) {
+    e.preventDefault(); setBusy(true); setErro("");
+    try {
+      const d = await api("/auth/login", { method: "POST", body: { email: email.trim(), senha, deviceId: deviceId(), deviceNome: "Navegador (Mesas)" } });
+      onOk(d.token, d.name);
+    } catch (er) { setErro(er.message); }
+    setBusy(false);
+  }
+  return (
+    <form className="login" onSubmit={entrar}>
+      <h1>Mesas</h1>
+      <p>Entre com o mesmo usuário do app Meu Giro.</p>
+      <input className="inp" placeholder="E-mail ou usuário" value={email} onChange={(e) => setEmail(e.target.value)} autoFocus />
+      <input className="inp" type="password" placeholder="Senha" value={senha} onChange={(e) => setSenha(e.target.value)} />
+      {erro && <div className="erro">{erro}</div>}
+      <button className="btn" style={{ width: "100%" }} disabled={busy}>{busy ? "Entrando…" : "Entrar"}</button>
+    </form>
+  );
+}
+
+function Mesas({ token, loja, avisar, abrir }) {
+  const [mesas, setMesas] = useState(null), [erro, setErro] = useState("");
+  const carregar = useCallback(async () => {
+    try { const d = await api("/salao/garcom/mesas", { token, loja }); setMesas(d.mesas || []); setErro(""); }
+    catch (e) { setErro(e.status === 404 ? "Esta loja não tem o restaurante (agente Link) ou o agente precisa ser atualizado." : e.message); }
+  }, [token, loja]);
+  useEffect(() => { setMesas(null); carregar(); const t = setInterval(carregar, 15000); return () => clearInterval(t); }, [carregar]);
+  if (erro && !mesas) return <div className="erro">{erro}</div>;
+  if (!mesas) return <div className="vazio">Carregando mesas…</div>;
+  if (!mesas.length) return <div className="vazio">Nenhuma mesa ativa. Ative as mesas no LinkPro.</div>;
+  return (
+    <div className="grade">
+      {mesas.map((m) => {
+        const oc = !!m.idAtendimento;
+        return (
+          <button key={m.idMesa} className={"mesa " + (oc ? "ocupada" : "livre")} onClick={() => abrir(m)}>
+            <div className="n">Mesa {m.numero}</div>
+            {oc ? <><div className="c">{m.cliente || "sem cliente"}</div><div className="v">{moeda(m.total)}</div></> : <div className="v" style={{ marginTop: "auto" }}>Livre</div>}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function Comanda({ token, loja, avisar, mesa, voltar }) {
+  const [idAt, setIdAt] = useState(mesa.idAtendimento || null);
+  const [com, setCom] = useState(null);
+  const [cliente, setCliente] = useState({ id: null, nome: "", tabela: "" });
+  const [novos, setNovos] = useState([]);
+  const [busy, setBusy] = useState(false);
+  const [modal, setModal] = useState(null); // 'cliente' | 'receber'
+
+  const carregar = useCallback(async (id = idAt) => {
+    if (!id) return;
+    try {
+      const c = await api("/salao/garcom/atendimento/" + id, { token, loja });
+      setCom(c); setCliente((x) => ({ ...x, id: c.idCliente ?? null, nome: c.cliente || "" }));
+    } catch (e) { avisar(e.message, true); }
+  }, [idAt, token, loja]);
+  useEffect(() => { carregar(); }, []);
+
+  async function precosDoCarrinho(idCli) {
+    if (!novos.length) return;
+    try {
+      const ids = [...new Set(novos.map((n) => n.id))].join(",");
+      const l = await api("/salao/garcom/produtos?ids=" + ids + (idCli ? "&idCliente=" + idCli : ""), { token, loja });
+      const m = Object.fromEntries((l || []).map((p) => [p.id, p]));
+      setNovos((ns) => ns.map((n) => (m[n.id] ? { ...n, preco: num(m[n.id].preco), normal: num(m[n.id].precoNormal) } : n)));
+    } catch (e) {}
+  }
+  async function escolherCliente(c) {
+    setModal(null);
+    const id = c ? c.id : null;
+    if (id === cliente.id) return;
+    try {
+      if (idAt) await api("/salao/garcom/atendimento/" + idAt + "/cliente", { method: "POST", token, loja, body: { idCliente: id } });
+      setCliente({ id, nome: c ? c.nome : "", tabela: c ? c.tabela : "" });
+      await precosDoCarrinho(id); await carregar();
+    } catch (e) { avisar(e.message, true); }
+  }
+  function add(p) {
+    setNovos((ns) => {
+      const i = ns.findIndex((n) => n.id === p.id && !n.obs);
+      if (i >= 0) { const c = [...ns]; c[i] = { ...c[i], qtd: c[i].qtd + 1 }; return c; }
+      return [...ns, { id: p.id, descricao: p.descricao, preco: num(p.preco), normal: num(p.precoNormal), qtd: 1, obs: "" }];
+    });
+  }
+  const totalNovos = novos.reduce((s, n) => s + n.qtd * n.preco, 0);
+  async function enviar() {
+    if (!novos.length) return;
+    setBusy(true);
+    try {
+      const d = await api("/salao/garcom/pedido", { method: "POST", token, loja, body: {
+        idAtendimento: idAt || undefined, idMesa: idAt ? undefined : mesa.idMesa, idCliente: cliente.id || undefined,
+        itens: novos.map((n) => ({ idProduto: n.id, qtd: n.qtd, ...(n.obs ? { obs: n.obs } : {}) })) } });
+      setIdAt(d.idAtendimento); setNovos([]); avisar("Pedido enviado pra mesa " + mesa.numero + ".");
+      await carregar(d.idAtendimento);
+    } catch (e) { avisar(e.message, true); }
+    setBusy(false);
+  }
+  const itens = ((com && com.itens) || []).filter((i) => !i.cancelado);
+  const aberta = !com || com.aberto !== false;
+
+  return (
+    <>
+      <h2 style={{ margin: "4px 0 14px" }}>Mesa {mesa.numero}</h2>
+      <div className="cols">
+        <div>
+          <div className="cli" onClick={() => aberta && setModal("cliente")}>
+            <span style={{ fontSize: 22 }}>👤</span>
+            <div style={{ flex: 1 }}>
+              <b>{cliente.id ? cliente.nome : "Sem cliente"}</b>
+              <small>{cliente.id ? (cliente.tabela ? "Tabela de preço: " + cliente.tabela : "Preços pela tabela do cliente") : "Clique pra escolher o cliente (aplica a tabela de preço dele)"}</small>
+            </div>
+          </div>
+          <div className="painel" style={{ marginBottom: 14 }}>
+            <h3>Na mesa <span>{moeda(com ? com.total : 0)}</span></h3>
+            {!itens.length ? <div className="vazio">Nada lançado ainda.</div> : itens.map((i) => (
+              <div className="linha" key={i.id}>
+                <div className="q">{qtdTxt(i.qtd)}×</div>
+                <div className="d">{i.descricao}{i.obs && <small>{i.obs}</small>}</div>
+                <Preco preco={i.preco} normal={i.precoNormal} qtd={num(i.qtd)} />
+              </div>
+            ))}
+            {aberta && itens.length > 0 && !novos.length && (
+              <div className="acoes"><button className="btn laranja" onClick={() => setModal("receber")}>Receber e fechar</button></div>
+            )}
+            {!aberta && <div className="ok" style={{ marginTop: 10 }}>Mesa fechada no caixa.</div>}
+          </div>
+          {aberta && (
+            <div className="painel">
+              <h3>Pedido novo <span>{novos.length ? moeda(totalNovos) : ""}</span></h3>
+              {!novos.length ? <div className="vazio">Escolha os produtos ao lado.</div> : novos.map((n, idx) => (
+                <div className="linha" key={idx}>
+                  <div className="qtdbox">
+                    <button onClick={() => setNovos((ns) => ns.flatMap((x, j) => (j !== idx ? [x] : x.qtd > 1 ? [{ ...x, qtd: x.qtd - 1 }] : [])))}>−</button>
+                    <b>{qtdTxt(n.qtd)}</b>
+                    <button onClick={() => setNovos((ns) => ns.map((x, j) => (j === idx ? { ...x, qtd: x.qtd + 1 } : x)))}>+</button>
+                  </div>
+                  <div className="d">{n.descricao}
+                    <input className="inp" style={{ marginTop: 5, width: "100%", padding: "6px 9px", fontSize: 13 }} placeholder="observação (ex.: sem gelo)"
+                      value={n.obs} onChange={(e) => setNovos((ns) => ns.map((x, j) => (j === idx ? { ...x, obs: e.target.value } : x)))} />
+                  </div>
+                  <Preco preco={n.preco} normal={n.normal} qtd={n.qtd} />
+                </div>
+              ))}
+              {novos.length > 0 && (
+                <div className="acoes"><button className="btn verde" disabled={busy} onClick={enviar}>{busy ? "Enviando…" : "Enviar pedido (" + moeda(totalNovos) + ")"}</button></div>
+              )}
+            </div>
+          )}
+        </div>
+        {aberta && <Produtos token={token} loja={loja} idCliente={cliente.id} onAdd={add} />}
+      </div>
+      {modal === "cliente" && <ClienteModal token={token} loja={loja} onClose={() => setModal(null)} onPick={escolherCliente} />}
+      {modal === "receber" && idAt && (
+        <ReceberModal token={token} loja={loja} idAt={idAt} total={num(com && com.total)} onClose={() => setModal(null)}
+          onFim={async (r) => {
+            setModal(null);
+            if (r.finalizado) { avisar("Mesa " + mesa.numero + " fechada. Venda " + (r.vendaCodigo || "") + (num(r.troco) > 0 ? " · troco " + moeda(r.troco) : "")); voltar(); }
+            else { avisar(r.mensagem || "Pagamento registrado.", !!r.motivo); await carregar(); }
+          }} />
+      )}
+    </>
+  );
+}
+
+function Produtos({ token, loja, idCliente, onAdd }) {
+  const [q, setQ] = useState(""), [grupos, setGrupos] = useState([]), [grupo, setGrupo] = useState(null);
+  const [lista, setLista] = useState(null);
+  const deb = useRef(null);
+  useEffect(() => { api("/salao/garcom/grupos", { token, loja }).then((g) => setGrupos(g || [])).catch(() => {}); }, [token, loja]);
+  useEffect(() => {
+    clearTimeout(deb.current);
+    const t = q.trim();
+    if (t.length === 1 && !/^\d$/.test(t)) return;
+    deb.current = setTimeout(async () => {
+      try {
+        const l = await api("/salao/garcom/produtos?q=" + encodeURIComponent(t) + (idCliente ? "&idCliente=" + idCliente : "") + (grupo ? "&grupo=" + grupo : ""), { token, loja });
+        setLista(l || []);
+      } catch (e) { setLista([]); }
+    }, t ? 300 : 0);
+  }, [q, grupo, idCliente, token, loja]);
+  return (
+    <div className="painel">
+      <h3>Produtos</h3>
+      <input className="inp" style={{ width: "100%" }} placeholder="Nome, código ou código de barras" value={q} onChange={(e) => setQ(e.target.value)} />
+      {grupos.length > 0 && (
+        <div className="chips">
+          <button className={"chip" + (grupo == null ? " on" : "")} onClick={() => setGrupo(null)}>Todos</button>
+          {grupos.map((g) => <button key={g.id} className={"chip" + (grupo === g.id ? " on" : "")} onClick={() => setGrupo(g.id)}>{g.nome}</button>)}
+        </div>
+      )}
+      <div className="prods">
+        {lista == null ? <div className="vazio">Carregando…</div> : !lista.length ? <div className="vazio">Nenhum produto.</div> : lista.map((p) => (
+          <button className="prod" key={p.id} onClick={() => onAdd(p)}>
+            <span style={{ flex: 1, fontSize: 14 }}>{p.descricao}</span>
+            <Preco preco={p.preco} normal={p.precoNormal} />
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ClienteModal({ token, loja, onClose, onPick }) {
+  const [q, setQ] = useState(""), [lista, setLista] = useState(null);
+  const deb = useRef(null);
+  useEffect(() => {
+    clearTimeout(deb.current);
+    if (q.trim().length < 2) { setLista(null); return; }
+    deb.current = setTimeout(async () => {
+      try { setLista((await api("/salao/garcom/clientes?q=" + encodeURIComponent(q.trim()), { token, loja })) || []); } catch (e) { setLista([]); }
+    }, 300);
+  }, [q]);
+  return (
+    <div className="fundo" onClick={onClose}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <h2>Cliente da mesa</h2>
+        <input className="inp" style={{ width: "100%" }} placeholder="Nome, apelido ou CPF/CNPJ" value={q} onChange={(e) => setQ(e.target.value)} autoFocus />
+        <button className="prod" onClick={() => onPick(null)}><span style={{ flex: 1 }}>Sem cliente <small style={{ color: "var(--muted)" }}>· volta os preços ao normal</small></span></button>
+        {lista && !lista.length && <div className="vazio">Nenhum cliente encontrado.</div>}
+        {(lista || []).map((c) => (
+          <button className="prod" key={c.id} onClick={() => onPick(c)}>
+            <span style={{ flex: 1 }}><b>{c.nome}</b><br /><small style={{ color: "var(--muted)" }}>{[c.documento, c.tabela ? "tabela " + c.tabela : "sem tabela de preço"].filter(Boolean).join(" · ")}</small></span>
+          </button>
+        ))}
+        <div className="acoes"><button className="btn ghost" onClick={onClose}>Fechar</button></div>
+      </div>
+    </div>
+  );
+}
+
+const FORMAS = [["dinheiro", "Dinheiro"], ["pix", "Pix"], ["debito", "Débito"], ["credito", "Crédito"]];
+function ReceberModal({ token, loja, idAt, total, onClose, onFim }) {
+  const [pags, setPags] = useState([{ forma: "dinheiro", valor: "" }]);
+  const [busy, setBusy] = useState(false), [erro, setErro] = useState("");
+  const soma = pags.reduce((s, p) => s + num(p.valor), 0);
+  const dinheiro = pags.filter((p) => p.forma === "dinheiro").reduce((s, p) => s + num(p.valor), 0);
+  const falta = Math.max(0, +(total - soma).toFixed(2));
+  const troco = Math.max(0, +(soma - total).toFixed(2));
+  const trocoInvalido = troco > dinheiro + 0.004;
+  function addForma(f) {
+    setPags((ps) => [...ps, { forma: f, valor: falta > 0 ? falta.toFixed(2).replace(".", ",") : "" }]);
+  }
+  async function receber() {
+    setBusy(true); setErro("");
+    try {
+      const pagamentos = pags.filter((p) => num(p.valor) > 0).map((p) => ({ forma: p.forma, valor: +num(p.valor).toFixed(2) }));
+      const res = await fetch(API + "/salao/garcom/atendimento/" + idAt + "/receber", {
+        method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token, "X-Empresa": loja },
+        body: JSON.stringify({ pagamentos, finalizar: true }) });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok || j.success === false) throw new Error(j.message || "Falha (" + res.status + ")");
+      onFim({ ...(j.data || {}), mensagem: j.message });
+    } catch (e) { setErro(e.message); }
+    setBusy(false);
+  }
+  return (
+    <div className="fundo" onClick={() => !busy && onClose()}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <h2>Receber</h2>
+        <div className="tot"><span>Total da mesa</span><b>{moeda(total)}</b></div>
+        <div style={{ height: 10 }} />
+        {pags.map((p, i) => (
+          <div className="forma" key={i}>
+            <select className="sel" value={p.forma} onChange={(e) => setPags((ps) => ps.map((x, j) => (j === i ? { ...x, forma: e.target.value } : x)))}>
+              {FORMAS.map(([k, t]) => <option key={k} value={k}>{t}</option>)}
+            </select>
+            <input className="inp" inputMode="decimal" placeholder={p.forma === "dinheiro" ? "valor entregue" : "valor"} value={p.valor}
+              onChange={(e) => setPags((ps) => ps.map((x, j) => (j === i ? { ...x, valor: e.target.value } : x)))} autoFocus={i === pags.length - 1} />
+            <button className="btn ghost peq" onClick={() => setPags((ps) => ps.filter((_, j) => j !== i))} disabled={pags.length === 1}>✕</button>
+          </div>
+        ))}
+        <div className="formas-add">
+          {FORMAS.map(([k, t]) => <button key={k} className="btn ghost peq" onClick={() => addForma(k)}>+ {t}</button>)}
+        </div>
+        <div className="tot"><span>Recebido</span><span>{moeda(soma)}</span></div>
+        {falta > 0 && <div className="tot vermelho"><span>Falta</span><b>{moeda(falta)}</b></div>}
+        {troco > 0 && <div className={"tot " + (trocoInvalido ? "vermelho" : "ok")}><span>{trocoInvalido ? "Troco maior que o dinheiro" : "Troco"}</span><b>{moeda(troco)}</b></div>}
+        {erro && <div className="erro">{erro}</div>}
+        <div className="acoes">
+          <button className="btn ghost" onClick={onClose} disabled={busy}>Cancelar</button>
+          <button className="btn verde" onClick={receber} disabled={busy || falta > 0 || trocoInvalido || soma <= 0}>{busy ? "Fechando…" : "Receber e fechar"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
