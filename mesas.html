@@ -158,16 +158,31 @@ function deviceId() {
   return d;
 }
 let aoPerderPasse = () => {};
-async function api(path, { method = "GET", body, token, loja } = {}) {
+function uuid() {
+  if (window.crypto && crypto.randomUUID) { try { return crypto.randomUUID(); } catch (e) {} }
+  const h = [...Array(32)].map(() => Math.floor(Math.random() * 16).toString(16));
+  h[12] = "4"; h[16] = (8 + Math.floor(Math.random() * 4)).toString(16);
+  const t = h.join("");
+  return t.slice(0, 8) + "-" + t.slice(8, 12) + "-" + t.slice(12, 16) + "-" + t.slice(16, 20) + "-" + t.slice(20);
+}
+async function api(path, { method = "GET", body, token, loja, timeout = 15000 } = {}) {
   // no modo local o garçom vai direto pro agente, com o passe; login/passe continuam no relay
   const direto = LOCAL && path.startsWith("/salao/");
   const passe = direto ? store.get(LS_PASSE) : null;
-  const res = await fetch((direto ? AGENTE : API) + path, {
-    method,
-    headers: { "Content-Type": "application/json",
-      ...(direto ? (passe ? { Authorization: "Passe " + passe } : {}) : { ...(token ? { Authorization: "Bearer " + token } : {}), ...(loja ? { "X-Empresa": loja } : {}) }) },
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  // sem resposta em `timeout` ms (rede caiu, servidor desligado): falha de conexão, não fica girando
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), timeout);
+  let res;
+  try {
+    res = await fetch((direto ? AGENTE : API) + path, {
+      method, signal: ctl.signal,
+      headers: { "Content-Type": "application/json",
+        ...(direto ? (passe ? { Authorization: "Passe " + passe } : {}) : { ...(token ? { Authorization: "Bearer " + token } : {}), ...(loja ? { "X-Empresa": loja } : {}) }) },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  } catch (err) {
+    const e = new Error("A conexão com o servidor falhou."); e.rede = true; throw e;
+  } finally { clearTimeout(timer); }
   if (direto && res.status === 401) aoPerderPasse();
   let json = {};
   try { json = await res.json(); } catch (e) {}
@@ -395,9 +410,17 @@ function Mesa({ token, loja, avisar, mesa, voltar }) {
   const [com, setCom] = useState(null);
   const [cli, setCli] = useState({ id: null, nome: "", tabela: "" });
   const [cliAberto, setCliAberto] = useState(false);
-  const [cart, setCart] = useState([]);
+  // carrinho fica salvo no aparelho até o servidor confirmar: caiu a conexão, fechou a tela, nada se perde
+  const chaveCart = "mg_mesas_cart_" + loja + "_" + mesa.idMesa;
+  const salvo = (() => { try { return JSON.parse(store.get(chaveCart) || "null"); } catch (e) { return null; } })();
+  const [cart, setCart] = useState((salvo && salvo.itens) || []);
+  const pendente = useRef((salvo && salvo.codigo) || null); // código do pedido ainda não confirmado
   const [busy, setBusy] = useState(false);
+  const [falha, setFalha] = useState(false);
   const [pagar, setPagar] = useState(false);
+  useEffect(() => {
+    store.set(chaveCart, cart.length ? JSON.stringify({ itens: cart, codigo: pendente.current }) : null);
+  }, [cart]);
 
   const carregar = useCallback(async (id = idAt) => {
     if (!id) return;
@@ -451,15 +474,24 @@ function Mesa({ token, loja, avisar, mesa, voltar }) {
     });
   }
   async function enviar() {
-    if (!cart.length) return;
-    setBusy(true);
+    if (!cart.length || busy) return;
+    // mesmo código no reenvio: se o primeiro chegou e só a resposta se perdeu, o agente não lança de novo
+    if (!pendente.current) pendente.current = uuid();
+    store.set(chaveCart, JSON.stringify({ itens: cart, codigo: pendente.current }));
+    setBusy(true); setFalha(false);
     try {
-      const { data } = await api("/salao/garcom/pedido", { method: "POST", token, loja, body: {
+      const { data } = await api("/salao/garcom/pedido", { method: "POST", token, loja, timeout: 10000, body: {
         idAtendimento: idAt || undefined, idMesa: idAt ? undefined : mesa.idMesa, idCliente: cli.id || undefined,
+        codigoPedido: pendente.current,
         itens: cart.map((c) => ({ idProduto: c.id, qtd: c.qtd, ...(c.obs.trim() ? { obs: c.obs.trim() } : {}) })) } });
-      setIdAt(data.idAtendimento); setCart([]); avisar("Pedido enviado · Mesa " + pad(mesa.numero));
+      pendente.current = null;
+      setIdAt(data.idAtendimento); setCart([]);
+      avisar((data.repetido ? "Pedido já tinha chegado · Mesa " : "Pedido enviado · Mesa ") + pad(mesa.numero));
       await carregar(data.idAtendimento);
-    } catch (e) { avisar(e.message, true); }
+    } catch (e) {
+      if (e.rede) setFalha(true);
+      else { pendente.current = null; avisar(e.message, true); }
+    }
     setBusy(false);
   }
 
@@ -524,7 +556,7 @@ function Mesa({ token, loja, avisar, mesa, voltar }) {
             ))}
             {cart.length > 0 && (
               <div className="rodape" style={{ justifyContent: "space-between" }}>
-                <button className="bt cont" onClick={() => setCart([])}>Limpar</button>
+                <button className="bt cont" onClick={() => { pendente.current = null; setCart([]); }}>Limpar</button>
                 <button className="bt verde" onClick={enviar} disabled={busy}>{busy ? "Enviando…" : "Enviar pedido · " + brl(cartTotal)}</button>
               </div>
             )}
@@ -533,6 +565,27 @@ function Mesa({ token, loja, avisar, mesa, voltar }) {
       </section>
 
       {aberta ? <Produtos token={token} loja={loja} idCliente={cli.id} cart={cart} onAdd={add} /> : <div />}
+
+      {falha && (
+        <div className="fundo">
+          <div className="modal" style={{ maxWidth: 420 }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 12, padding: "28px 24px 22px" }}>
+              <div style={{ width: 56, height: 56, borderRadius: 28, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(240,82,82,.12)", border: "1px solid rgba(240,82,82,.35)" }}>
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#f05252" strokeWidth="2" strokeLinecap="round"><path d="M2 8.8a15 15 0 0 1 20 0" /><path d="M5 12.5a10 10 0 0 1 14 0" /><path d="M8.5 16a5 5 0 0 1 7 0" /><path d="M12 20h.01" /><path d="M3 3l18 18" /></svg>
+              </div>
+              <span className="sora" style={{ fontWeight: 700, fontSize: 19, color: "#f2f6fc" }}>A conexão com o servidor falhou</span>
+              <span style={{ fontSize: 14, lineHeight: 1.5, color: "#a9badb" }}>
+                O pedido da Mesa {pad(mesa.numero)} não foi confirmado. Os {cart.length} {cart.length === 1 ? "item continua salvo" : "itens continuam salvos"} aqui,
+                nada se perde. Confira a rede e tente de novo.
+              </span>
+            </div>
+            <div className="rodape" style={{ justifyContent: "space-between", padding: "0 22px 22px" }}>
+              <button className="bt cont" onClick={() => setFalha(false)} disabled={busy}>Agora não</button>
+              <button className="bt verde" onClick={enviar} disabled={busy}>{busy ? "Reconectando…" : "Tentar reconectar"}</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {pagar && idAt && (
         <Receber token={token} loja={loja} idAt={idAt} mesa={mesa} total={total} fechar={() => setPagar(false)}
