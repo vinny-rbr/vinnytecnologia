@@ -1650,6 +1650,13 @@ function ViewSaude({ sess }) {
     catch (e) { setErro(e.message); if (ev == null) setEv([]); }
   }, [sess.token]);
   useEffect(() => { carregar(); const t = setInterval(carregar, 30000); return () => clearInterval(t); }, [carregar]);
+  const [marcando, setMarcando] = useState(null);
+  async function marcar(e, sim) {
+    setMarcando(e.id);
+    try { await api("/saude/" + e.id + "/resolvendo", { method: "POST", body: { resolvendo: sim }, base: ADMIN_API, token: sess.token }); await carregar(); }
+    catch (er) { setErro(er.message); }
+    setMarcando(null);
+  }
 
   const lojas = {};
   (ev || []).forEach((e) => { lojas[e.loja] = e.lojaNome || e.loja; });
@@ -1693,7 +1700,7 @@ function ViewSaude({ sess }) {
           <div className="mini-empty">Tudo tranquilo. Quando o IP, a impressora ou a rede de um cliente der problema, aparece aqui.</div>
         ) : (
           <div className="tbl-wrap"><table>
-            <thead><tr><th>Quando</th><th>Loja</th><th>Tipo</th><th>O que aconteceu</th></tr></thead>
+            <thead><tr><th>Quando</th><th>Loja</th><th>Tipo</th><th>O que aconteceu</th><th>Situação</th></tr></thead>
             <tbody>
               {lista.map((e) => (
                 <tr key={e.id}>
@@ -1706,6 +1713,16 @@ function ViewSaude({ sess }) {
                     </span>
                   </td>
                   <td><b>{e.titulo}</b>{e.detalhe ? <div style={{ opacity: .75, fontSize: 13 }}>{e.detalhe}</div> : null}</td>
+                  <td style={{ whiteSpace: "nowrap" }}>
+                    {e.nivel === "ok" ? <span style={{ color: "#22c55e", fontWeight: 700, fontSize: 12 }}>Normalizou</span>
+                      : e.resolvido ? <span style={{ color: "#22c55e", fontWeight: 700, fontSize: 12 }}>Resolvido</span>
+                      : e.resolvendo ? (
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                          <span title={"Avisos pausados" + (e.resolvendoEm ? " desde " + quando(e.resolvendoEm) : "")} style={{ color: "#3b9be8", fontWeight: 700, fontSize: 12 }}>Resolvendo{e.resolvendoPor ? " · " + e.resolvendoPor : ""}</span>
+                          <button className="btn btn-ghost btn-sm" disabled={marcando === e.id} onClick={() => marcar(e, false)}>Desmarcar</button>
+                        </span>)
+                      : <button className="btn btn-mg btn-sm" disabled={marcando === e.id} title="Para de repetir o aviso desse problema até ele se resolver" onClick={() => marcar(e, true)}>{marcando === e.id ? "…" : "Estou resolvendo"}</button>}
+                  </td>
                 </tr>
               ))}
             </tbody>
