@@ -1621,6 +1621,88 @@ function ViewRevendas({ sess, mostrarToast }) {
   );
 }
 
+/* Saúde das lojas (só master): o que os agentes viram na rede de cada cliente (IP do PC mudou, impressora
+   mudou de IP / desligou / voltou, conflito de IP, terminal do LinkPro com IP novo ou repetido). Também chega
+   como aviso no celular do master. Atualiza sozinho a cada 30s. */
+const SAUDE_TIPO = { ip_pc: "IP do PC", impressora_ip: "Impressora", impressora_fora: "Impressora", impressora_voltou: "Impressora",
+  conflito_ip: "Conflito de IP", terminal_ip: "Terminal LinkPro", terminal_conflito: "Conflito de IP" };
+const SAUDE_COR = { grave: "#f05252", aviso: "#f5a524", ok: "#22c55e" };
+function ViewSaude({ sess }) {
+  const [ev, setEv] = useState(null);
+  const [loja, setLoja] = useState("");
+  const [nivel, setNivel] = useState("");
+  const [erro, setErro] = useState("");
+  const carregar = useCallback(async () => {
+    try { setEv(await api("/saude?limite=300", { base: ADMIN_API, token: sess.token }) || []); setErro(""); }
+    catch (e) { setErro(e.message); if (ev == null) setEv([]); }
+  }, [sess.token]);
+  useEffect(() => { carregar(); const t = setInterval(carregar, 30000); return () => clearInterval(t); }, [carregar]);
+
+  const lojas = {};
+  (ev || []).forEach((e) => { lojas[e.loja] = e.lojaNome || e.loja; });
+  const lista = (ev || []).filter((e) => (!loja || e.loja === loja) && (!nivel || e.nivel === nivel));
+  const graves24 = (ev || []).filter((e) => e.nivel === "grave" && Date.now() - new Date(e.criadoEm).getTime() < 864e5).length;
+  const quando = (iso) => {
+    const d = new Date(iso), h = new Date();
+    const p = (n) => String(n).padStart(2, "0");
+    const dia = d.toDateString() === h.toDateString() ? "hoje" : p(d.getDate()) + "/" + p(d.getMonth() + 1);
+    return dia + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+  };
+  return (
+    <>
+      <div className="head-row">
+        <div><h1>Saúde das lojas</h1><p className="sub">O que os agentes viram na rede de cada cliente. Os mesmos avisos chegam no seu celular.{graves24 ? " " + graves24 + " problema(s) grave(s) nas últimas 24h." : ""}</p></div>
+      </div>
+
+      <div className="panel" style={{ padding: 14, marginBottom: 14, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+        <div className="field" style={{ marginBottom: 0, minWidth: 220 }}>
+          <select value={loja} onChange={(e) => setLoja(e.target.value)}>
+            <option value="">Todas as lojas</option>
+            {Object.entries(lojas).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          </select>
+        </div>
+        <div className="field" style={{ marginBottom: 0, minWidth: 160 }}>
+          <select value={nivel} onChange={(e) => setNivel(e.target.value)}>
+            <option value="">Todos</option>
+            <option value="grave">Grave</option>
+            <option value="aviso">Aviso</option>
+            <option value="ok">Resolvido</option>
+          </select>
+        </div>
+        <button className="btn btn-ghost" onClick={carregar}>Atualizar</button>
+      </div>
+
+      {erro && <div className="erro-inline"><Ic d={icAlert} /> {erro}</div>}
+
+      <div className="panel">
+        <div className="p-head"><span className="p-title"><Ic d={icAlert} /> Eventos</span></div>
+        {ev === null ? <div className="mini-empty">Carregando…</div> : !lista.length ? (
+          <div className="mini-empty">Tudo tranquilo. Quando o IP, a impressora ou a rede de um cliente der problema, aparece aqui.</div>
+        ) : (
+          <div className="tbl-wrap"><table>
+            <thead><tr><th>Quando</th><th>Loja</th><th>Tipo</th><th>O que aconteceu</th></tr></thead>
+            <tbody>
+              {lista.map((e) => (
+                <tr key={e.id}>
+                  <td style={{ whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" }}>{quando(e.criadoEm)}</td>
+                  <td>{e.lojaNome || e.loja}</td>
+                  <td style={{ whiteSpace: "nowrap" }}>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                      <span style={{ width: 8, height: 8, borderRadius: "50%", background: SAUDE_COR[e.nivel] || "#999" }} />
+                      {SAUDE_TIPO[e.tipo] || e.tipo}
+                    </span>
+                  </td>
+                  <td><b>{e.titulo}</b>{e.detalhe ? <div style={{ opacity: .75, fontSize: 13 }}>{e.detalhe}</div> : null}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table></div>
+        )}
+      </div>
+    </>
+  );
+}
+
 /* Catálogo de produtos por código de barras (só master). Pesquisa por nome ou EAN;
    alimenta o "Buscar" no cadastro de produto do app. */
 function ViewCatalogo({ sess }) {
@@ -1692,6 +1774,7 @@ function ViewCatalogo({ sess }) {
 const NAV = [
   { k: "inicio", label: "Início", icon: icHome },
   { k: "lojas", label: "Lojas", icon: icUsers },
+  { k: "saude", label: "Saúde das lojas", icon: icAlert, masterOnly: true },
   { k: "nova", label: "Nova loja", icon: icPlus },
   { k: "usuarios", label: "Usuários", icon: icKey },
   { k: "masters", label: "Usuários master", icon: icUsers, revOnly: true },
@@ -1706,7 +1789,7 @@ const NAV = [
   { k: "instaladores", label: "Instaladores", icon: icDownload },
   { k: "config", label: "Configurações", icon: icGear },
 ];
-const CRUMB = { inicio: "início", lojas: "início / lojas", nova: "início / nova loja", usuarios: "início / usuários", masters: "início / usuários master", solicitacoes: "início / solicitações", revendas: "início / revendas", transferencias: "início / transferências", catalogo: "recursos / catálogo", cobrancas: "financeiro / cobranças", relatorios: "financeiro / relatórios", instaladores: "recursos / instaladores", config: "recursos / configurações" };
+const CRUMB = { inicio: "início", lojas: "início / lojas", saude: "início / saúde das lojas", nova: "início / nova loja", usuarios: "início / usuários", masters: "início / usuários master", solicitacoes: "início / solicitações", revendas: "início / revendas", transferencias: "início / transferências", catalogo: "recursos / catálogo", cobrancas: "financeiro / cobranças", relatorios: "financeiro / relatórios", instaladores: "recursos / instaladores", config: "recursos / configurações" };
 
 function Modal({ modal, onClose }) {
   const [vals, setVals] = useState(() => Object.fromEntries((modal.fields || []).map((f) => [f.key, f.value != null ? f.value : ""])));
@@ -2045,6 +2128,7 @@ function Painel({ sess, onLogout }) {
       case "revendas": return <ViewRevendas {...props} />;
       case "transferencias": return <ViewTransferencias {...props} />;
       case "catalogo": return <ViewCatalogo {...props} />;
+      case "saude": return <ViewSaude {...props} />;
       case "cobrancas": return <ViewCobrancas {...props} />;
       case "relatorios": return <ViewRelatorios {...props} />;
       case "instaladores": return <ViewInstaladores {...props} />;

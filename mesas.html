@@ -10,28 +10,28 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  html, body { margin: 0; background: #0a1020; color: #e6edf7; font-family: Manrope, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  html, body { margin: 0; background: #121212; color: #ececec; font-family: Manrope, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
   * { box-sizing: border-box; }
   button { font-family: Manrope, system-ui, sans-serif; }
-  input::placeholder { color: #5e7398; }
-  ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-thumb { background: #22304f; border-radius: 8px; } ::-webkit-scrollbar-track { background: transparent; }
+  input::placeholder { color: #6b747d; }
+  ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-thumb { background: #2c2c2c; border-radius: 8px; } ::-webkit-scrollbar-track { background: transparent; }
   .sora { font-family: Sora, Manrope, sans-serif; }
-  .fundo-app { min-height: 100vh; display: flex; flex-direction: column; background: radial-gradient(1200px 500px at 50% -200px, #13203d 0%, #0a1020 70%); }
+  .fundo-app { min-height: 100vh; display: flex; flex-direction: column; background: #121212; }
 
   /* header */
-  .hdr { height: 64px; flex: none; display: flex; align-items: center; gap: 16px; padding: 0 24px; border-bottom: 1px solid #1a2541; background: rgba(14,22,41,.85); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 10; }
+  .hdr { height: 64px; flex: none; display: flex; align-items: center; gap: 16px; padding: 0 24px; border-bottom: 1px solid #262626; background: rgba(18,18,18,.94); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 10; }
   .logo { width: 36px; height: 36px; border-radius: 10px; background: #13233f; border: 1px solid #1f3256; display: flex; align-items: center; justify-content: center; font: 700 12px Sora; color: #3b9be8; flex: none; }
   .marca { display: flex; flex-direction: column; line-height: 1.1; }
-  .marca b { font: 700 16px Sora; color: #f2f6fc; }
+  .marca b { font: 700 16px Sora; color: #f4f4f4; }
   .marca small { font-size: 10px; font-weight: 700; letter-spacing: .16em; color: #f5a524; }
-  .sep { width: 1px; height: 28px; background: #1f2b48; }
-  .hbtn { display: flex; flex: none; white-space: nowrap; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border-radius: 10px; border: 1px solid #1f2b48; background: #111b31; color: #c9d6ea; font-weight: 600; font-size: 13px; cursor: pointer; }
-  .hbtn:hover { background: #16223d; color: #fff; }
+  .sep { width: 1px; height: 28px; background: #2c2c2c; }
+  .hbtn { display: flex; flex: none; white-space: nowrap; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border-radius: 10px; border: 1px solid #2c2c2c; background: #1a1a1a; color: #d6d6d6; font-weight: 600; font-size: 13px; cursor: pointer; }
+  .hbtn:hover { background: #242424; color: #fff; }
   .hbtn.ghost { background: transparent; }
-  .loja { display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 6px 0 8px; border-radius: 10px; border: 1px solid #1f2b48; background: #111b31; font-size: 13px; color: #c9d6ea; }
+  .loja { display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 6px 0 8px; border-radius: 10px; border: 1px solid #2c2c2c; background: #1a1a1a; font-size: 13px; color: #d6d6d6; }
   .loja .av { width: 22px; height: 22px; border-radius: 50%; background: #1d3a63; color: #8cc6f5; font: 700 10px Sora; display: flex; align-items: center; justify-content: center; flex: none; }
-  .loja select { background: transparent; border: 0; color: #c9d6ea; font: 600 13px Manrope; outline: none; max-width: 220px; cursor: pointer; }
-  .loja select option { background: #101a30; }
+  .loja select { background: transparent; border: 0; color: #d6d6d6; font: 600 13px Manrope; outline: none; max-width: 220px; cursor: pointer; }
+  .loja select option { background: #171717; }
   .hdr.internet { border-bottom-color: #6b4a12; background: rgba(42,30,10,.9); }
   .hdr.offline { border-bottom-color: #6b2a2a; background: rgba(44,14,18,.9); }
   .faixa { position: sticky; top: 64px; z-index: 9; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 9px 16px; font-size: 13px; font-weight: 600; text-align: center; }
@@ -43,141 +43,160 @@
 
   /* mesas */
   .main-mesas { flex: 1; width: 100%; max-width: 1400px; margin: 0 auto; padding: 32px 24px 48px; display: flex; flex-direction: column; gap: 24px; }
-  .h1 { margin: 0; font: 700 28px Sora; letter-spacing: -.02em; color: #f2f6fc; }
-  .resumo { font-size: 14px; color: #8aa0c2; }
-  .filtros { display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: #0f182c; border: 1px solid #1a2541; }
+  .h1 { margin: 0; font: 700 28px Sora; letter-spacing: -.02em; color: #f4f4f4; }
+  .resumo { font-size: 14px; color: #9aa3ab; }
+  .filtros { display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: #181818; border: 1px solid #262626; }
   .filtros button { display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px; border: 0; border-radius: 9px; font-weight: 600; font-size: 13px; cursor: pointer; }
   .filtros .dot { width: 7px; height: 7px; border-radius: 50%; }
   .filtros .cnt { font-family: Sora; font-size: 12px; opacity: .7; }
   .grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 14px; }
-  .card { position: relative; text-align: left; display: flex; flex-direction: column; justify-content: space-between; gap: 18px; min-height: 148px; padding: 16px; border-radius: 16px; color: #e6edf7; cursor: pointer; overflow: hidden; transition: transform .15s, border-color .15s; }
+  .card { position: relative; text-align: left; display: flex; flex-direction: column; justify-content: space-between; gap: 18px; min-height: 148px; padding: 16px; border-radius: 16px; color: #ececec; cursor: pointer; overflow: hidden; transition: transform .15s, border-color .15s; }
   .card:hover { transform: translateY(-2px); border-color: #2f4570 !important; }
   .card .barra { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; opacity: .9; }
-  .rot { font-size: 10px; font-weight: 700; letter-spacing: .14em; color: #6f86ab; }
-  .num { font: 700 34px Sora; line-height: 1; letter-spacing: -.03em; color: #f2f6fc; }
+  .rot { font-size: 10px; font-weight: 700; letter-spacing: .14em; color: #7d8a96; }
+  .num { font: 700 34px Sora; line-height: 1; letter-spacing: -.03em; color: #f4f4f4; }
   .pill { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px; border-radius: 999px; font-size: 11px; font-weight: 700; white-space: nowrap; }
   .pill i { width: 6px; height: 6px; border-radius: 50%; }
 
-  /* mesa (v2): produtos em cards à esquerda, comanda no painel à direita */
-  .main-mesa { flex: 1; width: 100%; max-width: 1520px; margin: 0 auto; padding: 20px 24px 24px; display: flex; flex-wrap: wrap; gap: 20px; align-items: stretch; }
-  .prods { flex: 1.7 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 16px; height: calc(100vh - 108px); min-height: 520px; }
-  .busca { position: relative; }
-  .busca span { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #5e7398; font-size: 17px; }
-  .busca input { width: 100%; height: 50px; padding: 0 16px 0 44px; border-radius: 999px; border: 1px solid #18233f; background: #0e172b; color: #e6edf7; font: 500 15px Manrope; outline: none; box-shadow: inset 0 1px 0 rgba(255,255,255,.02); }
-  .busca input:focus { border-color: #3b9be8; background: #0c1426; }
+  /* mesa (design "Mesa Pedido"): produtos compactos à esquerda, comanda num painel estreito à direita */
+  .main-mesa { flex: 1; min-height: 0; width: 100%; display: grid; grid-template-columns: minmax(0,1fr) minmax(300px,360px); gap: 20px; padding: 20px 24px; height: calc(100vh - 64px); }
+  .main-mesa.so-aside { grid-template-columns: minmax(300px,520px); justify-content: center; }
+  .prods { display: flex; flex-direction: column; gap: 14px; min-height: 0; min-width: 0; }
+  .prods .topo-p { display: flex; align-items: center; gap: 10px; }
+  .voltar { white-space: nowrap; flex-shrink: 0; height: 46px; padding: 0 16px; border-radius: 999px; border: 1px solid #2c2c2c; background: transparent; color: #ececec; font: 600 14px Manrope; cursor: pointer; }
+  .voltar:hover { background: #1d1d1d; }
+  .busca { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; height: 46px; padding: 0 18px; border-radius: 999px; border: 1px solid #262626; background: #181818; }
+  .busca span { color: #5ab0f0; font-size: 14px; }
+  .busca input { flex: 1; min-width: 0; background: transparent; border: 0; outline: none; color: #ececec; font: 500 15px Manrope; }
+  .busca:focus-within { border-color: #5ab0f0; }
   .abas { display: flex; gap: 22px; flex-wrap: wrap; }
-  .abas button { flex: none; white-space: nowrap; height: 34px; padding: 0; border: 0; border-bottom: 2px solid transparent; background: transparent; color: #6f86ab; font: 600 14px Manrope; cursor: pointer; }
+  .abas button { flex: none; white-space: nowrap; height: 34px; padding: 0; border: 0; border-bottom: 2px solid transparent; background: transparent; color: #7d8a96; font: 600 14px Manrope; cursor: pointer; }
   .abas button:hover { color: #fff; }
-  .abas button.on { border-bottom-color: #3b9be8; color: #f2f6fc; }
-  .plista { flex: 1; min-height: 0; overflow: auto; padding: 2px 6px 8px 2px; }
-  .pgrade { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
-  .pcard { position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: 18px; min-height: 140px; padding: 18px; border-radius: 18px; border: 1px solid transparent; background: #0e172b; color: inherit; text-align: left; cursor: pointer; transition: background .15s, border-color .15s; }
-  .pcard:hover { background: #121d36; border-color: #22325a; }
-  .pcard.on { background: #0f1f28; border-color: #1d4a35; }
-  .pcard .gr { font-size: 10px; font-weight: 600; letter-spacing: .14em; color: #566b90; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .pcard .badge { min-width: 24px; height: 24px; padding: 0 7px; border-radius: 999px; background: #22c55e; color: #04210f; font: 700 12px Sora; display: flex; align-items: center; justify-content: center; flex: none; }
-  .pcard .nome { font-size: 14px; font-weight: 500; line-height: 1.4; color: #dbe5f3; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-  .pcard .preco { font: 600 16px Sora; letter-spacing: -.01em; color: #f2f6fc; white-space: nowrap; }
-  .pcard .preco s { display: block; font: 500 11px Manrope; color: #6f86ab; }
-  .pcard .preco.desc { color: #22c55e; }
-  .pcard .mais { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid #26365a; color: #8cc6f5; font: 500 16px Sora; flex: none; }
-  .pcard.on .mais { background: #22c55e; border-color: #22c55e; color: #04210f; }
+  .abas button.on { border-bottom-color: #5ab0f0; color: #f4f4f4; }
+  .chips { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .chips button { white-space: nowrap; flex-shrink: 0; height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid #2c2c2c; background: transparent; color: #9aa3ab; font: 700 13px Manrope; cursor: pointer; }
+  .chips button.on { border-color: #ececec; background: #ececec; color: #121212; }
+  .plista { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding-right: 4px; }
+  .pgrade { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; align-content: start; min-width: 0; }
+  .pcard { position: relative; display: flex; flex-direction: column; gap: 6px; text-align: left; padding: 10px 12px; border-radius: 12px; border: 1px solid #242424; background: #1c1c1c; color: #ececec; cursor: pointer; min-width: 0; overflow: hidden; }
+  .pcard:hover { background: #242424; }
+  .pcard.on { border-color: #2fd36b55; background: #1a221c; }
+  .pcard .gr { font-size: 10px; letter-spacing: 1.5px; font-weight: 700; color: #5ab0f0; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pcard .badge { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: #2fd36b; color: #0d1f14; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex: none; }
+  .pcard .nome { font-size: 12px; font-weight: 700; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.6em; text-transform: uppercase; }
+  .pcard .preco { font-size: 15px; font-weight: 800; white-space: nowrap; }
+  .pcard .preco s { display: block; font-size: 11px; font-weight: 500; color: #7d8a96; }
+  .pcard .preco.desc { color: #2fd36b; }
+  .pcard .mais { width: 26px; height: 26px; border-radius: 50%; border: 1px solid #3a4a5a; color: #5ab0f0; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; flex: none; }
+  .pcard.on .mais { background: #2fd36b; border-color: #2fd36b; color: #0d1f14; }
 
-  .aside { flex: 1 1 380px; min-width: 0; max-width: 100%; display: flex; flex-direction: column; height: calc(100vh - 108px); min-height: 520px; border-radius: 24px; border: 1px solid #18233f; background: #0e172b; box-shadow: 0 40px 100px -50px rgba(0,0,0,.8); overflow: hidden; }
-  .aside .topo { display: flex; flex-direction: column; gap: 18px; padding: 26px 24px 20px; border-bottom: 1px solid #151f38; }
-  .aside .rolo { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; }
-  .rot2 { font-size: 10px; font-weight: 600; letter-spacing: .18em; color: #7f93b8; }
-  .sech { display: flex; align-items: center; justify-content: space-between; padding: 22px 24px 8px; }
-  .sech .esq { display: flex; align-items: center; gap: 8px; }
-  .sech .pt { width: 6px; height: 6px; border-radius: 50%; }
-  .sech .s { font-size: 12px; color: #7189b0; }
-  .limpar { height: 26px; padding: 0 8px; border: 0; border-radius: 7px; background: transparent; color: #7f9cc9; font: 600 12px Manrope; cursor: pointer; }
-  .limpar:hover { background: #16223d; color: #f05252; }
-  .vazio { margin: 4px 24px 12px; padding: 34px 20px; border-radius: 16px; border: 1px dashed #1e2a47; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
-  .cartl { display: flex; flex-direction: column; gap: 10px; padding: 14px 8px; border-bottom: 1px solid #151f38; }
-  .cartl .l1 { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 12px; align-items: start; }
-  .cartl .nm { font-size: 14px; font-weight: 500; line-height: 1.4; color: #e6edf7; }
-  .stepper { display: flex; align-items: center; flex: none; height: 32px; border-radius: 999px; background: #121c33; }
-  .stepper button { width: 32px; height: 32px; border: 0; background: transparent; color: #a9badb; font: 500 15px Sora; cursor: pointer; border-radius: 50%; }
-  .stepper button:hover { color: #fff; background: #16223d; }
-  .stepper span { min-width: 22px; text-align: center; font: 700 13px Sora; }
-  .stepper input { width: 46px; height: 28px; padding: 0; border: 1px solid #22304f; border-radius: 8px; background: #0c1426; color: #f2f6fc; text-align: center; font: 700 14px Sora; outline: none; }
-  .stepper input:focus { border-color: #f5a524; }
-  .obsin { flex: 1; min-width: 0; height: 32px; padding: 0 10px; border: 0; border-bottom: 1px solid #1a2541; background: transparent; color: #f5a524; font: 500 13px Manrope; outline: none; }
-  .obsin:focus { border-color: #3b9be8; }
-  .ped { border-radius: 14px; background: #0b1325; padding: 6px 14px 10px; }
-  .pedh { display: flex; justify-content: space-between; padding: 8px 0 4px; font-size: 11px; font-weight: 700; letter-spacing: .1em; color: #6f86ab; }
-  .lin { display: grid; grid-template-columns: 30px minmax(0,1fr) auto auto; gap: 8px; align-items: baseline; padding: 5px 0; }
-  .xit { width: 26px; height: 26px; align-self: center; border: 0; border-radius: 7px; background: transparent; color: #566b90; cursor: pointer; font-size: 14px; }
-  .xit:hover { background: #2a1620; color: #f05252; }
-  .menuctx { position: fixed; z-index: 70; min-width: 190px; padding: 6px; border-radius: 12px; border: 1px solid #22304f; background: #101a30; box-shadow: 0 16px 40px -12px rgba(0,0,0,.7); }
-  .menuctx button { width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 0; border-radius: 8px; background: transparent; color: #f05252; font-weight: 700; font-size: 13px; cursor: pointer; text-align: left; }
-  .menuctx button:hover { background: #2a1620; }
-  .q { font: 700 12px Sora; color: #3b9be8; }
-  .nm { font-size: 13px; font-weight: 600; color: #c9d6ea; }
-  .obs { font-size: 12px; color: #f5a524; }
-  .val { font: 600 13px Sora; color: #a9badb; text-align: right; white-space: nowrap; }
-  .val s { display: block; font: 500 11px Manrope; color: #6f86ab; }
-  .val.desc { color: #22c55e; }
-  .val.forte { font-weight: 700; font-size: 14px; color: #f2f6fc; }
-  .pe { flex: none; display: flex; flex-direction: column; gap: 16px; padding: 20px 24px 24px; border-top: 1px solid #151f38; background: #0b1325; }
-  .pe .tl { display: flex; justify-content: space-between; font-size: 13px; color: #8aa0c2; }
-  .pe .tl b { font: 600 13px Sora; color: #c9d6ea; white-space: nowrap; }
-  .bp { height: 52px; border: 0; border-radius: 999px; font: 700 15px Manrope; cursor: pointer; white-space: nowrap; }
+  .aside { display: flex; flex-direction: column; min-height: 0; border-radius: 18px; border: 1px solid #232323; background: #171717; overflow: hidden; }
+  .aside .topo { padding: 14px 16px; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  .aside .rot-mesa { display: flex; flex-direction: column; flex-shrink: 0; max-width: 120px; }
+  .aside .rot-mesa span { font-size: 10px; letter-spacing: 3px; color: #5ab0f0; font-weight: 700; }
+  .aside .rot-mesa b { font-size: 30px; font-weight: 800; line-height: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .aside .rolo { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; }
+  .barra-sec { display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-top: 1px solid #232323; flex-shrink: 0; }
+  .barra-sec .pt { width: 6px; height: 6px; border-radius: 50%; }
+  .barra-sec .t { font-size: 11px; letter-spacing: 2px; font-weight: 700; }
+  .barra-sec .s { font-size: 12px; color: #7d8a96; }
+  .barra-sec .dir { margin-left: auto; }
+  .limpar { background: none; border: 0; color: #5ab0f0; font: 700 12px Manrope; cursor: pointer; padding: 0; }
+  .limpar:hover { color: #f05252; }
+  .cvazio { padding: 28px 10px; text-align: center; color: #6b747d; font-size: 13px; }
+  .clin { display: flex; flex-direction: column; gap: 3px; padding: 6px 8px; margin: 0 8px; border-bottom: 1px solid #202020; }
+  .clin:hover { background: #1d1d1d; }
+  .clin .nm { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #ececec; }
+  .clin .linha { display: flex; align-items: center; gap: 6px; }
+  .clin .sb { width: 20px; height: 20px; border-radius: 5px; border: 1px solid #2c2c2c; background: transparent; color: #ececec; cursor: pointer; font-size: 11px; line-height: 1; padding: 0; flex: none; }
+  .clin .sb:disabled { opacity: .3; cursor: default; }
+  .clin .un { font-size: 11px; color: #9aa3ab; white-space: nowrap; }
+  .clin .un b { color: #ececec; font-weight: 800; }
+  .clin .tot { margin-left: auto; font-size: 12px; font-weight: 800; white-space: nowrap; }
+  .clin .tot.desc { color: #2fd36b; }
+  .clin .obs { font-size: 11px; color: #ff9a2e; }
+  .clin .obsin { width: 100%; height: 26px; padding: 0 8px; border: 0; border-bottom: 1px solid #2c2c2c; background: transparent; color: #ff9a2e; font: 500 12px Manrope; outline: none; }
+  .clin .obsin:focus { border-color: #5ab0f0; }
+  .clin .ico { width: 20px; height: 20px; border: 0; border-radius: 5px; background: transparent; color: #6b747d; cursor: pointer; font-size: 12px; padding: 0; flex: none; }
+  .clin .ico:hover { background: #242424; color: #ececec; }
+  .clin .ico.x:hover { background: #2a1620; color: #f05252; }
+  .clin.cancelado { opacity: .5; }
+  .clin.cancelado .nm { text-decoration: line-through; }
+  .pedh { display: flex; justify-content: space-between; padding: 8px 16px 2px; font-size: 10px; font-weight: 700; letter-spacing: .14em; color: #6b747d; }
+  .pe { flex-shrink: 0; padding: 12px 16px 14px; border-top: 1px solid #232323; background: #151515; display: flex; flex-direction: column; gap: 10px; }
+  .pe .tl { color: #5ab0f0; font-size: 12px; }
+  .pe .tl b { color: #ececec; font-weight: 700; }
+  .bp { height: 46px; border: 0; border-radius: 999px; font: 800 15px Manrope; cursor: pointer; white-space: nowrap; }
   .bp:disabled { opacity: .6; cursor: not-allowed; }
-  .bp.verde { flex: 1; background: #22c55e; color: #04210f; }
-  .bp.verde:hover:not(:disabled) { background: #34d46d; }
-  .bp.laranja { flex: 1; background: #f5a524; color: #1a1204; }
-  .bp.laranja:hover { background: #ffb53d; }
-  .bp.contorno { flex: none; padding: 0 20px; border: 1px solid #4a3a1a; background: transparent; color: #f5a524; font-size: 14px; }
-  .bp.contorno:hover { background: rgba(245,165,36,.08); }
-  .bp.nada { flex: 1; border: 1px solid #18233f; background: transparent; color: #4f6285; cursor: not-allowed; }
-  .clibox { border-radius: 14px; background: #121c33; }
-  .cli { width: 100%; display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 0; background: transparent; color: inherit; text-align: left; cursor: pointer; border-radius: 12px; }
-  .cli:hover { background: #111c33; }
-  .cli .av { width: 34px; height: 34px; flex: none; border-radius: 10px; display: flex; align-items: center; justify-content: center; font: 700 12px Sora; }
-  .cliop { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 12px; border: 0; border-radius: 9px; background: transparent; color: #dbe5f3; font-weight: 600; font-size: 13px; cursor: pointer; text-align: left; }
-  .cliop:hover { background: #16223d; }
-  .inp { height: 34px; padding: 0 12px; border-radius: 9px; border: 1px solid #1f2b48; background: #0c1426; color: #e6edf7; font: 500 13px Manrope; outline: none; width: 100%; }
-  .inp:focus { border-color: #3b9be8; }
+  .bp.verde { flex: 1; background: #2fd36b; color: #0d1f14; }
+  .bp.verde:hover:not(:disabled) { background: #45e07e; }
+  .bp.laranja { flex: 1; background: #ff9a2e; color: #1a1204; }
+  .bp.contorno { flex: none; padding: 0 18px; border: 1px solid #4a3a1a; background: transparent; color: #ff9a2e; font-size: 14px; }
+  .bp.nada { flex: 1; border: 1px solid #262626; background: transparent; color: #6b747d; cursor: not-allowed; }
+  .clibox { position: relative; flex: 1; min-width: 0; }
+  .cli { width: 100%; display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 0; border-radius: 10px; background: #1d1d1d; color: inherit; text-align: left; cursor: pointer; }
+  .cli:hover { background: #242424; }
+  .cli .av { width: 28px; height: 28px; flex-shrink: 0; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 12px; }
+  .clidrop { position: absolute; z-index: 20; top: calc(100% + 6px); left: 0; right: 0; display: flex; flex-direction: column; gap: 2px; padding: 6px; border-radius: 12px; border: 1px solid #2c2c2c; background: #1a1a1a; box-shadow: 0 16px 40px -12px rgba(0,0,0,.7); max-height: 320px; overflow: auto; }
+  .cliop { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 9px 10px; border: 0; border-radius: 8px; background: transparent; color: #e4e4e4; font-weight: 600; font-size: 13px; cursor: pointer; text-align: left; }
+  .cliop:hover { background: #242424; }
+  .inp { height: 34px; padding: 0 12px; border-radius: 9px; border: 1px solid #2c2c2c; background: #181818; color: #ececec; font: 500 13px Manrope; outline: none; width: 100%; }
+  .inp:focus { border-color: #5ab0f0; }
   .rodape { display: flex; justify-content: flex-end; gap: 10px; padding: 12px 16px 16px; }
   .bt { height: 46px; padding: 0 22px; border: 0; border-radius: 12px; font-weight: 700; font-size: 15px; cursor: pointer; white-space: nowrap; }
   .bt:disabled { opacity: .55; cursor: not-allowed; }
-  .bt.verde { background: #22c55e; color: #04210f; box-shadow: 0 6px 20px -8px rgba(34,197,94,.6); }
-  .bt.verde:hover:not(:disabled) { background: #34d46d; }
-  .bt.cont { background: transparent; border: 1px solid #22304f; color: #a9badb; font-weight: 600; font-size: 14px; padding: 0 16px; }
-  .bt.cont:hover { color: #fff; background: #16223d; }
-  @media (max-width: 960px) {
-    .main-mesa { padding: 14px 12px 20px; gap: 14px; }
-    .prods, .aside { flex-basis: 100%; height: auto; min-height: 0; }
-    .plista { max-height: 62vh; }
+  .bt.verde { background: #2fd36b; color: #0d1f14; }
+  .bt.verde:hover:not(:disabled) { background: #45e07e; }
+  .bt.cont { background: transparent; border: 1px solid #2c2c2c; color: #9aa3ab; font-weight: 600; font-size: 14px; padding: 0 16px; }
+  .bt.cont:hover { color: #fff; background: #242424; }
+  .vazio { margin: 4px 16px 12px; padding: 28px 16px; border-radius: 14px; border: 1px dashed #2c2c2c; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+  .rot2 { font-size: 10px; font-weight: 700; letter-spacing: .18em; color: #9aa3ab; }
+  .sech { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px 8px; }
+  .sech .esq { display: flex; align-items: center; gap: 8px; }
+  .sech .pt { width: 6px; height: 6px; border-radius: 50%; }
+  .sech .s { font-size: 12px; color: #7d8a96; }
+  .stepper { display: flex; align-items: center; flex: none; height: 32px; border-radius: 999px; background: #1d1d1d; }
+  .stepper button { width: 32px; height: 32px; border: 0; background: transparent; color: #9aa3ab; font: 600 15px Manrope; cursor: pointer; border-radius: 50%; }
+  .stepper button:hover { color: #fff; background: #242424; }
+  .stepper span { min-width: 22px; text-align: center; font: 800 13px Manrope; }
+  .stepper input { width: 46px; height: 28px; padding: 0; border: 1px solid #2c2c2c; border-radius: 8px; background: #181818; color: #f4f4f4; text-align: center; font: 800 14px Manrope; outline: none; }
+  .stepper input:focus { border-color: #ff9a2e; }
+  .cartl { display: flex; flex-direction: column; gap: 10px; padding: 12px 8px; border-bottom: 1px solid #232323; }
+  .cartl .nm { font-size: 14px; font-weight: 600; line-height: 1.4; color: #ececec; }
+  .obsin { flex: 1; min-width: 0; height: 32px; padding: 0 10px; border: 0; border-bottom: 1px solid #2c2c2c; background: transparent; color: #ff9a2e; font: 500 13px Manrope; outline: none; }
+  .xit { width: 26px; height: 26px; align-self: center; border: 0; border-radius: 7px; background: transparent; color: #6b747d; cursor: pointer; font-size: 14px; }
+  .xit:hover { background: #2a1620; color: #f05252; }
+  .menuctx { position: fixed; z-index: 70; min-width: 190px; padding: 6px; border-radius: 12px; border: 1px solid #2c2c2c; background: #1a1a1a; box-shadow: 0 16px 40px -12px rgba(0,0,0,.7); }
+  .menuctx button { width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 0; border-radius: 8px; background: transparent; color: #f05252; font-weight: 700; font-size: 13px; cursor: pointer; text-align: left; }
+  .menuctx button:hover { background: #2a1620; }
+  @media (max-width: 900px) {
+    .main-mesa { grid-template-columns: 1fr; height: auto; padding: 12px; gap: 12px; }
+    .plista { max-height: 60vh; }
     .aside .rolo { overflow: visible; }
-    .pgrade { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
-    .pcard { min-height: 120px; padding: 14px; }
   }
 
   /* login */
-  .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; background: radial-gradient(900px 500px at 50% -120px, #13203d 0%, #0a1020 70%); }
+  .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; background: #121212; }
   .login { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 28px; }
-  .lcard { display: flex; flex-direction: column; gap: 16px; padding: 24px; border-radius: 20px; border: 1px solid #1c2846; background: #101a30; box-shadow: 0 30px 80px -30px rgba(0,0,0,.6); }
+  .lcard { display: flex; flex-direction: column; gap: 16px; padding: 24px; border-radius: 20px; border: 1px solid #262626; background: #171717; box-shadow: 0 30px 80px -30px rgba(0,0,0,.6); }
   .campo { display: flex; flex-direction: column; gap: 6px; }
-  .campo > span { font-size: 12px; font-weight: 700; color: #a9badb; }
-  .campo input { width: 100%; height: 46px; padding: 0 14px; border-radius: 12px; background: #0c1426; color: #f2f6fc; font: 600 15px Manrope; outline: none; }
+  .campo > span { font-size: 12px; font-weight: 700; color: #9aa3ab; }
+  .campo input { width: 100%; height: 46px; padding: 0 14px; border-radius: 12px; background: #181818; color: #f4f4f4; font: 600 15px Manrope; outline: none; }
   .campo input:focus { border-color: #3b9be8 !important; }
 
   /* modal receber */
   .fundo { position: fixed; inset: 0; z-index: 50; background: rgba(4,8,18,.72); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; padding: 24px; }
-  .modal { width: 100%; max-width: 480px; max-height: calc(100vh - 48px); overflow: auto; border-radius: 20px; border: 1px solid #22304f; background: #101a30; box-shadow: 0 30px 80px -20px rgba(0,0,0,.7); display: flex; flex-direction: column; }
-  .metodos { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; padding: 4px; border-radius: 12px; background: #0c1426; border: 1px solid #1a2541; }
+  .modal { width: 100%; max-width: 480px; max-height: calc(100vh - 48px); overflow: auto; border-radius: 20px; border: 1px solid #2c2c2c; background: #171717; box-shadow: 0 30px 80px -20px rgba(0,0,0,.7); display: flex; flex-direction: column; }
+  .metodos { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; padding: 4px; border-radius: 12px; background: #181818; border: 1px solid #262626; }
   .metodos button { height: 36px; border: 0; border-radius: 9px; font-weight: 700; font-size: 13px; cursor: pointer; }
-  .rapido { flex: none; white-space: nowrap; height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid #1f2b48; background: transparent; color: #c9d6ea; font-weight: 600; font-size: 12px; cursor: pointer; }
-  .rapido:hover { background: #16223d; color: #fff; }
-  .pl { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; background: #0c1426; border: 1px solid #1a2541; }
-  .x { width: 32px; height: 32px; border-radius: 9px; border: 1px solid #1f2b48; background: transparent; color: #a9badb; font-size: 16px; cursor: pointer; }
-  .x:hover { background: #16223d; color: #fff; }
-  .toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 60; display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-radius: 12px; background: #12233a; color: #e6edf7; font-weight: 600; font-size: 14px; box-shadow: 0 16px 40px -12px rgba(0,0,0,.6); max-width: 92vw; }
+  .rapido { flex: none; white-space: nowrap; height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid #2c2c2c; background: transparent; color: #d6d6d6; font-weight: 600; font-size: 12px; cursor: pointer; }
+  .rapido:hover { background: #242424; color: #fff; }
+  .pl { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; background: #181818; border: 1px solid #262626; }
+  .x { width: 32px; height: 32px; border-radius: 9px; border: 1px solid #2c2c2c; background: transparent; color: #9aa3ab; font-size: 16px; cursor: pointer; }
+  .x:hover { background: #242424; color: #fff; }
+  .toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 60; display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-radius: 12px; background: #12233a; color: #ececec; font-weight: 600; font-size: 14px; box-shadow: 0 16px 40px -12px rgba(0,0,0,.6); max-width: 92vw; }
   .toast .ic { width: 20px; height: 20px; border-radius: 50%; color: #04210f; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex: none; }
-  .carreg { color: #7f9cc9; padding: 40px; text-align: center; font-size: 14px; }
+  .carreg { color: #9aa3ab; padding: 40px; text-align: center; font-size: 14px; }
 </style>
 </head>
 <body>
@@ -330,14 +349,14 @@ function Aprovacoes({ token, avisar }) {
       <div className="fundo" onClick={() => setAberto(false)}>
         <div className="modal" style={{ maxWidth: 520 }} onClick={(e) => e.stopPropagation()}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 22px 12px" }}>
-            <span className="sora" style={{ fontWeight: 700, fontSize: 19, color: "#f2f6fc" }}>Pedidos de cancelamento</span>
+            <span className="sora" style={{ fontWeight: 700, fontSize: 19, color: "#f4f4f4" }}>Pedidos de cancelamento</span>
             <button className="x" onClick={() => setAberto(false)}>×</button>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "0 22px 20px" }}>
             {lista.map((s) => (
-              <div key={s.id} style={{ display: "flex", flexDirection: "column", gap: 8, padding: 14, borderRadius: 14, background: "#0c1426", border: "1px solid #1a2541" }}>
-                <span style={{ fontSize: 12, color: "#7f9cc9" }}>{s.solicitante} · {s.lojaNome || s.loja} · {hhmm(s.criadoEm)}</span>
-                <span style={{ fontSize: 14, fontWeight: 600, color: "#f2f6fc" }}>{s.descricao}</span>
+              <div key={s.id} style={{ display: "flex", flexDirection: "column", gap: 8, padding: 14, borderRadius: 14, background: "#181818", border: "1px solid #262626" }}>
+                <span style={{ fontSize: 12, color: "#9aa3ab" }}>{s.solicitante} · {s.lojaNome || s.loja} · {hhmm(s.criadoEm)}</span>
+                <span style={{ fontSize: 14, fontWeight: 600, color: "#f4f4f4" }}>{s.descricao}</span>
                 <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
                   <button className="bt cont" disabled={busy === s.id} onClick={() => decidir(s, false)}>Recusar</button>
                   <button className="bt" disabled={busy === s.id} onClick={() => decidir(s, true)} style={{ background: "#f05252", color: "#fff" }}>{busy === s.id ? "…" : "Aprovar e cancelar"}</button>
@@ -419,7 +438,7 @@ function App() {
   if (LOCAL && (info.erro || !info.pronto)) return (
     <div className="login-wrap"><div className="lcard" style={{ maxWidth: 420 }}>
       <span className="sora" style={{ fontWeight: 700, fontSize: 18 }}>Modo local ainda não configurado</span>
-      <span style={{ fontSize: 14, color: "#7f9cc9" }}>O agente desta loja precisa conectar na internet uma vez pra receber a configuração. Confira a internet do computador do agente e recarregue a página.</span>
+      <span style={{ fontSize: 14, color: "#9aa3ab" }}>O agente desta loja precisa conectar na internet uma vez pra receber a configuração. Confira a internet do computador do agente e recarregue a página.</span>
     </div></div>
   );
   if (!token || (LOCAL && !passe)) return <Login onOk={async (t, manter) => {
@@ -435,7 +454,7 @@ function App() {
           <div className="logo">&lt;v/&gt;</div>
           <div className="marca"><b>Meu Giro</b><small>MESAS</small></div>
         </div>
-        {(mesa || repo) && (<><div className="sep" /><button className="hbtn" onClick={() => { setMesa(null); setRepo(false); }}>← Mesas</button></>)}
+        {repo && !mesa && (<><div className="sep" /><button className="hbtn" onClick={() => setRepo(false)}>← Mesas</button></>)}
         <div style={{ flex: 1 }} />
         {LOCAL && (viaRota === "local"
           ? <span className="pill" style={{ background: "rgba(59,155,232,.12)", color: "#5aaef0" }}><i style={{ background: "#3b9be8" }} />Rede local</span>
@@ -469,7 +488,7 @@ function App() {
         : <Salao {...ctx} abrir={setMesa} reposicao={() => setRepo(true)} />}
       {toast && (
         <div className="toast" style={{ border: "1px solid " + (toast.err ? "#6b2a2a" : "#1f6b3e") }}>
-          <span className="ic" style={{ background: toast.err ? "#f05252" : "#22c55e" }}>{toast.err ? "!" : "✓"}</span>{toast.msg}
+          <span className="ic" style={{ background: toast.err ? "#f05252" : "#2fd36b" }}>{toast.err ? "!" : "✓"}</span>{toast.msg}
         </div>
       )}
     </div>
@@ -493,21 +512,21 @@ function Login({ onOk }) {
     }
     setBusy(false);
   }
-  const borda = "1px solid " + (erro ? "#6b2a2a" : "#1f2b48");
+  const borda = "1px solid " + (erro ? "#6b2a2a" : "#2c2c2c");
   return (
     <div className="login-wrap">
       <form className="login" onSubmit={entrar}>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, textAlign: "center" }}>
           <div className="logo" style={{ width: 56, height: 56, borderRadius: 16, fontSize: 16 }}>&lt;v/&gt;</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <span className="sora" style={{ fontWeight: 700, fontSize: 26, letterSpacing: "-.02em", color: "#f2f6fc" }}>Meu Giro</span>
+            <span className="sora" style={{ fontWeight: 700, fontSize: 26, letterSpacing: "-.02em", color: "#f4f4f4" }}>Meu Giro</span>
             <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".16em", color: "#f5a524" }}>MESAS</span>
           </div>
         </div>
         <div className="lcard">
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <span className="sora" style={{ fontWeight: 700, fontSize: 18, color: "#f2f6fc" }}>Entrar</span>
-            <span style={{ fontSize: 13, color: "#7f9cc9" }}>Use o mesmo usuário e senha do app Meu Giro.</span>
+            <span className="sora" style={{ fontWeight: 700, fontSize: 18, color: "#f4f4f4" }}>Entrar</span>
+            <span style={{ fontSize: 13, color: "#9aa3ab" }}>Use o mesmo usuário e senha do app Meu Giro.</span>
           </div>
           <label className="campo"><span>Usuário</span>
             <input value={user} onChange={(e) => { setUser(e.target.value); setErro(""); }} placeholder="usuário ou e-mail" autoComplete="username" style={{ border: borda }} autoFocus />
@@ -519,13 +538,13 @@ function Login({ onOk }) {
             </div>
           </label>
           {erro && <span style={{ fontSize: 13, fontWeight: 600, color: "#f05252" }}>{erro}</span>}
-          <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 13, color: "#c9d6ea" }} onClick={(e) => { e.preventDefault(); setManter(!manter); }}>
-            <span style={{ width: 20, height: 20, flex: "none", borderRadius: 6, border: "1px solid " + (manter ? "#22c55e" : "#2a3a5c"), background: manter ? "#22c55e" : "#0c1426", color: "#04210f", fontSize: 12, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>{manter ? "✓" : ""}</span>
+          <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 13, color: "#d6d6d6" }} onClick={(e) => { e.preventDefault(); setManter(!manter); }}>
+            <span style={{ width: 20, height: 20, flex: "none", borderRadius: 6, border: "1px solid " + (manter ? "#2fd36b" : "#333333"), background: manter ? "#2fd36b" : "#181818", color: "#04210f", fontSize: 12, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>{manter ? "✓" : ""}</span>
             Manter conectado neste dispositivo
           </label>
           <button type="submit" className="bt verde" disabled={busy} style={{ height: 48 }}>{busy ? "Entrando…" : "Entrar"}</button>
         </div>
-        <span style={{ textAlign: "center", fontSize: 13, color: "#7189b0" }}>Esqueceu a senha? Fale com o gerente da loja.</span>
+        <span style={{ textAlign: "center", fontSize: 13, color: "#7d8a96" }}>Esqueceu a senha? Fale com o gerente da loja.</span>
       </form>
     </div>
   );
@@ -543,10 +562,10 @@ function rotulo(a) {
 }
 
 function CardAt({ rot, num, oc, total, meta, onClick }) {
-  const ac = oc ? "#f5a524" : "#22c55e";
+  const ac = oc ? "#f5a524" : "#2fd36b";
   return (
     <button className="card" onClick={onClick}
-      style={{ border: "1px solid " + (oc ? "#3a3220" : "#173a2b"), background: oc ? "linear-gradient(180deg,#16203a,#111a30)" : "#0f1830" }}>
+      style={{ border: "1px solid " + (oc ? "#3a3220" : "#173a2b"), background: oc ? "linear-gradient(180deg,#16203a,#111a30)" : "#181818" }}>
       <div className="barra" style={{ background: ac }} />
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
@@ -556,8 +575,8 @@ function CardAt({ rot, num, oc, total, meta, onClick }) {
         <span className="pill" style={{ background: oc ? "rgba(245,165,36,.12)" : "rgba(34,197,94,.12)", color: ac }}><i style={{ background: ac }} />{oc ? "Ocupada" : "Livre"}</span>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 3, minWidth: 0 }}>
-        <span className="sora" style={{ fontWeight: 600, fontSize: 17, color: oc ? "#f2f6fc" : "#7f9cc9" }}>{oc ? brl(nnum(total)) : "Disponível"}</span>
-        <span style={{ fontSize: 12, color: "#7189b0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{meta}</span>
+        <span className="sora" style={{ fontWeight: 600, fontSize: 17, color: oc ? "#f4f4f4" : "#9aa3ab" }}>{oc ? brl(nnum(total)) : "Disponível"}</span>
+        <span style={{ fontSize: 12, color: "#7d8a96", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{meta}</span>
       </div>
     </button>
   );
@@ -585,18 +604,18 @@ function NovoAvulso({ token, loja, fechar, abrir }) {
     <div className="fundo" onClick={fechar}>
       <div className="modal" style={{ maxWidth: 460 }} onClick={(e) => e.stopPropagation()}>
         <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "22px 22px 8px" }}>
-          <span className="sora" style={{ fontWeight: 700, fontSize: 20, color: "#f2f6fc" }}>Novo avulso</span>
-          <span style={{ fontSize: 13, color: "#7f9cc9" }}>Atendimento no balcão, sem mesa. Digite o nome ou escolha um cliente cadastrado (opcional).</span>
+          <span className="sora" style={{ fontWeight: 700, fontSize: 20, color: "#f4f4f4" }}>Novo avulso</span>
+          <span style={{ fontSize: 13, color: "#9aa3ab" }}>Atendimento no balcão, sem mesa. Digite o nome ou escolha um cliente cadastrado (opcional).</span>
           <input className="inp" style={{ height: 46, fontSize: 15 }} autoFocus maxLength={60} placeholder="Nome ou cliente cadastrado (nome, CPF/CNPJ)" value={nome}
             onChange={(e) => setNome(e.target.value)} onKeyDown={(e) => e.key === "Enter" && enter()} />
           {lista && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 2, maxHeight: 240, overflow: "auto", borderRadius: 12, background: "#0c1426", border: "1px solid #1a2541", padding: 4 }}>
-              {!lista.length && <div style={{ padding: "8px 12px", fontSize: 13, color: "#7f9cc9" }}>Nenhum cliente cadastrado com esse nome. Pode abrir só com o nome.</div>}
+            <div style={{ display: "flex", flexDirection: "column", gap: 2, maxHeight: 240, overflow: "auto", borderRadius: 12, background: "#181818", border: "1px solid #262626", padding: 4 }}>
+              {!lista.length && <div style={{ padding: "8px 12px", fontSize: 13, color: "#9aa3ab" }}>Nenhum cliente cadastrado com esse nome. Pode abrir só com o nome.</div>}
               {lista.map((c, i) => (
                 <button key={c.id} className="cliop" onClick={() => cliente(c)}
-                  style={(igual ? igual.id === c.id : i === 0) ? { background: "#16223d", boxShadow: "inset 3px 0 0 #3b9be8" } : null}>
-                  <span>{c.nome}{c.documento ? <span style={{ color: "#6f86ab", fontWeight: 500 }}> · {c.documento}</span> : null}</span>
-                  <span style={{ fontSize: 12, fontWeight: 500, color: "#7189b0", whiteSpace: "nowrap" }}>{c.tabela ? "Tabela " + c.tabela : "cadastrado"}</span>
+                  style={(igual ? igual.id === c.id : i === 0) ? { background: "#242424", boxShadow: "inset 3px 0 0 #3b9be8" } : null}>
+                  <span>{c.nome}{c.documento ? <span style={{ color: "#7d8a96", fontWeight: 500 }}> · {c.documento}</span> : null}</span>
+                  <span style={{ fontSize: 12, fontWeight: 500, color: "#7d8a96", whiteSpace: "nowrap" }}>{c.tabela ? "Tabela " + c.tabela : "cadastrado"}</span>
                 </button>
               ))}
             </div>
@@ -629,7 +648,7 @@ function Salao({ token, loja, avisar, abrir, reposicao }) {
   const lista = tab === "mesas" ? mesas : tab === "comandas" ? comandas : avulsos;
   const ocupadas = lista.filter((m) => m.idAtendimento);
   const aberto = [...mesas, ...comandas, ...avulsos].filter((m) => m.idAtendimento).reduce((s, m) => s + nnum(m.total), 0);
-  const filtros = [["Todas", lista.length, "#3b9be8"], ["Livres", lista.length - ocupadas.length, "#22c55e"], ["Ocupadas", ocupadas.length, "#f5a524"]];
+  const filtros = [["Todas", lista.length, "#3b9be8"], ["Livres", lista.length - ocupadas.length, "#2fd36b"], ["Ocupadas", ocupadas.length, "#f5a524"]];
   const vis = lista.filter((m) => filtro === "Todas" || (filtro === "Livres" ? !m.idAtendimento : !!m.idAtendimento));
   // no LinkPro a loja usa mesa OU comanda (dados_empresa.comanda_ou_mesa); avulso sempre
   const abas = [dados.usaComanda ? ["comandas", "Comandas", comandas.filter((m) => m.idAtendimento).length]
@@ -671,7 +690,7 @@ function Salao({ token, loja, avisar, abrir, reposicao }) {
         {tab !== "avulsos" && (
           <div className="filtros">
             {filtros.map(([l, c, dot]) => (
-              <button key={l} onClick={() => setFiltro(l)} style={{ background: filtro === l ? "#1a2846" : "transparent", color: filtro === l ? "#fff" : "#a9badb" }}>
+              <button key={l} onClick={() => setFiltro(l)} style={{ background: filtro === l ? "#2a2a2a" : "transparent", color: filtro === l ? "#fff" : "#9aa3ab" }}>
                 <span className="dot" style={{ background: dot }} />{l}<span className="cnt">{c}</span>
               </button>
             ))}
@@ -753,7 +772,7 @@ function Mesa({ token, loja, avisar, mesa, voltar }) {
   const cartQtd = ativos.reduce((s, c) => s + c.qtd, 0);
   const [autorizar, setAutorizar] = useState(null); // {titulo, texto, ok(quem)}
   const ocupada = !!idAt && itens.length > 0;
-  const ac = ocupada ? "#f5a524" : "#22c55e";
+  const ac = ocupada ? "#f5a524" : "#2fd36b";
 
   async function precosDoCarrinho(idCli) {
     if (!cart.length) return;
@@ -812,106 +831,99 @@ function Mesa({ token, loja, avisar, mesa, voltar }) {
   );
   const nItens = (n) => (n ? qtdTxt(n) + (n > 1 ? " itens" : " item") : "");
 
+  const [editObs, setEditObs] = useState(null); // linha do pedido novo com a observação aberta
+  const tirarNovo = (c, idx) => setAutorizar({
+    titulo: "Cancelar item", texto: c.qtd + "× " + c.nome,
+    ok: (por) => setCart((cs) => cs.map((x, j) => (j === idx ? { ...x, cancelado: true, por } : x))) });
+  const corStatus = !aberta ? ["#0f2a3a", "#5ab0f0"] : ocupada ? ["#2e2410", "#ff9a2e"] : ["#0f2a1a", "#2fd36b"];
+
   return (
-    <main className="main-mesa">
-      {aberta ? <Produtos token={token} loja={loja} idCliente={cli.id} cart={cart} onAdd={add} /> : null}
+    <main className={"main-mesa" + (aberta ? "" : " so-aside")}>
+      {aberta ? <Produtos token={token} loja={loja} idCliente={cli.id} cart={cart} onAdd={add} voltar={voltar} /> : null}
 
       <aside className="aside">
         <div className="topo">
-          <div style={{ display: "flex", alignItems: "flex-end", gap: 12, flexWrap: "wrap" }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: 2, marginRight: "auto" }}>
-              <span className="rot2" style={{ color: "#566b90" }}>{rot.rot}</span>
-              <h1 className="sora" style={{ margin: 0, fontWeight: 600, fontSize: rot.num.length > 4 ? 28 : 40, lineHeight: 1.05, letterSpacing: "-.03em", color: "#f2f6fc", wordBreak: "break-word" }}>{rot.num}</h1>
-            </div>
-            <span className="pill" style={{ height: 26, fontSize: 12, padding: "0 10px", background: !aberta ? "rgba(59,155,232,.12)" : ocupada ? "rgba(245,165,36,.12)" : "rgba(34,197,94,.12)", color: !aberta ? "#5aaef0" : ac }}>
-              <i style={{ background: !aberta ? "#3b9be8" : ac }} />{aberta ? (ocupada ? "Ocupada" : "Livre") : "Fechada"}
-            </span>
-            {com && com.abertura && <span style={{ fontSize: 12, color: "#7189b0" }}>aberta há {ago(com.abertura)}</span>}
-          </div>
+          <div className="rot-mesa" title={rot.titulo}><span>{rot.rot}</span><b style={rot.num.length > 4 ? { fontSize: 18 } : null}>{rot.num}</b></div>
           <ClienteBox cli={cli} aberto={cliAberto} podeMexer={aberta} token={token} loja={loja}
             toggle={() => setCliAberto(!cliAberto)} escolher={escolherCliente} />
+          <span title={com && com.abertura ? "aberta há " + ago(com.abertura) : ""} style={{ display: "flex", alignItems: "center", gap: 5, padding: "4px 10px", borderRadius: 999, background: corStatus[0], color: corStatus[1], fontSize: 12, fontWeight: 700, flexShrink: 0 }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: corStatus[1] }} />{aberta ? (ocupada ? "Ocupada" : "Livre") : "Fechada"}
+          </span>
         </div>
 
-        <div className="rolo">
-          {aberta && (<>
-            {sec("#22c55e", "PEDIDO NOVO", nItens(cartQtd), ativos.length > 0 && <button className="limpar" onClick={() => setAutorizar({
+        {aberta && (
+          <div className="barra-sec">
+            <span className="pt" style={{ background: "#2fd36b" }} /><span className="t" style={{ color: "#2fd36b" }}>PEDIDO NOVO</span>
+            <span className="s">{nItens(cartQtd)}</span>
+            {ativos.length > 0 && <button className="limpar dir" onClick={() => setAutorizar({
               titulo: "Limpar o pedido", texto: "Tira todos os itens do pedido novo.",
-              ok: () => { pendente.current = null; setCart([]); } })}>Limpar</button>)}
-            {!cart.length ? (
-              <div className="vazio">
-                <span style={{ fontSize: 14, fontWeight: 500, color: "#c9d6ea" }}>Nenhum item no pedido</span>
-                <span style={{ fontSize: 12, color: "#7189b0" }}>Toque nos produtos para adicionar.</span>
+              ok: () => { pendente.current = null; setCart([]); } })}>Limpar</button>}
+          </div>
+        )}
+
+        <div className="rolo">
+          {aberta && (!cart.length ? <div className="cvazio">Toque em um produto para adicionar</div> : cart.map((c, idx) => (
+            c.cancelado ? (
+              <div className="clin cancelado" key={idx} title={c.nome}>
+                <span className="nm">{c.qtd}× {c.nome}</span>
+                <span style={{ fontSize: 10, fontWeight: 800, color: "#f05252" }}>CANCELADO{c.por ? " · " + c.por : ""}</span>
               </div>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", padding: "0 16px" }}>
-                {cart.map((c, idx) => (
-                  c.cancelado ? (
-                  <div className="cartl" key={idx} style={{ opacity: .55 }}>
-                    <div className="l1">
-                      <span className="nm" style={{ textDecoration: "line-through" }}>{c.qtd}× {c.nome}</span>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: "#f05252", whiteSpace: "nowrap" }}>CANCELADO{c.por ? " · " + c.por : ""}</span>
-                    </div>
-                  </div>
-                  ) : (
-                  <div className="cartl" key={idx} onContextMenu={(e) => abrirMenu(e, "Cancelar item", () => setAutorizar({
-                    titulo: "Cancelar item", texto: c.qtd + "× " + c.nome,
-                    ok: (por) => setCart((cs) => cs.map((x, j) => (j === idx ? { ...x, cancelado: true, por } : x))) }))}>
-                    <div className="l1">
-                      <span className="nm">{c.nome}</span>
-                      <Val preco={c.preco} normal={c.normal} qtd={c.qtd} cls="val forte" />
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <div className="stepper">
-                        {/* como no LinkPro: diminui até 1; tirar o item é "cancelar" (com autorização) */}
-                        <button disabled={c.qtd <= 1} style={c.qtd <= 1 ? { opacity: .35, cursor: "default" } : null}
-                          onClick={() => setCart((cs) => cs.map((x, j) => (j === idx && x.qtd > 1 ? { ...x, qtd: x.qtd - 1 } : x)))}>−</button>
-                        <span>{c.qtd}</span>
-                        <button onClick={() => setCart((cs) => cs.map((x, j) => (j === idx ? { ...x, qtd: x.qtd + 1 } : x)))}>+</button>
-                      </div>
-                      <input className="obsin" value={c.obs} placeholder="Observação" maxLength={200}
-                        onChange={(e) => { const v = e.target.value; setCart((cs) => cs.map((x, j) => (j === idx ? { ...x, obs: v } : x))); }} />
-                      <button className="xit" title="Cancelar item (precisa de autorização)" onClick={() => setAutorizar({
-                        titulo: "Cancelar item", texto: c.qtd + "× " + c.nome,
-                        ok: (por) => setCart((cs) => cs.map((x, j) => (j === idx ? { ...x, cancelado: true, por } : x))) })}>✕</button>
-                    </div>
-                  </div>
-                  )
-                ))}
+              <div className="clin" key={idx} title={c.nome} onContextMenu={(e) => abrirMenu(e, "Cancelar item", () => tirarNovo(c, idx))}>
+                <span className="nm">{c.nome}</span>
+                <div className="linha">
+                  {/* como no LinkPro: diminui até 1; tirar o item é "cancelar" (com autorização) */}
+                  <button className="sb" disabled={c.qtd <= 1} onClick={() => setCart((cs) => cs.map((x, j) => (j === idx && x.qtd > 1 ? { ...x, qtd: x.qtd - 1 } : x)))}>−</button>
+                  <span className="un"><b>{c.qtd}</b> UN × {brl(c.preco)}</span>
+                  <button className="sb" onClick={() => setCart((cs) => cs.map((x, j) => (j === idx ? { ...x, qtd: x.qtd + 1 } : x)))}>+</button>
+                  <button className="ico" title="Observação" onClick={() => setEditObs(editObs === idx ? null : idx)} style={c.obs ? { color: "#ff9a2e" } : null}>✎</button>
+                  <span className={"tot" + (nnum(c.normal) > 0 && Math.abs(nnum(c.normal) - c.preco) >= 0.005 ? " desc" : "")}>{brl(c.qtd * c.preco)}</span>
+                  <button className="ico x" title="Cancelar item (precisa de autorização)" onClick={() => tirarNovo(c, idx)}>✕</button>
+                </div>
+                {editObs === idx
+                  ? <input className="obsin" autoFocus value={c.obs} placeholder="Observação (ex.: sem gelo)" maxLength={200}
+                      onChange={(e) => { const v = e.target.value; setCart((cs) => cs.map((x, j) => (j === idx ? { ...x, obs: v } : x))); }}
+                      onKeyDown={(e) => e.key === "Enter" && setEditObs(null)} onBlur={() => setEditObs(null)} />
+                  : c.obs ? <span className="obs">{c.obs}</span> : null}
               </div>
-            )}
-          </>)}
+            )
+          )))}
 
           {itens.length > 0 && (<>
-            {sec("#f5a524", "JÁ NA MESA", nItens(qtdItens), <span className="sora" style={{ fontWeight: 600, fontSize: 13, color: "#f5a524", whiteSpace: "nowrap" }}>{brl(total)}</span>)}
-            <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "0 24px 20px" }}>
-              {pedidos.map((p, i) => (
-                <div className="ped" key={p.k}>
-                  <div className="pedh"><span>PEDIDO {i + 1}</span><span style={{ fontWeight: 600, letterSpacing: 0 }}>{hhmm(p.hora)}</span></div>
-                  {p.linhas.map((l) => (
-                    <div className="lin" key={l.id} onContextMenu={(e) => aberta && abrirMenu(e, "Cancelar / diminuir item", () => setCancelando(l))}>
-                      <span className="q">{qtdTxt(l.qtd)}×</span>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 1, minWidth: 0 }}>
-                        <span className="nm">{l.descricao}</span>
-                        {l.obs && <span className="obs">{l.obs}</span>}
-                      </div>
-                      <Val preco={l.preco} normal={l.precoNormal} qtd={nnum(l.qtd)} />
-                      {aberta ? <button className="xit" title="Cancelar ou diminuir (precisa de autorização)" onClick={() => setCancelando(l)}>✕</button> : <span />}
-                    </div>
-                  ))}
-                </div>
-              ))}
+            <div className="barra-sec" style={{ marginTop: aberta ? 8 : 0 }}>
+              <span className="pt" style={{ background: "#ff9a2e" }} /><span className="t" style={{ color: "#ff9a2e" }}>JÁ NA MESA</span>
+              <span className="s">{nItens(qtdItens)}</span>
+              <span className="dir" style={{ fontSize: 12, fontWeight: 800, color: "#ff9a2e" }}>{brl(total)}</span>
             </div>
+            {pedidos.map((p, i) => (
+              <div key={p.k}>
+                <div className="pedh"><span>PEDIDO {i + 1}</span><span style={{ letterSpacing: 0 }}>{hhmm(p.hora)}</span></div>
+                {p.linhas.map((l) => (
+                  <div className="clin" key={l.id} title={l.descricao} onContextMenu={(e) => aberta && abrirMenu(e, "Cancelar / diminuir item", () => setCancelando(l))}>
+                    <span className="nm">{l.descricao}</span>
+                    <div className="linha">
+                      <span className="un"><b>{qtdTxt(l.qtd)}</b> UN × {brl(nnum(l.preco))}</span>
+                      <span className={"tot" + (nnum(l.precoNormal) > 0 && Math.abs(nnum(l.precoNormal) - nnum(l.preco)) >= 0.005 ? " desc" : "")}>{brl(nnum(l.qtd) * nnum(l.preco))}</span>
+                      {aberta && <button className="ico x" title="Cancelar ou diminuir (precisa de autorização)" onClick={() => setCancelando(l)}>✕</button>}
+                    </div>
+                    {l.obs && <span className="obs">{l.obs}</span>}
+                  </div>
+                ))}
+              </div>
+            ))}
           </>)}
-          {!aberta && <div className="vazio"><span style={{ fontSize: 14, fontWeight: 600, color: "#22c55e" }}>Mesa fechada no caixa.</span></div>}
+          {!aberta && <div className="cvazio" style={{ color: "#2fd36b", fontWeight: 600 }}>Mesa fechada no caixa.</div>}
         </div>
 
         <div className="pe">
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <div className="tl"><span>Na mesa</span><b>{brl(total)}</b></div>
-            {aberta && <div className="tl"><span>Pedido novo</span><b>{brl(cartTotal)}</b></div>}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", paddingTop: 10, marginTop: 6, borderTop: "1px dashed #1e2a47" }}>
-              <span className="rot2">TOTAL</span>
-              <span className="sora" style={{ fontWeight: 600, fontSize: 30, letterSpacing: "-.03em", color: "#f5a524", whiteSpace: "nowrap" }}>{brl(total + (aberta ? cartTotal : 0))}</span>
+          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 12 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <span className="tl">Na mesa <b>{brl(total)}</b></span>
+              {aberta && <span className="tl">Pedido <b>{brl(cartTotal)}</b></span>}
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+              <span style={{ fontSize: 10, letterSpacing: 3, fontWeight: 700, color: "#9aa3ab" }}>TOTAL</span>
+              <span style={{ fontSize: 26, fontWeight: 800, color: "#ff9a2e", lineHeight: 1.1, whiteSpace: "nowrap" }}>{brl(total + (aberta ? cartTotal : 0))}</span>
             </div>
           </div>
           {aberta ? (
@@ -932,8 +944,8 @@ function Mesa({ token, loja, avisar, mesa, voltar }) {
               <div style={{ width: 56, height: 56, borderRadius: 28, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(240,82,82,.12)", border: "1px solid rgba(240,82,82,.35)" }}>
                 <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#f05252" strokeWidth="2" strokeLinecap="round"><path d="M2 8.8a15 15 0 0 1 20 0" /><path d="M5 12.5a10 10 0 0 1 14 0" /><path d="M8.5 16a5 5 0 0 1 7 0" /><path d="M12 20h.01" /><path d="M3 3l18 18" /></svg>
               </div>
-              <span className="sora" style={{ fontWeight: 700, fontSize: 19, color: "#f2f6fc" }}>A conexão com o servidor falhou</span>
-              <span style={{ fontSize: 14, lineHeight: 1.5, color: "#a9badb" }}>
+              <span className="sora" style={{ fontWeight: 700, fontSize: 19, color: "#f4f4f4" }}>A conexão com o servidor falhou</span>
+              <span style={{ fontSize: 14, lineHeight: 1.5, color: "#9aa3ab" }}>
                 O pedido {rot.titulo.startsWith("Comanda") ? "da " : "do "}{rot.titulo} não foi confirmado. Os {cart.length} {cart.length === 1 ? "item continua salvo" : "itens continuam salvos"} aqui,
                 nada se perde. Confira a rede e tente de novo.
               </span>
@@ -991,34 +1003,30 @@ function ClienteBox({ cli, aberto, podeMexer, token, loja, toggle, escolher }) {
   const tem = !!cli.id;
   return (
     <div className="clibox">
-      <button className="cli" onClick={() => podeMexer && toggle()} style={{ cursor: podeMexer ? "pointer" : "default" }}>
-        <div className="av" style={{ background: tem ? "#2a1f4a" : "#16223d", color: tem ? "#b79bff" : "#7189b0" }}>{tem ? iniciais(cli.nome) : "?"}</div>
-        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 1 }}>
-          <span style={{ fontWeight: 700, fontSize: 14, color: "#f2f6fc", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{tem ? cli.nome : "Sem cliente"}</span>
-          <span style={{ fontSize: 12, color: "#7f9cc9", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{tem ? (cli.tabela ? "Tabela: " + cli.tabela : "Preços pela tabela do cliente") : "Toque para escolher · aplica a tabela de preço"}</span>
-        </div>
-        {podeMexer && <span style={{ flex: "none", fontSize: 12, fontWeight: 600, color: "#5aaef0" }}>{aberto ? "Fechar" : tem ? "Trocar" : "Escolher"}</span>}
+      <button className="cli" onClick={() => podeMexer && toggle()} style={{ cursor: podeMexer ? "pointer" : "default" }}
+        title={tem ? (cli.tabela ? "Tabela " + cli.tabela : cli.nome) : "Escolher o cliente aplica a tabela de preço dele"}>
+        <span className="av" style={{ background: tem ? "#2a1f4a" : "#0f2e33", color: tem ? "#b79bff" : "#3ec6d6" }}>{tem ? iniciais(cli.nome) : "?"}</span>
+        <span style={{ flex: 1, minWidth: 0, fontWeight: 700, fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{tem ? cli.nome : "Sem cliente"}</span>
+        {podeMexer && <span style={{ color: "#5ab0f0", fontSize: 12, fontWeight: 700, flex: "none" }}>{aberto ? "Fechar" : tem ? "Trocar" : "Escolher"}</span>}
       </button>
       {aberto && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 2, padding: 6, borderTop: "1px solid #1a2541" }}>
-          <div style={{ padding: "4px 6px 6px" }}>
-            <input className="inp" style={{ height: 38 }} autoFocus placeholder="Buscar cliente: nome, apelido ou CPF/CNPJ" value={q} onChange={(e) => setQ(e.target.value)} />
-          </div>
-          {lista && !lista.length && <div style={{ padding: "8px 12px", fontSize: 13, color: "#7f9cc9" }}>Nenhum cliente encontrado.</div>}
+        <div className="clidrop">
+          <input className="inp" style={{ height: 36, marginBottom: 4 }} autoFocus placeholder="Nome, apelido ou CPF/CNPJ" value={q} onChange={(e) => setQ(e.target.value)} />
+          {lista && !lista.length && <div style={{ padding: "8px 10px", fontSize: 13, color: "#9aa3ab" }}>Nenhum cliente encontrado.</div>}
           {(lista || []).map((c) => (
             <button key={c.id} className="cliop" onClick={() => escolher(c)}>
-              <span>{c.nome}{c.documento ? <span style={{ color: "#6f86ab", fontWeight: 500 }}> · {c.documento}</span> : null}</span>
-              <span style={{ fontSize: 12, fontWeight: 500, color: "#7189b0", whiteSpace: "nowrap" }}>{c.tabela ? "Tabela " + c.tabela : "sem tabela"}</span>
+              <span>{c.nome}{c.documento ? <span style={{ color: "#7d8a96", fontWeight: 500 }}> · {c.documento}</span> : null}</span>
+              <span style={{ fontSize: 12, fontWeight: 500, color: "#7d8a96", whiteSpace: "nowrap" }}>{c.tabela ? "Tabela " + c.tabela : "sem tabela"}</span>
             </button>
           ))}
-          {tem && <button className="cliop" onClick={() => escolher(null)}><span>Remover cliente</span><span style={{ fontSize: 12, fontWeight: 500, color: "#7189b0" }}>volta ao preço normal</span></button>}
+          {tem && <button className="cliop" onClick={() => escolher(null)}><span>Remover cliente</span><span style={{ fontSize: 12, fontWeight: 500, color: "#7d8a96" }}>volta ao preço normal</span></button>}
         </div>
       )}
     </div>
   );
 }
 
-function Produtos({ token, loja, idCliente, cart, onAdd }) {
+function Produtos({ token, loja, idCliente, cart, onAdd, voltar }) {
   const [q, setQ] = useState(""), [grupos, setGrupos] = useState([]), [grupo, setGrupo] = useState(null);
   const [lista, setLista] = useState(null);
   const deb = useRef(null);
@@ -1037,18 +1045,19 @@ function Produtos({ token, loja, idCliente, cart, onAdd }) {
   const aba = (id, label) => <button key={label} className={grupo === id ? "on" : ""} onClick={() => setGrupo(id)}>{label}</button>;
   return (
     <section className="prods">
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <div className="topo-p">
+        <button className="voltar" onClick={voltar}>← Voltar</button>
         <div className="busca"><span>⌕</span><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar por nome, código ou código de barras" /></div>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-          <div className="abas">{aba(null, "Todos")}{grupos.map((g) => aba(g.id, g.nome))}</div>
-          <span style={{ fontSize: 12, color: "#7189b0" }}>{lista ? lista.length + " produtos" : ""}</span>
-        </div>
+      </div>
+      <div className="chips">
+        {aba(null, "Todos")}{grupos.map((g) => aba(g.id, g.nome))}
+        <span style={{ marginLeft: "auto", fontSize: 13, color: "#7d8a96" }}>{lista ? lista.length + " produtos" : ""}</span>
       </div>
       <div className="plista">
         {lista == null ? <div className="carreg">Carregando…</div> : !lista.length ? (
           <div style={{ padding: "60px 20px", textAlign: "center", display: "flex", flexDirection: "column", gap: 6 }}>
-            <span className="sora" style={{ fontWeight: 600, fontSize: 16, color: "#dbe5f3" }}>Nenhum produto encontrado</span>
-            <span style={{ fontSize: 13, color: "#7189b0" }}>Tente outro nome ou código.</span>
+            <span className="sora" style={{ fontWeight: 600, fontSize: 16, color: "#e4e4e4" }}>Nenhum produto encontrado</span>
+            <span style={{ fontSize: 13, color: "#7d8a96" }}>Tente outro nome ou código.</span>
           </div>
         ) : (
           <div className="pgrade">
@@ -1056,15 +1065,13 @@ function Produtos({ token, loja, idCliente, cart, onAdd }) {
               const noCart = cart.filter((c) => c.id === p.id).reduce((s, c) => s + c.qtd, 0);
               const desc = nnum(p.precoNormal) > 0 && Math.abs(nnum(p.precoNormal) - nnum(p.preco)) >= 0.005;
               return (
-                <button key={p.id} className={"pcard" + (noCart ? " on" : "")} onClick={() => onAdd(p)}>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, minHeight: 24 }}>
-                      <span className="gr">{p.grupo || p.codigo || ""}</span>
-                      {noCart > 0 && <span className="badge">{noCart}</span>}
-                    </div>
-                    <span className="nome">{p.descricao}</span>
+                <button key={p.id} className={"pcard" + (noCart ? " on" : "")} onClick={() => onAdd(p)} title={p.descricao}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, minHeight: 20 }}>
+                    <span className="gr">{p.grupo || p.codigo || ""}</span>
+                    {noCart > 0 && <span className="badge" style={{ marginLeft: "auto" }}>{noCart}</span>}
                   </div>
-                  <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 8 }}>
+                  <span className="nome">{p.descricao}</span>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
                     <span className={"preco" + (desc ? " desc" : "")}>{desc && <s>{brl(nnum(p.precoNormal))}</s>}{brl(nnum(p.preco))}</span>
                     <span className="mais">+</span>
                   </div>
@@ -1132,8 +1139,8 @@ function Reposicao({ token, loja, avisar, voltar }) {
         <div className="plista">
           {dados == null ? <div className="carreg">Carregando…</div> : !produtos.length ? (
             <div style={{ padding: "60px 20px", textAlign: "center", display: "flex", flexDirection: "column", gap: 10, alignItems: "center" }}>
-              <span className="sora" style={{ fontWeight: 600, fontSize: 16, color: "#dbe5f3" }}>Nenhum produto marcado pra reposição</span>
-              <span style={{ fontSize: 13, color: "#7189b0" }}>Marque os produtos da vitrine (coxinha, pastel…) em Editar lista.</span>
+              <span className="sora" style={{ fontWeight: 600, fontSize: 16, color: "#e4e4e4" }}>Nenhum produto marcado pra reposição</span>
+              <span style={{ fontSize: 13, color: "#7d8a96" }}>Marque os produtos da vitrine (coxinha, pastel…) em Editar lista.</span>
               <button className="bt verde" style={{ marginTop: 8 }} onClick={() => setEditar(true)}>Escolher produtos</button>
             </div>
           ) : (
@@ -1150,7 +1157,7 @@ function Reposicao({ token, loja, avisar, voltar }) {
                       <span className="nome">{p.descricao}</span>
                     </div>
                     <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 8 }}>
-                      <span style={{ fontSize: 12, color: p.temPonto ? "#6f86ab" : "#f05252" }}>{p.temPonto ? "toque pra pedir" : "sem impressora no LinkPro"}</span>
+                      <span style={{ fontSize: 12, color: p.temPonto ? "#7d8a96" : "#f05252" }}>{p.temPonto ? "toque pra pedir" : "sem impressora no LinkPro"}</span>
                       <span className="mais">+</span>
                     </div>
                   </button>
@@ -1162,9 +1169,9 @@ function Reposicao({ token, loja, avisar, voltar }) {
       </section>
 
       <aside className="aside">
-        <div className="topo">
+        <div className="topo" style={{ flexDirection: "column", alignItems: "stretch", gap: 14 }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <span className="rot2" style={{ color: "#566b90" }}>PEDIDO PRA COZINHA</span>
+            <span className="rot2" style={{ color: "#6b747d" }}>PEDIDO PRA COZINHA</span>
             <h1 className="sora" style={{ margin: 0, fontWeight: 600, fontSize: 30, lineHeight: 1.1, letterSpacing: "-.03em", color: "#f5a524" }}>Reposição</h1>
           </div>
           <input className="inp" style={{ height: 42 }} value={obs} onChange={(e) => setObs(e.target.value)} maxLength={120} placeholder="Recado geral (ex.: urgente, pra antes das 18h)" />
@@ -1174,8 +1181,8 @@ function Reposicao({ token, loja, avisar, voltar }) {
             {cart.length > 0 && <button className="limpar" onClick={() => setCart([])}>Limpar</button>}</div>
           {!cart.length ? (
             <div className="vazio">
-              <span style={{ fontSize: 14, fontWeight: 500, color: "#c9d6ea" }}>Nada pra repor ainda</span>
-              <span style={{ fontSize: 12, color: "#7189b0" }}>Toque nos produtos que acabaram.</span>
+              <span style={{ fontSize: 14, fontWeight: 500, color: "#d6d6d6" }}>Nada pra repor ainda</span>
+              <span style={{ fontSize: 12, color: "#7d8a96" }}>Toque nos produtos que acabaram.</span>
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", padding: "0 16px" }}>
@@ -1200,7 +1207,7 @@ function Reposicao({ token, loja, avisar, voltar }) {
           )}
         </div>
         <div className="pe">
-          <span style={{ fontSize: 12, color: "#7189b0" }}>Não é venda e não mexe no estoque: só avisa a cozinha.</span>
+          <span style={{ fontSize: 12, color: "#7d8a96" }}>Não é venda e não mexe no estoque: só avisa a cozinha.</span>
           <div style={{ display: "flex", gap: 10 }}>
             {cart.length > 0
               ? <button className="bp laranja" onClick={enviar} disabled={busy}>{busy ? "Enviando…" : "Enviar pra cozinha"}</button>
@@ -1252,7 +1259,7 @@ function EditarReposicao({ token, loja, avisar, ids, fechar }) {
                   <span className="nome">{p.descricao}</span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: on ? "#22c55e" : "#6f86ab" }}>{on ? "Na reposição" : "Marcar"}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: on ? "#2fd36b" : "#7d8a96" }}>{on ? "Na reposição" : "Marcar"}</span>
                   <span className="mais">{on ? "✓" : "+"}</span>
                 </div>
               </button>
@@ -1296,12 +1303,12 @@ function PedirCelular({ token, loja, descricao, acao, aprovado }) {
     </div>
   );
   const resta = Math.max(0, Math.round((new Date(sol.venceEm).getTime() - agora) / 1000));
-  const cor = sol.status === "PENDENTE" ? "#8cc6f5" : sol.status === "APROVADO" ? "#22c55e" : "#f05252";
+  const cor = sol.status === "PENDENTE" ? "#8cc6f5" : sol.status === "APROVADO" ? "#2fd36b" : "#f05252";
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 4, padding: 12, borderRadius: 12, background: "#0c1426", border: "1px solid " + cor }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 4, padding: 12, borderRadius: 12, background: "#181818", border: "1px solid " + cor }}>
       {sol.status === "PENDENTE" ? (<>
         <span style={{ fontSize: 13, fontWeight: 700, color: cor }}>Aguardando aprovação pelo celular…</span>
-        <span style={{ fontSize: 12, color: "#7f9cc9" }}>{(sol.aprovadores || []).length ? "Enviado pra " + sol.aprovadores.join(", ") + ". " : ""}Vence em {Math.floor(resta / 60)}:{pad(resta % 60)}.</span>
+        <span style={{ fontSize: 12, color: "#9aa3ab" }}>{(sol.aprovadores || []).length ? "Enviado pra " + sol.aprovadores.join(", ") + ". " : ""}Vence em {Math.floor(resta / 60)}:{pad(resta % 60)}.</span>
       </>) : (
         <span style={{ fontSize: 13, fontWeight: 700, color: cor }}>
           {sol.status === "APROVADO" ? "Aprovado por " + (sol.aprovador || "") : sol.status === "RECUSADO" ? "Recusado por " + (sol.aprovador || "")
@@ -1337,18 +1344,18 @@ function Autorizar({ token, loja, titulo, texto, onde, fechar, ok }) {
       <div className="modal" style={{ maxWidth: 420 }} onClick={(e) => e.stopPropagation()}>
         <div style={{ display: "flex", flexDirection: "column", gap: 6, padding: "20px 22px 12px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span className="sora" style={{ fontWeight: 700, fontSize: 19, color: "#f2f6fc" }}>{titulo}</span>
+            <span className="sora" style={{ fontWeight: 700, fontSize: 19, color: "#f4f4f4" }}>{titulo}</span>
             <button className="x" onClick={fechar} disabled={busy && !pede}>×</button>
           </div>
-          <span style={{ fontSize: 14, color: "#c9d6ea" }}>{texto}</span>
+          <span style={{ fontSize: 14, color: "#d6d6d6" }}>{texto}</span>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "6px 22px 14px" }}>
-          {!pede ? <span style={{ fontSize: 13, color: "#7f9cc9" }}>Conferindo permissão…</span> : (<>
+          {!pede ? <span style={{ fontSize: 13, color: "#9aa3ab" }}>Conferindo permissão…</span> : (<>
             <span style={{ fontSize: 13, fontWeight: 700, color: "#f5a524" }}>Autorização: usuário do LinkPro com permissão de cancelar</span>
             <input className="inp" style={{ height: 40 }} autoFocus placeholder="Usuário (ex.: admin)" value={login} onChange={(e) => setLogin(e.target.value)} autoComplete="off" />
             <input className="inp" style={{ height: 40 }} type="password" placeholder="Senha" value={senha} onChange={(e) => setSenha(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && login.trim() && senha && conferir(true)} autoComplete="new-password" />
-            <span style={{ fontSize: 12, color: "#566b90", textAlign: "center" }}>ou</span>
+            <span style={{ fontSize: 12, color: "#6b747d", textAlign: "center" }}>ou</span>
             <PedirCelular token={token} loja={loja} descricao={titulo + ": " + texto + (onde ? " · " + onde : "")} acao={{ tipo: "pedido-novo" }}
               aprovado={(por) => ok(por)} />
           </>)}
@@ -1393,17 +1400,17 @@ function CancelarItem({ token, loja, idAt, item, onde, fechar, fim }) {
   return (
     <div className="fundo" onClick={() => !busy && fechar()}>
       <div className="modal" style={{ maxWidth: 440 }} onClick={(e) => e.stopPropagation()}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6, padding: "20px 22px 14px", borderBottom: "1px solid #172340" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6, padding: "20px 22px 14px", borderBottom: "1px solid #232323" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span className="sora" style={{ fontWeight: 700, fontSize: 19, color: "#f2f6fc" }}>{tudo ? "Cancelar item" : "Diminuir item"}</span>
+            <span className="sora" style={{ fontWeight: 700, fontSize: 19, color: "#f4f4f4" }}>{tudo ? "Cancelar item" : "Diminuir item"}</span>
             <button className="x" onClick={fechar} disabled={busy}>×</button>
           </div>
-          <span style={{ fontSize: 14, color: "#c9d6ea" }}>{qtdTxt(max)}× {item.descricao}</span>
+          <span style={{ fontSize: 14, color: "#d6d6d6" }}>{qtdTxt(max)}× {item.descricao}</span>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 14, padding: "16px 22px" }}>
           {max > 1 && inteiro && (
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-              <span style={{ fontSize: 14, color: "#a9badb" }}>Quantos tirar?</span>
+              <span style={{ fontSize: 14, color: "#9aa3ab" }}>Quantos tirar?</span>
               <div className="stepper">
                 <button onClick={() => setTirar((t) => Math.max(1, t - 1))}>−</button>
                 <span>{tirar}</span>
@@ -1411,14 +1418,14 @@ function CancelarItem({ token, loja, idAt, item, onde, fechar, fim }) {
               </div>
             </div>
           )}
-          <span style={{ fontSize: 13, color: "#7f9cc9" }}>{tudo ? "O item sai da conta e o estoque volta." : "Fica " + qtdTxt(max - tirar) + "× na conta; o estoque do que saiu volta."}</span>
+          <span style={{ fontSize: 13, color: "#9aa3ab" }}>{tudo ? "O item sai da conta e o estoque volta." : "Fica " + qtdTxt(max - tirar) + "× na conta; o estoque do que saiu volta."}</span>
           {pedeSenha && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: 12, borderRadius: 12, background: "#0c1426", border: "1px solid #4a3a1a" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: 12, borderRadius: 12, background: "#181818", border: "1px solid #4a3a1a" }}>
               <span style={{ fontSize: 13, fontWeight: 700, color: "#f5a524" }}>Autorização: usuário do LinkPro com permissão de cancelar</span>
               <input className="inp" style={{ height: 40 }} autoFocus placeholder="Usuário (ex.: admin)" value={login} onChange={(e) => setLogin(e.target.value)} autoComplete="off" />
               <input className="inp" style={{ height: 40 }} type="password" placeholder="Senha" value={senha} onChange={(e) => setSenha(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && confirmar()} autoComplete="new-password" />
-              <span style={{ fontSize: 12, color: "#566b90", textAlign: "center" }}>ou</span>
+              <span style={{ fontSize: 12, color: "#6b747d", textAlign: "center" }}>ou</span>
               <PedirCelular token={token} loja={loja}
                 descricao={(tudo ? "Cancelar " + qtdTxt(max) : "Tirar " + qtdTxt(tirar) + " de " + qtdTxt(max)) + "× " + item.descricao + " (" + brl(nnum(item.preco) * tirar) + ")" + (onde ? " · " + onde : "")}
                 acao={{ tipo: "item", idAtendimento: idAt, idItem: item.id, qtd: tirar }}
@@ -1469,29 +1476,29 @@ function Receber({ token, loja, idAt, mesa, total, fechar, fim }) {
     } catch (e) { setErro(e.message); }
     setBusy(false);
   }
-  const corResto = resto > 0.005 ? "#f05252" : resto < -0.005 ? (trocoInvalido ? "#f05252" : "#f5a524") : "#22c55e";
+  const corResto = resto > 0.005 ? "#f05252" : resto < -0.005 ? (trocoInvalido ? "#f05252" : "#f5a524") : "#2fd36b";
   const rotResto = resto > 0.005 ? "Falta" : resto < -0.005 ? (trocoInvalido ? "Troco maior que o dinheiro" : "Troco") : "Quitado";
   return (
     <div className="fundo" onClick={() => !busy && fechar()}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 4, padding: "20px 22px 18px", borderBottom: "1px solid #172340" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4, padding: "20px 22px 18px", borderBottom: "1px solid #232323" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span className="sora" style={{ fontWeight: 700, fontSize: 20, color: "#f2f6fc" }}>Receber · {rotulo(mesa).titulo}</span>
+            <span className="sora" style={{ fontWeight: 700, fontSize: 20, color: "#f4f4f4" }}>Receber · {rotulo(mesa).titulo}</span>
             <button className="x" onClick={fechar} disabled={busy}>×</button>
           </div>
-          <span style={{ fontSize: 13, color: "#7f9cc9" }}>Total da mesa</span>
-          <span className="sora" style={{ fontWeight: 700, fontSize: 36, letterSpacing: "-.02em", color: "#f2f6fc" }}>{brl(total)}</span>
+          <span style={{ fontSize: 13, color: "#9aa3ab" }}>Total da mesa</span>
+          <span className="sora" style={{ fontWeight: 700, fontSize: 36, letterSpacing: "-.02em", color: "#f4f4f4" }}>{brl(total)}</span>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 14, padding: "18px 22px" }}>
           <div className="metodos">
-            {METODOS.map(([k, l]) => <button key={k} onClick={() => setMetodo(k)} style={{ background: metodo === k ? "#3b9be8" : "transparent", color: metodo === k ? "#fff" : "#a9badb" }}>{l}</button>)}
+            {METODOS.map(([k, l]) => <button key={k} onClick={() => setMetodo(k)} style={{ background: metodo === k ? "#3b9be8" : "transparent", color: metodo === k ? "#fff" : "#9aa3ab" }}>{l}</button>)}
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <div style={{ flex: 1, position: "relative" }}>
-              <span className="sora" style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", fontWeight: 600, fontSize: 14, color: "#6f86ab" }}>R$</span>
+              <span className="sora" style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", fontWeight: 600, fontSize: 14, color: "#7d8a96" }}>R$</span>
               <input value={entrada} onChange={(e) => setEntrada(e.target.value)} onKeyDown={(e) => e.key === "Enter" && adicionar()} inputMode="decimal"
                 placeholder={metodo === "dinheiro" ? "valor entregue" : "valor em " + nomeMetodo(metodo).toLowerCase()}
-                style={{ width: "100%", height: 48, padding: "0 14px 0 44px", borderRadius: 12, border: "1px solid #2a4a7a", background: "#0c1426", color: "#f2f6fc", font: "600 16px Sora", outline: "none" }} />
+                style={{ width: "100%", height: 48, padding: "0 14px 0 44px", borderRadius: 12, border: "1px solid #2a4a7a", background: "#181818", color: "#f4f4f4", font: "600 16px Sora", outline: "none" }} />
             </div>
             <button onClick={() => adicionar()} style={{ height: 48, padding: "0 18px", borderRadius: 12, border: "1px solid #2a4a7a", background: "#13233f", color: "#8cc6f5", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>Adicionar</button>
           </div>
@@ -1502,25 +1509,25 @@ function Receber({ token, loja, idAt, mesa, total, fechar, fim }) {
           </div>
           {pags.map((p, i) => (
             <div className="pl" key={i}>
-              <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e" }} />
-              <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: "#dbe5f3" }}>{nomeMetodo(p.forma)}</span>
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#2fd36b" }} />
+              <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: "#e4e4e4" }}>{nomeMetodo(p.forma)}</span>
               <span className="sora" style={{ fontWeight: 600, fontSize: 14 }}>{brl(p.valor)}</span>
-              <button onClick={() => setPags((ps) => ps.filter((_, j) => j !== i))} style={{ width: 26, height: 26, border: 0, borderRadius: 7, background: "transparent", color: "#7189b0", cursor: "pointer", fontSize: 14 }}>×</button>
+              <button onClick={() => setPags((ps) => ps.filter((_, j) => j !== i))} style={{ width: 26, height: 26, border: 0, borderRadius: 7, background: "transparent", color: "#7d8a96", cursor: "pointer", fontSize: 14 }}>×</button>
             </div>
           ))}
           {erro && <span style={{ fontSize: 13, fontWeight: 600, color: "#f05252" }}>{erro}</span>}
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6, padding: "14px 22px", borderTop: "1px solid #172340", background: "#0d1629" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, color: "#a9badb" }}><span>Recebido</span><span className="sora" style={{ fontWeight: 600, color: "#e6edf7" }}>{brl(pago)}</span></div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6, padding: "14px 22px", borderTop: "1px solid #232323", background: "#151515" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, color: "#9aa3ab" }}><span>Recebido</span><span className="sora" style={{ fontWeight: 600, color: "#ececec" }}>{brl(pago)}</span></div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
             <span style={{ fontSize: 14, fontWeight: 700, color: corResto }}>{rotResto}</span>
             <span className="sora" style={{ fontWeight: 700, fontSize: 22, color: corResto }}>{brl(Math.abs(resto))}</span>
           </div>
         </div>
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, padding: "16px 22px 20px" }}>
-          <button className="bt cont" onClick={fechar} disabled={busy} style={{ height: 48, fontSize: 15, fontWeight: 700, color: "#c9d6ea" }}>Cancelar</button>
+          <button className="bt cont" onClick={fechar} disabled={busy} style={{ height: 48, fontSize: 15, fontWeight: 700, color: "#d6d6d6" }}>Cancelar</button>
           <button className="bt" onClick={confirmar} disabled={!pode || busy}
-            style={{ height: 48, padding: "0 24px", background: pode ? "#22c55e" : "#173a2b", color: pode ? "#04210f" : "#4f7d63", opacity: 1 }}>
+            style={{ height: 48, padding: "0 24px", background: pode ? "#2fd36b" : "#173a2b", color: pode ? "#04210f" : "#4f7d63", opacity: 1 }}>
             {busy ? "Fechando…" : "Receber e fechar"}
           </button>
         </div>
