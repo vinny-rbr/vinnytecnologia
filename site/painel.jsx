@@ -292,12 +292,23 @@ function RecursosChips({ l, busy, onRecurso }) {
   );
 }
 
+/* Versão do agente da loja (só master): verde = última, laranja = desatualizada, cinza = ainda não sabemos. */
+const agenteDesatualizado = (l) => !!(l.versaoAtual && l.versaoAgente && l.versaoAgente < l.versaoAtual);
+function VerChip({ l }) {
+  const v = l.versaoAgente, ult = l.versaoAtual;
+  const cor = !v ? ["#7d8a96", "rgba(125,138,150,.15)"] : agenteDesatualizado(l) ? ["#f5a524", "rgba(245,165,36,.15)"] : ["#22c55e", "rgba(34,197,94,.15)"];
+  const txt = !v ? "versão ?" : agenteDesatualizado(l) ? "v" + v + " · atualizar (v" + ult + ")" : "v" + v;
+  const dica = !v ? "Ainda não sabemos a versão: aparece quando o agente conectar." : agenteDesatualizado(l)
+    ? "Agente na v" + v + "; a última é a v" + ult + ". Ele atualiza sozinho, ou reinicie o serviço Meu Giro na loja." : "Agente na última versão.";
+  return <span title={dica} style={{ marginLeft: 6, padding: "1px 7px", borderRadius: 999, fontSize: 11, fontWeight: 700, color: cor[0], background: cor[1], whiteSpace: "nowrap" }}>{txt}</span>;
+}
+
 function Linha({ l, onAtivar, busy, m, onGrupo, rev, onHist, sel, onSel, onRecurso }) {
   const soon = vencendoEmBreve(l);
   const nomeCell = (
     <td className="loja">
       <div className="nm">{l.nome || "Loja sem nome"}</div>
-      <div className="cnpj">{fmtCnpj(l.cnpj)}{l.sistema && <span className="sis-chip" title="Sistema do PDV">{l.sistema}</span>}{l.grupo && <span className="grp-chip"><Ic d={icFolder} /> {l.grupo}</span>}</div>
+      <div className="cnpj">{fmtCnpj(l.cnpj)}{l.sistema && <span className="sis-chip" title="Sistema do PDV">{l.sistema}</span>}{m && <VerChip l={l} />}{l.grupo && <span className="grp-chip"><Ic d={icFolder} /> {l.grupo}</span>}</div>
       {m && (
         <div className="dev-line">
           <Ic d={icUsers} /> {l.revendaCodigo ? (l.revendaNome || l.revendaCodigo) : "Venda direta"}
@@ -486,12 +497,14 @@ function ViewLojas({ lojas, onAtivar, ativando, isMaster, master, rev, onGrupo, 
     aguardando: base.filter((l) => l.status === "aguardando").length,
     vencer: base.filter(vencendoEmBreve).length,
     bloqueadas: base.filter((l) => l.status === "bloqueada").length,
+    antigas: base.filter(agenteDesatualizado).length,
   };
   const filtradas = base.filter((l) => {
     if (tab === "ativas" && l.status !== "ativa") return false;
     if (tab === "aguardando" && l.status !== "aguardando") return false;
     if (tab === "bloqueadas" && l.status !== "bloqueada") return false;
     if (tab === "vencer" && !vencendoEmBreve(l)) return false;
+    if (tab === "antigas" && !agenteDesatualizado(l)) return false;
     if (q.trim()) {
       const t = q.toLowerCase();
       if (!((l.nome || "").toLowerCase().includes(t) || (l.cnpj || "").includes(q.replace(/\D/g, "")))) return false;
@@ -499,7 +512,7 @@ function ViewLojas({ lojas, onAtivar, ativando, isMaster, master, rev, onGrupo, 
     return true;
   });
   const tabs = isMaster
-    ? [["todas", "Todas", cont.todas], ["ativas", "Ativas", cont.ativas], ["vencer", "A vencer", cont.vencer], ["bloqueadas", "Bloqueadas", cont.bloqueadas]]
+    ? [["todas", "Todas", cont.todas], ["ativas", "Ativas", cont.ativas], ["vencer", "A vencer", cont.vencer], ["bloqueadas", "Bloqueadas", cont.bloqueadas], ["antigas", "Agente desatualizado", cont.antigas]]
     : [["todas", "Todas", cont.todas], ["ativas", "Ativas", cont.ativas], ["aguardando", "Aguardando", cont.aguardando], ["vencer", "A vencer", cont.vencer], ["bloqueadas", "Bloqueadas", cont.bloqueadas]];
   return (
     <>
