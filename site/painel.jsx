@@ -2039,15 +2039,6 @@ function ViewEtiquetas({ sess, lojas, isMaster, onRecurso, mostrarToast }) {
                 ? "Ao salvar, o modelo escolhido do Host vira este layout (o original fica guardado e volta se desligar)."
                 : "O Host continua com o modelo dele. Este layout vale para as impressões feitas por aqui.")}</p>
 
-            <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
-              <button className="btn btn-ghost btn-sm" disabled={!!ferr} onClick={() => ferramenta("regua")}
-                title="Imprime uma régua em mm: pela foto dá pra ver se o conteúdo está no lugar e ajustar a posição">
-                {ferr === "regua" ? "Enviando…" : "Imprimir régua de teste"}</button>
-              <button className="btn btn-ghost btn-sm" disabled={!!ferr} onClick={() => ferramenta("avancar")}
-                title="Puxa uma etiqueta em branco (pra acertar o começo do rolo)">
-                {ferr === "avancar" ? "Enviando…" : "Avançar 1 etiqueta"}</button>
-            </div>
-
             <button className="btn btn-mg" style={{ width: "100%", marginTop: 12 }} disabled={!mudou || salvando} onClick={salvar}>
               {salvando ? "Salvando…" : mudou ? "Salvar layout" : "Layout salvo"}
             </button>
@@ -2069,7 +2060,17 @@ function ViewEtiquetas({ sess, lojas, isMaster, onRecurso, mostrarToast }) {
             </div>
 
             <div className="panel" style={caixa}>
-              {titulo("Imprimir na loja")}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                {titulo("Imprimir na loja")}
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+                  <button className="btn btn-ghost btn-sm" disabled={!!ferr} onClick={() => ferramenta("regua")}
+                    title="Imprime uma régua em mm: pela foto dá pra ver se o conteúdo está no lugar e ajustar a posição em Tamanho e posição">
+                    {ferr === "regua" ? "Enviando…" : "Régua de teste"}</button>
+                  <button className="btn btn-ghost btn-sm" disabled={!!ferr} onClick={() => ferramenta("avancar")}
+                    title="Puxa uma etiqueta em branco (pra acertar o começo do rolo)">
+                    {ferr === "avancar" ? "Enviando…" : "Avançar 1 etiqueta"}</button>
+                </div>
+              </div>
               <div className="search" style={{ marginBottom: 8 }}>
                 <Ic d={icSearch} />
                 <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar produto por nome, código ou código de barras" aria-label="Buscar produto" />
