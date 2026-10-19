@@ -2241,6 +2241,9 @@ function ViewEtiquetas({ sess, lojas, isMaster, onRecurso, mostrarToast }) {
                       {(info.tabelas || []).map((t) => <option key={t.id} value={t.id}>{t.nome}</option>)}
                     </select>
                   </div>
+                  {((cfg.estilo === "clube" ? cfg.tabelaClube : cfg.tabelaAtacado) == null) && (
+                    <p style={{ fontSize: 12, color: "#f5a524", margin: 0 }}>Escolha a tabela de preço do LinkPro: sem ela a caixa {cfg.estilo === "clube" ? "do clube" : "do atacado"} sai vazia.</p>
+                  )}
                   {cfg.estilo === "atacado" && <EtqNum label="A partir de quantas unidades" value={cfg.qtdAtacado} onChange={set("qtdAtacado")} step={1} min={2} max={999} />}
                 </div>
               ) : (
