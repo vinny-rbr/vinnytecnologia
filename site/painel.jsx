@@ -1920,6 +1920,18 @@ function ViewEtiquetas({ sess, lojas, isMaster, onRecurso, mostrarToast }) {
   }
   const total = fila.reduce((s, i) => s + i.qtd, 0);
 
+  // régua de alinhamento / avançar uma etiqueta (usam o layout salvo na loja)
+  const [ferr, setFerr] = useState("");
+  async function ferramenta(qual) {
+    if (mudou) { mostrarToast("Salve o layout antes.", false); return; }
+    setFerr(qual);
+    try {
+      await api(rota(qual), { method: "POST", base, token: sess.token, body: {} });
+      mostrarToast(qual === "regua" ? "Régua enviada: tire uma foto da etiqueta pra ajustar a posição." : "A impressora puxou uma etiqueta.");
+    } catch (e) { mostrarToast(e.message, false); }
+    setFerr("");
+  }
+
   async function imprimir() {
     if (mudou) { mostrarToast("Salve o layout antes de imprimir.", false); return; }
     setImprimindo(true);
@@ -2026,6 +2038,15 @@ function ViewEtiquetas({ sess, lojas, isMaster, onRecurso, mostrarToast }) {
               : (cfg.modo === "meugiro"
                 ? "Ao salvar, o modelo escolhido do Host vira este layout (o original fica guardado e volta se desligar)."
                 : "O Host continua com o modelo dele. Este layout vale para as impressões feitas por aqui.")}</p>
+
+            <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
+              <button className="btn btn-ghost btn-sm" disabled={!!ferr} onClick={() => ferramenta("regua")}
+                title="Imprime uma régua em mm: pela foto dá pra ver se o conteúdo está no lugar e ajustar a posição">
+                {ferr === "regua" ? "Enviando…" : "Imprimir régua de teste"}</button>
+              <button className="btn btn-ghost btn-sm" disabled={!!ferr} onClick={() => ferramenta("avancar")}
+                title="Puxa uma etiqueta em branco (pra acertar o começo do rolo)">
+                {ferr === "avancar" ? "Enviando…" : "Avançar 1 etiqueta"}</button>
+            </div>
 
             <button className="btn btn-mg" style={{ width: "100%", marginTop: 12 }} disabled={!mudou || salvando} onClick={salvar}>
               {salvando ? "Salvando…" : mudou ? "Salvar layout" : "Layout salvo"}
