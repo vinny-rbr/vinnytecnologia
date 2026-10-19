@@ -1888,7 +1888,8 @@ function ViewEtiquetas({ sess, lojas, isMaster, onRecurso, mostrarToast }) {
 
   // busca de produtos
   useEffect(() => {
-    if (busca.trim().length < 2) { setAchados([]); return; }
+    const t0 = busca.trim();
+    if (t0.length < 2 && !/^\d+$/.test(t0)) { setAchados([]); return; } // codigo ("2") busca na hora
     const t = setTimeout(async () => {
       try { setAchados(((await api(rota("produtos") + "?q=" + encodeURIComponent(busca.trim()), { base, token: sess.token })) || []).slice(0, 12)); }
       catch (e) { setAchados([]); }
@@ -2096,7 +2097,7 @@ function ViewEtiquetas({ sess, lojas, isMaster, onRecurso, mostrarToast }) {
                   {achados.map((p) => (
                     <button key={p.id} type="button" onClick={() => adicionar(p)}
                       style={{ display: "flex", width: "100%", gap: 10, alignItems: "center", padding: "9px 12px", background: "transparent", border: "none", borderBottom: "1px solid var(--line)", color: "var(--text)", cursor: "pointer", textAlign: "left" }}>
-                      <span style={{ flex: 1 }}><b style={{ fontWeight: 600 }}>{p.name}</b><div style={{ fontSize: 12, color: "var(--muted)" }}>{p.barras || "Cód. " + p.id}</div></span>
+                      <span style={{ flex: 1 }}><b style={{ fontWeight: 600 }}>{p.name}</b><div style={{ fontSize: 12, color: "var(--muted)" }}>{"Cód. " + (p.code || p.id) + (p.barras ? " · " + p.barras : "")}</div></span>
                       <span style={{ fontFamily: "var(--mono)" }}>{p.price}</span>
                       <span style={{ color: "var(--mg)", fontWeight: 700 }}>+</span>
                     </button>
