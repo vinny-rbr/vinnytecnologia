@@ -1839,6 +1839,163 @@ function EtqFaixa({ label, value, onChange, min, max, step = 0.5, suf = " pt" })
   );
 }
 
+/* Cupom da cozinha (loja Link): o pedido que sai na impressora da cozinha. Antes só dava pra editar na
+   página do PC da loja; aqui vai pela central. Mesmos campos do cupom.json do agente. */
+function CupomCozinha({ cnpj, base, sess, mostrarToast }) {
+  const rota = (a) => `/etiquetas/${cnpj}/cupom-${a}`;
+  const [cfg, setCfg] = useState(null);
+  const [salvo, setSalvo] = useState(null);
+  const [pontos, setPontos] = useState([]);
+  const [previa, setPrevia] = useState(null);
+  const [erro, setErro] = useState("");
+  const [salvando, setSalvando] = useState(false);
+  const [testePonto, setTestePonto] = useState("");
+  const [testando, setTestando] = useState(false);
+
+  useEffect(() => {
+    let vivo = true;
+    setCfg(null); setErro(""); setPrevia(null);
+    Promise.all([api(rota("config"), { base, token: sess.token }), api(rota("pontos"), { base, token: sess.token }).catch(() => [])])
+      .then(([c, p]) => { if (!vivo) return; setCfg(c); setSalvo(JSON.stringify(c)); setPontos(p || []); if ((p || []).length) setTestePonto(String(p[0].id)); })
+      .catch((e) => vivo && setErro(e.message));
+    return () => { vivo = false; };
+  }, [cnpj]);
+
+  useEffect(() => {
+    if (!cfg) return;
+    const t = setTimeout(async () => {
+      try { const r = await api(rota("previa"), { method: "POST", base, token: sess.token, body: cfg }); setPrevia("data:image/png;base64," + r.png); }
+      catch (e) { setErro(e.message); }
+    }, 450);
+    return () => clearTimeout(t);
+  }, [cfg]);
+
+  const set = (k) => (v) => setCfg((c) => ({ ...c, [k]: v }));
+  const mudou = cfg && JSON.stringify(cfg) !== salvo;
+
+  async function salvar() {
+    setSalvando(true);
+    try { const c = await api(rota("config"), { method: "POST", base, token: sess.token, body: cfg }); setCfg(c); setSalvo(JSON.stringify(c)); mostrarToast("Cupom da cozinha salvo."); }
+    catch (e) { mostrarToast(e.message, false); }
+    setSalvando(false);
+  }
+  async function padrao() {
+    try { setCfg(await api(rota("padrao"), { base, token: sess.token })); mostrarToast("Voltou pro padrão. Salve pra valer."); }
+    catch (e) { mostrarToast(e.message, false); }
+  }
+  async function teste() {
+    if (mudou) { mostrarToast("Salve antes de imprimir o teste.", false); return; }
+    setTestando(true);
+    try { await api(rota("teste"), { method: "POST", base, token: sess.token, body: { idPonto: Number(testePonto) } }); mostrarToast("Teste enviado pra impressora da cozinha."); }
+    catch (e) { mostrarToast(e.message, false); }
+    setTestando(false);
+  }
+
+  if (erro && !cfg) return <div className="erro-inline"><Ic d={icAlert} /> {erro}</div>;
+  if (!cfg) return <div className="panel"><div className="mini-empty">Carregando o cupom da loja…</div></div>;
+
+  const caixa = { padding: 16 };
+  const titulo = (t) => <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--muted)", margin: "14px 0 10px" }}>{t}</div>;
+  const chk = (k, t) => <label key={k} className="chk-row" style={{ marginBottom: 8 }}><input type="checkbox" checked={!!cfg[k]} onChange={(e) => set(k)(e.target.checked)} /> {t}</label>;
+  const texto = (k, t, ph) => (
+    <label style={{ display: "block", fontSize: 13, color: "var(--muted)", marginBottom: 10 }}>{t}
+      <input value={cfg[k] || ""} onChange={(e) => set(k)(e.target.value)} placeholder={ph}
+        style={{ width: "100%", marginTop: 4, padding: "9px 11px", borderRadius: 9, border: "1px solid var(--line)", background: "var(--ink-2)", color: "var(--text)" }} />
+    </label>
+  );
+  const sempre = cfg.modo === "sempre";
+  const marcado = new Set((cfg.pontosAgente || []).map(Number));
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "minmax(300px, 380px) 1fr", gap: 14, alignItems: "start" }} className="etq-grid">
+      <div className="panel" style={caixa}>
+        {titulo("Quem imprime os pedidos")}
+        <EtqSeg value={sempre ? "sempre" : "reserva"} onChange={set("modo")} opts={[["reserva", "LinkPro (agente de reserva)"], ["sempre", "Sempre o agente"]]} />
+        <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 8 }}>{sempre
+          ? "O agente imprime os pontos marcados com este layout; a impressão deles fica desligada no LinkPro."
+          : "O LinkPro imprime como sempre; o agente só imprime se o LinkPro parar (fila parada)."}</p>
+        {sempre && (pontos.length
+          ? pontos.map((p) => (
+            <label key={p.id} className="chk-row" style={{ marginBottom: 6 }}>
+              <input type="checkbox" checked={marcado.has(Number(p.id))} onChange={(e) => {
+                const s = new Set(marcado); e.target.checked ? s.add(Number(p.id)) : s.delete(Number(p.id));
+                set("pontosAgente")([...s]);
+              }} /> {p.nome} <span style={{ color: "var(--muted)", fontSize: 12 }}>({p.impressora})</span>
+            </label>))
+          : <p style={{ fontSize: 12, color: "var(--muted)" }}>Nenhum ponto de impressão do LinkPro com impressora do Windows.</p>)}
+
+        {titulo("Papel")}
+        <EtqSeg value={String(cfg.papelMm)} onChange={(v) => set("papelMm")(Number(v))} opts={[["80", "80 mm"], ["58", "58 mm"]]} />
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 10 }}>
+          <EtqNum label="Cópias" value={cfg.copias} onChange={set("copias")} step={1} min={1} max={5} />
+          <EtqNum label="Sobra no fim (mm)" value={cfg.sobraFinal} onChange={set("sobraFinal")} step={1} max={60} />
+          <EtqNum label="Margem esquerda (mm)" value={cfg.margemEsq} onChange={set("margemEsq")} max={20} />
+          <EtqNum label="Margem direita (mm)" value={cfg.margemDir} onChange={set("margemDir")} max={20} />
+          <EtqNum label="Deslocar tudo (mm, − esquerda)" value={cfg.deslocamento} onChange={set("deslocamento")} min={-20} max={20} />
+        </div>
+
+        {titulo("Topo")}
+        {texto("textoTopo", "Texto no topo", "Ex.: nome da loja")}
+        {chk("mostrarSetor", "Mostrar o setor")}
+        {chk("setorEspacado", "Setor com letras espaçadas")}
+        {chk("faixaPreta", "Mesa em branco numa faixa preta")}
+        {chk("mostrarAtendimento", "Número do atendimento")}
+        {chk("mostrarHora", "Hora do pedido")}
+        <EtqFaixa label="Setor" value={cfg.tamSetor} onChange={set("tamSetor")} min={6} max={20} />
+        <EtqFaixa label="Mesa" value={cfg.tamMesa} onChange={set("tamMesa")} min={10} max={40} />
+        <EtqFaixa label="Informações" value={cfg.tamInfo} onChange={set("tamInfo")} min={6} max={16} />
+
+        {titulo("Itens")}
+        {chk("itemNegrito", "Itens em negrito")}
+        {chk("itemCaixaAlta", "Itens em maiúsculas")}
+        {chk("linhaEntreItens", "Linha entre os itens")}
+        {chk("mostrarObs", "Observações")}
+        <EtqFaixa label="Quantidade" value={cfg.tamQtd} onChange={set("tamQtd")} min={8} max={28} />
+        <EtqFaixa label="Item" value={cfg.tamItem} onChange={set("tamItem")} min={8} max={24} />
+        <EtqFaixa label="Observação" value={cfg.tamObs} onChange={set("tamObs")} min={6} max={18} />
+
+        {titulo("Rodapé")}
+        {chk("mostrarGarcom", "Garçom")}
+        {chk("mostrarQtdItens", "Quantidade de itens")}
+        {chk("mostrarTotal", "Total")}
+        {chk("mostrarDataHora", "Data e hora")}
+        {texto("textoRodape", "Texto do rodapé", "Ex.: NÃO É DOCUMENTO FISCAL")}
+        <EtqFaixa label="Rodapé" value={cfg.tamRodape} onChange={set("tamRodape")} min={6} max={12} />
+
+        <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+          <button className="btn btn-ghost" onClick={padrao}>Padrão</button>
+          <button className="btn btn-mg" style={{ flex: 1 }} disabled={!mudou || salvando} onClick={salvar}>{salvando ? "Salvando…" : mudou ? "Salvar cupom" : "Cupom salvo"}</button>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div className="panel" style={caixa}>
+          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--muted)", marginBottom: 10 }}>Prévia</div>
+          <div style={{ background: "#2a2f3a", borderRadius: 12, padding: 18, display: "flex", justifyContent: "center" }}>
+            {previa
+              ? <img src={previa} alt="Prévia do cupom" style={{ width: cfg.papelMm === 58 ? 250 : 330, maxWidth: "100%", background: "#fff", boxShadow: "0 8px 28px rgba(0,0,0,.45)", borderRadius: 4 }} />
+              : <div className="mini-empty">Montando a prévia…</div>}
+          </div>
+          {erro && <div className="erro-inline" style={{ marginTop: 10 }}><Ic d={icAlert} /> {erro}</div>}
+        </div>
+        <div className="panel" style={caixa}>
+          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--muted)", marginBottom: 10 }}>Imprimir teste</div>
+          {pontos.length ? (
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+              <div className="field" style={{ marginBottom: 0, minWidth: 220, flex: 1 }}>
+                <select value={testePonto} onChange={(e) => setTestePonto(e.target.value)}>
+                  {pontos.map((p) => <option key={p.id} value={p.id}>{p.nome} · {p.impressora}</option>)}
+                </select>
+              </div>
+              <button className="btn btn-mg" disabled={testando} onClick={teste}>{testando ? "Enviando…" : "Imprimir teste"}</button>
+            </div>
+          ) : <div className="mini-empty">Nenhum ponto de impressão com impressora do Windows nesta loja.</div>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ViewEtiquetas({ sess, lojas, isMaster, onRecurso, mostrarToast }) {
   const hosts = lojas.filter((l) => !l.sistema || l.sistema === "Host" || l.sistema === "Link");
   const [cnpj, setCnpj] = useState(() => (hosts.find((l) => (l.recursos || []).includes("etiquetas")) || hosts[0] || {}).cnpj || "");
@@ -1859,6 +2016,9 @@ function ViewEtiquetas({ sess, lojas, isMaster, onRecurso, mostrarToast }) {
   const [achados, setAchados] = useState([]);
   const [fila, setFila] = useState([]);       // [{p, qtd}]
   const [imprimindo, setImprimindo] = useState(false);
+  const [aba, setAba] = useState("etiquetas"); // etiquetas | cupom (cupom da cozinha: so Link)
+  const temCupom = !!loja && loja.sistema === "Link";
+  const abaAtual = temCupom ? aba : "etiquetas";
 
   // carrega o layout da loja
   useEffect(() => {
@@ -1952,7 +2112,7 @@ function ViewEtiquetas({ sess, lojas, isMaster, onRecurso, mostrarToast }) {
   return (
     <>
       <div className="head-row">
-        <div><h1>Estúdio de Etiquetas</h1><p className="sub">Monte a etiqueta de gôndola da loja, veja como fica e imprima na impressora de etiqueta dela. O Host e o LinkPro também podem usar este layout.</p></div>
+        <div><h1>Estúdio de Impressão</h1><p className="sub">Etiquetas de gôndola e cupom da cozinha de cada loja: monte o layout, veja a prévia e imprima na loja. O Host e o LinkPro também podem usar estes layouts.</p></div>
       </div>
 
       <div className="panel" style={{ padding: 14, marginBottom: 14, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
@@ -1963,18 +2123,21 @@ function ViewEtiquetas({ sess, lojas, isMaster, onRecurso, mostrarToast }) {
           </select>
         </div>
         {loja && !ativo && <button className="btn btn-mg" disabled={ativando} onClick={ativar}><Ic d={icTag} /> {ativando ? "Ativando…" : "Ativar nesta loja"}</button>}
-        {mudou && <button className="btn btn-mg" disabled={salvando} onClick={salvar}>{salvando ? "Salvando…" : "Salvar layout"}</button>}
+        {mudou && abaAtual === "etiquetas" && <button className="btn btn-mg" disabled={salvando} onClick={salvar}>{salvando ? "Salvando…" : "Salvar layout"}</button>}
+        {temCupom && ativo && <div style={{ marginLeft: "auto" }}><EtqSeg value={abaAtual} onChange={setAba} opts={[["etiquetas", "Etiquetas"], ["cupom", "Cupom da cozinha"]]} /></div>}
       </div>
 
-      {erro && <div className="erro-inline"><Ic d={icAlert} /> {erro}</div>}
+      {erro && abaAtual === "etiquetas" && <div className="erro-inline"><Ic d={icAlert} /> {erro}</div>}
 
       {loja && !ativo && (
-        <div className="panel"><div className="mini-empty">O Estúdio de Etiquetas ainda não está ativo em <b>{loja.nome}</b>. Clique em <b>Ativar nesta loja</b>.</div></div>
+        <div className="panel"><div className="mini-empty">O Estúdio de Impressão ainda não está ativo em <b>{loja.nome}</b>. Clique em <b>Ativar nesta loja</b>.</div></div>
       )}
 
-      {ativo && !cfg && !erro && <div className="panel"><div className="mini-empty">Carregando o layout da loja…</div></div>}
+      {ativo && abaAtual === "cupom" && <CupomCozinha cnpj={cnpj} base={base} sess={sess} mostrarToast={mostrarToast} />}
 
-      {ativo && cfg && (
+      {ativo && abaAtual === "etiquetas" && !cfg && !erro && <div className="panel"><div className="mini-empty">Carregando o layout da loja…</div></div>}
+
+      {ativo && abaAtual === "etiquetas" && cfg && (
         <div style={{ display: "grid", gridTemplateColumns: "minmax(300px, 380px) 1fr", gap: 14, alignItems: "start" }} className="etq-grid">
           {/* ---------------- ajustes ---------------- */}
           <div className="panel" style={caixa}>
@@ -2150,12 +2313,12 @@ const NAV = [
   { k: "cobrancas", label: "Cobranças", icon: icCard },
   { k: "relatorios", label: "Relatórios", icon: icFile },
   { grp: "Recursos" },
-  { k: "etiquetas", label: "Estúdio de Etiquetas", icon: icTag },
+  { k: "etiquetas", label: "Estúdio de Impressão", icon: icTag },
   { k: "catalogo", label: "Catálogo", icon: icFile, masterOnly: true },
   { k: "instaladores", label: "Instaladores", icon: icDownload },
   { k: "config", label: "Configurações", icon: icGear },
 ];
-const CRUMB = { inicio: "início", lojas: "início / lojas", saude: "início / saúde das lojas", nova: "início / nova loja", usuarios: "início / usuários", masters: "início / usuários master", solicitacoes: "início / solicitações", revendas: "início / revendas", transferencias: "início / transferências", catalogo: "recursos / catálogo", etiquetas: "recursos / estúdio de etiquetas", cobrancas: "financeiro / cobranças", relatorios: "financeiro / relatórios", instaladores: "recursos / instaladores", config: "recursos / configurações" };
+const CRUMB = { inicio: "início", lojas: "início / lojas", saude: "início / saúde das lojas", nova: "início / nova loja", usuarios: "início / usuários", masters: "início / usuários master", solicitacoes: "início / solicitações", revendas: "início / revendas", transferencias: "início / transferências", catalogo: "recursos / catálogo", etiquetas: "recursos / estúdio de impressão", cobrancas: "financeiro / cobranças", relatorios: "financeiro / relatórios", instaladores: "recursos / instaladores", config: "recursos / configurações" };
 
 function Modal({ modal, onClose }) {
   const [vals, setVals] = useState(() => Object.fromEntries((modal.fields || []).map((f) => [f.key, f.value != null ? f.value : ""])));
