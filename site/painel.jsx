@@ -1811,6 +1811,16 @@ function ViewCatalogo({ sess }) {
 const icTag = <><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></>;
 const ETQ_AMARELO = "#ffe14d";
 
+const ETQ_MODELOS = [
+  ["gondola", "Gôndola", "Faixa com o preço e código ao lado"],
+  ["oferta", "Oferta", "De / Por, com faixa OFERTA"],
+  ["atacado", "Atacado", "Unidade e a partir de N un."],
+  ["medida", "Por medida", "Preço e R$ por litro ou kg"],
+  ["clube", "Clube", "Preço normal e do clube"],
+  ["mini", "Mini", "Gôndola estreita"],
+  ["classico", "Clássico", "Duas colunas, preço grande"],
+];
+
 function EtqSeg({ value, onChange, opts }) {
   return (
     <div className="tabs" style={{ display: "inline-flex" }}>
@@ -2026,7 +2036,7 @@ function ViewEtiquetas({ sess, lojas, isMaster, onRecurso, mostrarToast }) {
     if (!cnpj || !ativo) return;
     let vivo = true;
     api(rota("config"), { base, token: sess.token })
-      .then((r) => { if (!vivo) return; setCfg(r.config); setSalvo(JSON.stringify(r.config)); setInfo({ impressoras: r.impressoras || [], modelosHost: r.modelosHost || [] }); })
+      .then((r) => { if (!vivo) return; setCfg(r.config); setSalvo(JSON.stringify(r.config)); setInfo({ impressoras: r.impressoras || [], modelosHost: r.modelosHost || [], tabelas: r.tabelas || [] }); })
       .catch((e) => vivo && setErro(e.message));
     return () => { vivo = false; };
   }, [cnpj, ativo]);
@@ -2038,13 +2048,15 @@ function ViewEtiquetas({ sess, lojas, isMaster, onRecurso, mostrarToast }) {
     const t = setTimeout(async () => {
       setCarregandoPrevia(true);
       try {
-        const r = await api(rota("previa"), { method: "POST", base, token: sess.token, body: { config: cfg, ...(idPrevia ? { produto: idPrevia } : {}) } });
+        const ult = fila.length ? fila[fila.length - 1] : null;
+        const r = await api(rota("previa"), { method: "POST", base, token: sess.token, body: { config: cfg, ...(idPrevia ? { produto: idPrevia } : {}),
+          ...(ult && Number(ult.de) > 0 ? { precoDe: Number(ult.de) } : {}), ...(ult && Number(ult.clube) > 0 ? { precoClube: Number(ult.clube) } : {}) } });
         setPrevia("data:image/png;base64," + r.png); setErro("");
       } catch (e) { setErro(e.message); }
       setCarregandoPrevia(false);
     }, 450);
     return () => clearTimeout(t);
-  }, [cfg, idPrevia]);
+  }, [cfg, idPrevia, fila.length ? fila[fila.length - 1].de + "|" + fila[fila.length - 1].clube : ""]);
 
   // busca de produtos
   useEffect(() => {
@@ -2099,7 +2111,8 @@ function ViewEtiquetas({ sess, lojas, isMaster, onRecurso, mostrarToast }) {
     if (mudou) { mostrarToast("Salve o layout antes de imprimir.", false); return; }
     setImprimindo(true);
     try {
-      const r = await api(rota("imprimir"), { method: "POST", base, token: sess.token, body: { itens: fila.map((i) => ({ id: Number(i.p.id), qtd: i.qtd })) } });
+      const r = await api(rota("imprimir"), { method: "POST", base, token: sess.token, body: { itens: fila.map((i) => ({ id: Number(i.p.id), qtd: i.qtd,
+        ...(Number(i.de) > 0 ? { precoDe: Number(i.de) } : {}), ...(Number(i.clube) > 0 ? { precoClube: Number(i.clube) } : {}) })) } });
       mostrarToast((r.etiquetas === 1 ? "1 etiqueta enviada" : r.etiquetas + " etiquetas enviadas") + " pra impressora da loja.");
       setFila([]);
     } catch (e) { mostrarToast(e.message, false); }
@@ -2141,12 +2154,41 @@ function ViewEtiquetas({ sess, lojas, isMaster, onRecurso, mostrarToast }) {
         <div style={{ display: "grid", gridTemplateColumns: "minmax(300px, 380px) 1fr", gap: 14, alignItems: "start" }} className="etq-grid">
           {/* ---------------- ajustes ---------------- */}
           <div className="panel" style={caixa}>
-            {titulo("Estilo")}
-            <EtqSeg value={cfg.estilo === "gondola" ? "gondola" : "classico"} onChange={(v) => set("estilo")(v)} opts={[["gondola", "Gôndola"], ["classico", "Clássico"]]} />
+            {titulo("Modelo")}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+              {ETQ_MODELOS.map(([v, nome, dica]) => {
+                const on = (cfg.estilo === "destaque" ? "classico" : cfg.estilo) === v;
+                return (
+                  <button key={v} type="button" title={dica} onClick={() => set("estilo")(v)}
+                    style={{ textAlign: "left", padding: "8px 10px", borderRadius: 9, cursor: "pointer", border: "1px solid " + (on ? "var(--mg)" : "var(--line)"),
+                      background: on ? "color-mix(in srgb, var(--mg) 16%, transparent)" : "var(--ink-2)", color: "var(--text)" }}>
+                    <div style={{ fontWeight: 700, fontSize: 13 }}>{nome}</div>
+                    <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>{dica}</div>
+                  </button>
+                );
+              })}
+            </div>
             <div style={{ marginTop: 10 }}>
-              {cfg.estilo === "gondola"
-                ? <EtqSeg value={cfg.faixa} onChange={set("faixa")} opts={[["preta", "Faixa preta"], ["contorno", "Contorno"]]} />
-                : <EtqSeg value={cfg.estilo} onChange={set("estilo")} opts={[["classico", "Preço simples"], ["destaque", "Tarja preta"]]} />}
+              {cfg.estilo === "gondola" && <EtqSeg value={cfg.faixa} onChange={set("faixa")} opts={[["preta", "Faixa preta"], ["contorno", "Contorno"]]} />}
+              {(cfg.estilo === "classico" || cfg.estilo === "destaque") && <EtqSeg value={cfg.estilo} onChange={set("estilo")} opts={[["classico", "Preço simples"], ["destaque", "Tarja preta"]]} />}
+              {(cfg.estilo === "atacado" || cfg.estilo === "clube") && (loja.sistema === "Link" ? (
+                <div style={{ display: "grid", gap: 8 }}>
+                  <div className="field" style={{ marginBottom: 0 }}>
+                    <select value={(cfg.estilo === "clube" ? cfg.tabelaClube : cfg.tabelaAtacado) ?? ""}
+                      onChange={(e) => set(cfg.estilo === "clube" ? "tabelaClube" : "tabelaAtacado")(e.target.value ? Number(e.target.value) : null)}>
+                      <option value="">{cfg.estilo === "clube" ? "Tabela de preço do clube…" : "Tabela de preço do atacado…"}</option>
+                      {(info.tabelas || []).map((t) => <option key={t.id} value={t.id}>{t.nome}</option>)}
+                    </select>
+                  </div>
+                  {cfg.estilo === "atacado" && <EtqNum label="A partir de quantas unidades" value={cfg.qtdAtacado} onChange={set("qtdAtacado")} step={1} min={2} max={999} />}
+                </div>
+              ) : (
+                <p style={{ fontSize: 12, color: "var(--muted)" }}>{cfg.estilo === "atacado"
+                  ? "No Host, o preço de atacado é a promoção por quantidade do cadastro do produto (valor promocional a partir de N unidades)."
+                  : "O Host não tem preço de clube: digite o preço do clube de cada produto na lista de impressão, ao lado."}</p>
+              ))}
+              {cfg.estilo === "oferta" && <p style={{ fontSize: 12, color: "var(--muted)" }}>O "De" você digita na lista de impressão.{loja.sistema === "Host" ? " No Host, produto com preço promocional já sai De (normal) / Por (promocional)." : ""}</p>}
+              {cfg.estilo === "medida" && <p style={{ fontSize: 12, color: "var(--muted)" }}>O preço por litro ou kg sai pela medida do nome ("2L", "500ML", "1KG") ou pelo peso do cadastro.</p>}
             </div>
 
             <div style={{ marginTop: 18 }}>{titulo("O que aparece")}</div>
@@ -2269,12 +2311,20 @@ function ViewEtiquetas({ sess, lojas, isMaster, onRecurso, mostrarToast }) {
               )}
               {!fila.length ? <div className="mini-empty">Busque os produtos que vão ganhar etiqueta.</div> : (
                 <div className="tbl-wrap"><table>
-                  <thead><tr><th>Produto</th><th>Preço</th><th style={{ width: 150 }}>Etiquetas</th></tr></thead>
+                  <thead><tr><th>Produto</th><th>Preço</th>{cfg.estilo === "oferta" && <th>De R$</th>}{cfg.estilo === "clube" && <th>Clube R$</th>}<th style={{ width: 150 }}>Etiquetas</th></tr></thead>
                   <tbody>
                     {fila.map((i) => (
                       <tr key={i.p.id}>
                         <td>{i.p.name}</td>
                         <td style={{ fontFamily: "var(--mono)" }}>{i.p.price}</td>
+                        {(cfg.estilo === "oferta" || cfg.estilo === "clube") && (
+                          <td>
+                            <input type="number" step="0.01" min="0" placeholder={cfg.estilo === "oferta" ? "opcional" : (loja.sistema === "Link" ? "da tabela" : "0,00")}
+                              value={(cfg.estilo === "oferta" ? i.de : i.clube) || ""}
+                              onChange={(e) => { const v = e.target.value; setFila((f) => f.map((x) => x === i ? { ...x, [cfg.estilo === "oferta" ? "de" : "clube"]: v } : x)); }}
+                              style={{ width: 90, padding: "6px 8px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--ink-2)", color: "var(--text)", fontFamily: "var(--mono)" }} />
+                          </td>
+                        )}
                         <td>
                           <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
                             <button className="btn btn-ghost btn-sm" onClick={() => setFila((f) => i.qtd > 1 ? f.map((x) => x === i ? { ...x, qtd: x.qtd - 1 } : x) : f.filter((x) => x !== i))}>−</button>
