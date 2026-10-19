@@ -1641,7 +1641,8 @@ function ViewRevendas({ sess, mostrarToast }) {
    mudou de IP / desligou / voltou, conflito de IP, terminal do LinkPro com IP novo ou repetido). Também chega
    como aviso no celular do master. Atualiza sozinho a cada 30s. */
 const SAUDE_TIPO = { ip_pc: "IP do PC", impressora_ip: "Impressora", impressora_fora: "Impressora", impressora_voltou: "Impressora",
-  conflito_ip: "Conflito de IP", terminal_ip: "Terminal LinkPro", terminal_conflito: "Conflito de IP", agente_off: "Computador", agente_on: "Computador" };
+  conflito_ip: "Conflito de IP", terminal_ip: "Terminal LinkPro", terminal_conflito: "Conflito de IP", agente_off: "Computador", agente_on: "Computador",
+  etiquetadora_fora: "Impressora de etiqueta", etiquetadora_voltou: "Impressora de etiqueta", etiquetadora_porta: "Impressora de etiqueta" };
 const SAUDE_COR = { grave: "#f05252", aviso: "#f5a524", ok: "#22c55e" };
 function ViewSaude({ sess }) {
   const [ev, setEv] = useState(null);
