@@ -2241,8 +2241,11 @@ function ViewEtiquetas({ sess, lojas, isMaster, onRecurso, mostrarToast }) {
                       {(info.tabelas || []).map((t) => <option key={t.id} value={t.id}>{t.nome}</option>)}
                     </select>
                   </div>
-                  {((cfg.estilo === "clube" ? cfg.tabelaClube : cfg.tabelaAtacado) == null) && (
-                    <p style={{ fontSize: 12, color: "#f5a524", margin: 0 }}>Escolha a tabela de preço do LinkPro: sem ela a caixa {cfg.estilo === "clube" ? "do clube" : "do atacado"} sai vazia.</p>
+                  {cfg.estilo === "clube" && cfg.tabelaClube == null && (
+                    <p style={{ fontSize: 12, color: "#f5a524", margin: 0 }}>Escolha a tabela de preço do clube: sem ela a caixa do clube sai vazia.</p>
+                  )}
+                  {cfg.estilo === "atacado" && (
+                    <p style={{ fontSize: 12, color: "var(--muted)", margin: 0 }}>Sem tabela, o atacado vem do <b>Desconto Condicional</b> do LinkPro (produto com quantidade mínima). Produto sem desconto sai com a caixa vazia.</p>
                   )}
                   {cfg.estilo === "atacado" && <EtqNum label="A partir de quantas unidades" value={cfg.qtdAtacado} onChange={set("qtdAtacado")} step={1} min={2} max={999} />}
                 </div>
@@ -2251,7 +2254,7 @@ function ViewEtiquetas({ sess, lojas, isMaster, onRecurso, mostrarToast }) {
                   ? "No Host, o preço de atacado é a promoção por quantidade do cadastro do produto (valor promocional a partir de N unidades)."
                   : "O Host não tem preço de clube: digite o preço do clube de cada produto na lista de impressão, ao lado."}</p>
               ))}
-              {cfg.estilo === "oferta" && <p style={{ fontSize: 12, color: "var(--muted)" }}>O "De" você digita na lista de impressão.{loja.sistema === "Host" ? " No Host, produto com preço promocional já sai De (normal) / Por (promocional)." : ""}</p>}
+              {cfg.estilo === "oferta" && <p style={{ fontSize: 12, color: "var(--muted)" }}>O "De" você digita na lista de impressão.{loja.sistema === "Host" ? " No Host, produto com preço promocional já sai De (normal) / Por (promocional)." : " No Link, produto com Desconto Condicional (quantidade mínima 1) já sai De (normal) / Por (com desconto)."}</p>}
               {cfg.estilo === "medida" && <p style={{ fontSize: 12, color: "var(--muted)" }}>O preço por litro ou kg sai pela medida do nome ("2L", "500ML", "1KG") ou pelo peso do cadastro.</p>}
               {(ETQ_PARAMS[cfg.estilo] || []).length > 0 && (
                 <div style={{ display: "grid", gap: 8 }}>
