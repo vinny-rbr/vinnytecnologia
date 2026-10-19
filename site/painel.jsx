@@ -2021,7 +2021,7 @@ function ViewEtiquetas({ sess, lojas, isMaster, onRecurso, mostrarToast }) {
             )}
             <p style={{ fontSize: 12, color: "var(--muted)" }}>{loja.sistema === "Link"
               ? (cfg.modo === "meugiro"
-                ? "Ao salvar, o LinkPro ganha o modelo “Meu Giro (gôndola)” com este tamanho e estilo. Escolha ele na tela de etiquetas do LinkPro."
+                ? "Ao salvar, o LinkPro ganha o modelo “Meu Giro (gôndola)” no tamanho desta etiqueta. É a versão simples (nome, preço grande e código de barras embaixo): o LinkPro não faz faixa preta. O layout completo sai pela impressão daqui."
                 : "O LinkPro continua com os modelos dele. Este layout vale para as impressões feitas por aqui.")
               : (cfg.modo === "meugiro"
                 ? "Ao salvar, o modelo escolhido do Host vira este layout (o original fica guardado e volta se desligar)."
