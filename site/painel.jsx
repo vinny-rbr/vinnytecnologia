@@ -1819,7 +1819,68 @@ const ETQ_MODELOS = [
   ["clube", "Clube", "Preço normal e do clube"],
   ["mini", "Mini", "Gôndola estreita"],
   ["classico", "Clássico", "Duas colunas, preço grande"],
+  ["blackfriday", "Black Friday", "Tarja, De riscado e preço"],
+  ["menorpreco", "Menor preço", "Tarja MENOR PREÇO DA REGIÃO"],
+  ["dodia", "Oferta do dia", "SÓ HOJE com a data"],
+  ["queima", "Queima de estoque", "Moldura e últimas unidades"],
+  ["validade", "Validade próxima", "De, Por e % de desconto"],
+  ["limite", "Limite por cliente", "Faixa preta e limite"],
+  ["segunda", "2ª unidade", "% de desconto na 2ª"],
+  ["leve", "Leve e pague", "Leve 3, pague 2"],
+  ["fardo", "Fardo × unidade", "Unidade e fardo fechado"],
+  ["progressiva", "Tabela progressiva", "Preço por faixa de quantidade"],
+  ["pix", "Desconto no Pix", "Cartão e no Pix"],
+  ["parcelado", "Parcelado", "À vista e em N vezes"],
+  ["cashback", "Cashback", "Valor que volta no app"],
+  ["acougue", "Açougue", "Preço o kg em caixa"],
+  ["hortifruti", "Hortifruti", "Preço o kg e produto fresco"],
+  ["frios", "Frios por 100g", "Preço de 100 g e do kg"],
+  ["padaria", "Padaria", "Feito aqui hoje, /kg"],
+  ["organico", "Orgânico", "Selo orgânico"],
+  ["importado", "Importado", "Origem e detalhe"],
+  ["gelada", "Bebida gelada", "Tarja BEM GELADA"],
+  ["pet", "Pet shop", "Preço em destaque e por kg"],
+  ["farmacia", "Farmácia", "Faixa da categoria, De / por"],
+  ["categoria", "Faixa de categoria", "Barra lateral e categoria"],
+  ["novidade", "Novidade", "Faixa NOVIDADE NA LOJA"],
+  ["cartaz", "Cartaz de ponta", "Faixa OFERTA e preço grande"],
+  ["minimalista", "Minimalista", "Só o número, sem R$"],
+  ["invertido", "Invertido", "Etiqueta preta (gasta mais fita)"],
+  ["redondo", "Adesivo redondo", "Círculo SÓ R$"],
 ];
+
+/* Textos e números de cada modelo (o que não vem do cadastro): [chave, rótulo, padrão]. */
+const ETQ_PARAMS = {
+  blackfriday: [["tag", "Texto da tarja", "BLACK FRIDAY"]],
+  menorpreco: [["tag", "Texto da tarja", "MENOR PREÇO DA REGIÃO"]],
+  dodia: [["sub", "Rodapé", "válido até o fechamento"]],
+  queima: [["tag", "Texto da tarja", "QUEIMA DE ESTOQUE"], ["sub", "Subtítulo", "Últimas unidades"]],
+  validade: [["tag", "Texto da tarja", "VALIDADE PRÓXIMA"], ["sub", "Subtítulo", "Consumir logo"]],
+  limite: [["qtd", "Limite por cliente (unidades)", "3"]],
+  segunda: [["pct", "Desconto na 2ª unidade (%)", "50"]],
+  leve: [["leve", "Leve", "3"], ["pague", "Pague", "2"]],
+  fardo: [["qtd", "Unidades no fardo", "6"], ["pct", "Desconto no fardo (%)", "13.6"]],
+  progressiva: [["qtd2", "2ª faixa: a partir de (un.)", "6"], ["pct2", "2ª faixa: desconto (%)", "10"],
+    ["qtd3", "3ª faixa: a partir de (un.)", "12"], ["pct3", "3ª faixa: desconto (%)", "17.5"], ["sub", "Rodapé", "Preço por unidade em cada faixa"]],
+  pix: [["pct", "Desconto no Pix (%)", "10"]],
+  parcelado: [["parcelas", "Parcelas", "10"], ["sub", "Embaixo", "sem juros"]],
+  cashback: [["valor", "Cashback (R$)", "3"], ["sub", "Embaixo", "de cashback no app"]],
+  acougue: [["tag", "Categoria", "BOVINO · RESFRIADO"], ["sub", "Detalhe", "Peça embalada a vácuo"], ["suf", "Unidade", "o kg"]],
+  hortifruti: [["tag", "Selo", "PRODUTO FRESCO"], ["sub", "Origem", "Origem: Brasil"], ["suf", "Unidade", "o kg"]],
+  frios: [["tag", "Texto do topo", "FATIADO NA HORA"], ["suf", "Porção", "100g"]],
+  padaria: [["tag", "Texto da tarja", "FEITO AQUI HOJE"], ["sub", "Subtítulo", ""], ["suf", "Unidade", "/kg"]],
+  organico: [["tag", "Selo", "ORGÂNICO CERTIFICADO"], ["sub", "Produtor / origem", "Produtor local"], ["suf", "Unidade", "o maço"]],
+  importado: [["tag", "Origem", "IMPORTADO"], ["sub", "Detalhe", "Safra · 750ml"]],
+  gelada: [["tag", "Texto da tarja", "BEM GELADA"]],
+  pet: [["tag", "Categoria", "PET"]],
+  farmacia: [["tag", "Categoria", "CUIDADOS PESSOAIS"]],
+  categoria: [["tag", "Categoria", "LIMPEZA"]],
+  novidade: [["tag", "Texto da faixa", "NOVIDADE NA LOJA"]],
+  cartaz: [["tag", "Texto da faixa", "OFERTA"]],
+  redondo: [["tag", "Texto de cima", "SÓ"]],
+};
+/* Modelos que mostram o "De R$" digitado na lista de impressão. */
+const ETQ_COM_DE = new Set(["oferta", "blackfriday", "validade", "farmacia"]);
 
 function EtqSeg({ value, onChange, opts }) {
   return (
@@ -2155,7 +2216,7 @@ function ViewEtiquetas({ sess, lojas, isMaster, onRecurso, mostrarToast }) {
           {/* ---------------- ajustes ---------------- */}
           <div className="panel" style={caixa}>
             {titulo("Modelo")}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, maxHeight: 330, overflowY: "auto", paddingRight: 4 }}>
               {ETQ_MODELOS.map(([v, nome, dica]) => {
                 const on = (cfg.estilo === "destaque" ? "classico" : cfg.estilo) === v;
                 return (
@@ -2189,6 +2250,17 @@ function ViewEtiquetas({ sess, lojas, isMaster, onRecurso, mostrarToast }) {
               ))}
               {cfg.estilo === "oferta" && <p style={{ fontSize: 12, color: "var(--muted)" }}>O "De" você digita na lista de impressão.{loja.sistema === "Host" ? " No Host, produto com preço promocional já sai De (normal) / Por (promocional)." : ""}</p>}
               {cfg.estilo === "medida" && <p style={{ fontSize: 12, color: "var(--muted)" }}>O preço por litro ou kg sai pela medida do nome ("2L", "500ML", "1KG") ou pelo peso do cadastro.</p>}
+              {(ETQ_PARAMS[cfg.estilo] || []).length > 0 && (
+                <div style={{ display: "grid", gap: 8 }}>
+                  {ETQ_PARAMS[cfg.estilo].map(([k, rot, pad]) => (
+                    <label key={k} style={{ fontSize: 12.5, color: "var(--muted)" }}>{rot}
+                      <input value={((cfg.modeloTextos || {})[cfg.estilo] || {})[k] ?? ""} placeholder={pad}
+                        onChange={(e) => { const v = e.target.value; setCfg((c) => ({ ...c, modeloTextos: { ...(c.modeloTextos || {}), [c.estilo]: { ...((c.modeloTextos || {})[c.estilo] || {}), [k]: v } } })); }}
+                        style={{ width: "100%", marginTop: 4, padding: "8px 10px", borderRadius: 9, border: "1px solid var(--line)", background: "var(--ink-2)", color: "var(--text)" }} />
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div style={{ marginTop: 18 }}>{titulo("O que aparece")}</div>
@@ -2311,17 +2383,17 @@ function ViewEtiquetas({ sess, lojas, isMaster, onRecurso, mostrarToast }) {
               )}
               {!fila.length ? <div className="mini-empty">Busque os produtos que vão ganhar etiqueta.</div> : (
                 <div className="tbl-wrap"><table>
-                  <thead><tr><th>Produto</th><th>Preço</th>{cfg.estilo === "oferta" && <th>De R$</th>}{cfg.estilo === "clube" && <th>Clube R$</th>}<th style={{ width: 150 }}>Etiquetas</th></tr></thead>
+                  <thead><tr><th>Produto</th><th>Preço</th>{ETQ_COM_DE.has(cfg.estilo) && <th>De R$</th>}{cfg.estilo === "clube" && <th>Clube R$</th>}<th style={{ width: 150 }}>Etiquetas</th></tr></thead>
                   <tbody>
                     {fila.map((i) => (
                       <tr key={i.p.id}>
                         <td>{i.p.name}</td>
                         <td style={{ fontFamily: "var(--mono)" }}>{i.p.price}</td>
-                        {(cfg.estilo === "oferta" || cfg.estilo === "clube") && (
+                        {(ETQ_COM_DE.has(cfg.estilo) || cfg.estilo === "clube") && (
                           <td>
-                            <input type="number" step="0.01" min="0" placeholder={cfg.estilo === "oferta" ? "opcional" : (loja.sistema === "Link" ? "da tabela" : "0,00")}
-                              value={(cfg.estilo === "oferta" ? i.de : i.clube) || ""}
-                              onChange={(e) => { const v = e.target.value; setFila((f) => f.map((x) => x === i ? { ...x, [cfg.estilo === "oferta" ? "de" : "clube"]: v } : x)); }}
+                            <input type="number" step="0.01" min="0" placeholder={cfg.estilo !== "clube" ? "opcional" : (loja.sistema === "Link" ? "da tabela" : "0,00")}
+                              value={(cfg.estilo !== "clube" ? i.de : i.clube) || ""}
+                              onChange={(e) => { const v = e.target.value; setFila((f) => f.map((x) => x === i ? { ...x, [cfg.estilo !== "clube" ? "de" : "clube"]: v } : x)); }}
                               style={{ width: 90, padding: "6px 8px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--ink-2)", color: "var(--text)", fontFamily: "var(--mono)" }} />
                           </td>
                         )}
