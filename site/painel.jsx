@@ -270,10 +270,13 @@ const RECURSOS = [
   { id: "salao", nome: "Salão", sis: "Link" },
   { id: "painel_tv", nome: "Painel TV", sis: "Link" },
   { id: "forca_vendas", nome: "Força de vendas", sis: "Host" },
+  { id: "etiquetas", nome: "Etiquetas", sis: "Host" },
+  { id: "etiquetas", nome: "Etiquetas", sis: "Link" },
 ];
 
 function RecursosChips({ l, busy, onRecurso }) {
-  const lista = RECURSOS.filter((r) => !l.sistema || l.sistema === r.sis);
+  const lista = RECURSOS.filter((r, i, todos) => (!l.sistema || l.sistema === r.sis)
+    && todos.findIndex((x) => x.id === r.id && (!l.sistema || l.sistema === x.sis)) === i); // sem chip repetido
   if (!lista.length || !onRecurso) return null;
   const ativos = new Set(l.recursos || []);
   return (
@@ -506,8 +509,8 @@ function ViewLojas({ lojas, onAtivar, ativando, isMaster, master, rev, onGrupo, 
     if (tab === "vencer" && !vencendoEmBreve(l)) return false;
     if (tab === "antigas" && !agenteDesatualizado(l)) return false;
     if (q.trim()) {
-      const t = q.toLowerCase();
-      if (!((l.nome || "").toLowerCase().includes(t) || (l.cnpj || "").includes(q.replace(/\D/g, "")))) return false;
+      const t = q.trim().toLowerCase(), dig = q.replace(/\D/g, "");
+      if (!((l.nome || "").toLowerCase().includes(t) || (dig && (l.cnpj || "").includes(dig)))) return false;
     }
     return true;
   });
@@ -1800,6 +1803,299 @@ function ViewCatalogo({ sess }) {
   );
 }
 
+/* ================= ESTÚDIO DE ETIQUETAS =================
+   Etiquetas de gôndola das lojas Host: ativa o recurso na loja, monta o layout (estilo, faixa,
+   tamanhos, posição) com prévia ao vivo e imprime na impressora de etiqueta da loja. O mesmo layout
+   vira o modelo do próprio Host (quando "o Host imprime com este layout" está ligado). */
+const icTag = <><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></>;
+const ETQ_AMARELO = "#ffe14d";
+
+function EtqSeg({ value, onChange, opts }) {
+  return (
+    <div className="tabs" style={{ display: "inline-flex" }}>
+      {opts.map(([v, t]) => <button key={v} type="button" className={"tab" + (value === v ? " on" : "")} onClick={() => onChange(v)}>{t}</button>)}
+    </div>
+  );
+}
+
+function EtqNum({ label, value, onChange, step = 0.5, min = 0, max = 200 }) {
+  return (
+    <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "var(--muted)" }}>
+      {label}
+      <input type="number" step={step} min={min} max={max} value={value ?? ""}
+        onChange={(e) => onChange(e.target.value === "" ? min : Number(e.target.value))}
+        style={{ width: "100%", padding: "8px 10px", borderRadius: 9, border: "1px solid var(--line)", background: "var(--ink-2)", color: "var(--text)", fontFamily: "var(--mono)" }} />
+    </label>
+  );
+}
+
+function EtqFaixa({ label, value, onChange, min, max, step = 0.5, suf = " pt" }) {
+  return (
+    <label style={{ display: "block", fontSize: 13, color: "var(--muted)", marginBottom: 10 }}>
+      <div style={{ display: "flex", justifyContent: "space-between" }}><span>{label}</span><b style={{ color: "var(--text)", fontFamily: "var(--mono)" }}>{Number(value).toFixed(step < 1 ? 1 : 0)}{suf}</b></div>
+      <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} style={{ width: "100%", accentColor: "var(--mg)" }} />
+    </label>
+  );
+}
+
+function ViewEtiquetas({ sess, lojas, isMaster, onRecurso, mostrarToast }) {
+  const hosts = lojas.filter((l) => !l.sistema || l.sistema === "Host" || l.sistema === "Link");
+  const [cnpj, setCnpj] = useState(() => (hosts.find((l) => (l.recursos || []).includes("etiquetas")) || hosts[0] || {}).cnpj || "");
+  const loja = hosts.find((l) => l.cnpj === cnpj);
+  const ativo = !!loja && (loja.recursos || []).includes("etiquetas");
+  const base = isMaster ? ADMIN_API : API;
+  const rota = (acao) => `/etiquetas/${cnpj}/${acao}`;
+
+  const [info, setInfo] = useState(null);     // {impressoras, modelosHost}
+  const [cfg, setCfg] = useState(null);
+  const [salvo, setSalvo] = useState(null);   // pra saber se mudou
+  const [erro, setErro] = useState("");
+  const [previa, setPrevia] = useState(null);
+  const [carregandoPrevia, setCarregandoPrevia] = useState(false);
+  const [salvando, setSalvando] = useState(false);
+  const [ativando, setAtivando] = useState(false);
+  const [busca, setBusca] = useState("");
+  const [achados, setAchados] = useState([]);
+  const [fila, setFila] = useState([]);       // [{p, qtd}]
+  const [imprimindo, setImprimindo] = useState(false);
+
+  // carrega o layout da loja
+  useEffect(() => {
+    setCfg(null); setSalvo(null); setInfo(null); setPrevia(null); setErro(""); setFila([]); setAchados([]);
+    if (!cnpj || !ativo) return;
+    let vivo = true;
+    api(rota("config"), { base, token: sess.token })
+      .then((r) => { if (!vivo) return; setCfg(r.config); setSalvo(JSON.stringify(r.config)); setInfo({ impressoras: r.impressoras || [], modelosHost: r.modelosHost || [] }); })
+      .catch((e) => vivo && setErro(e.message));
+    return () => { vivo = false; };
+  }, [cnpj, ativo]);
+
+  // prévia ao vivo (espera parar de mexer)
+  const idPrevia = fila.length ? Number(fila[fila.length - 1].p.id) : null;
+  useEffect(() => {
+    if (!cfg) return;
+    const t = setTimeout(async () => {
+      setCarregandoPrevia(true);
+      try {
+        const r = await api(rota("previa"), { method: "POST", base, token: sess.token, body: { config: cfg, ...(idPrevia ? { produto: idPrevia } : {}) } });
+        setPrevia("data:image/png;base64," + r.png); setErro("");
+      } catch (e) { setErro(e.message); }
+      setCarregandoPrevia(false);
+    }, 450);
+    return () => clearTimeout(t);
+  }, [cfg, idPrevia]);
+
+  // busca de produtos
+  useEffect(() => {
+    if (busca.trim().length < 2) { setAchados([]); return; }
+    const t = setTimeout(async () => {
+      try { setAchados(((await api(rota("produtos") + "?q=" + encodeURIComponent(busca.trim()), { base, token: sess.token })) || []).slice(0, 12)); }
+      catch (e) { setAchados([]); }
+    }, 400);
+    return () => clearTimeout(t);
+  }, [busca]);
+
+  const set = (k) => (v) => setCfg((c) => ({ ...c, [k]: v }));
+  const mudou = cfg && JSON.stringify(cfg) !== salvo;
+
+  async function ativar() {
+    setAtivando(true);
+    await onRecurso(loja, { id: "etiquetas", nome: "Estúdio de Etiquetas" }, true);
+    setAtivando(false);
+  }
+
+  async function salvar() {
+    setSalvando(true);
+    try {
+      const r = await api(rota("config"), { method: "POST", base, token: sess.token, body: cfg });
+      setSalvo(JSON.stringify(cfg));
+      mostrarToast(r && r.mensagem ? "Layout salvo. " + r.mensagem : "Layout salvo.");
+    } catch (e) { mostrarToast(e.message, false); }
+    setSalvando(false);
+  }
+
+  function adicionar(p) {
+    setFila((f) => f.some((i) => i.p.id === p.id) ? f.map((i) => i.p.id === p.id ? { ...i, qtd: i.qtd + 1 } : i) : [...f, { p, qtd: 1 }]);
+    setBusca(""); setAchados([]);
+  }
+  const total = fila.reduce((s, i) => s + i.qtd, 0);
+
+  async function imprimir() {
+    if (mudou) { mostrarToast("Salve o layout antes de imprimir.", false); return; }
+    setImprimindo(true);
+    try {
+      const r = await api(rota("imprimir"), { method: "POST", base, token: sess.token, body: { itens: fila.map((i) => ({ id: Number(i.p.id), qtd: i.qtd })) } });
+      mostrarToast((r.etiquetas === 1 ? "1 etiqueta enviada" : r.etiquetas + " etiquetas enviadas") + " pra impressora da loja.");
+      setFila([]);
+    } catch (e) { mostrarToast(e.message, false); }
+    setImprimindo(false);
+  }
+
+  const caixa = { padding: 16 };
+  const titulo = (t) => <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--muted)", margin: "4px 0 10px" }}>{t}</div>;
+
+  return (
+    <>
+      <div className="head-row">
+        <div><h1>Estúdio de Etiquetas</h1><p className="sub">Monte a etiqueta de gôndola da loja, veja como fica e imprima na impressora de etiqueta dela. O Host e o LinkPro também podem usar este layout.</p></div>
+      </div>
+
+      <div className="panel" style={{ padding: 14, marginBottom: 14, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+        <div className="field" style={{ marginBottom: 0, minWidth: 280 }}>
+          <select value={cnpj} onChange={(e) => setCnpj(e.target.value)}>
+            {!hosts.length && <option value="">Nenhuma loja Host ou Link</option>}
+            {hosts.map((l) => <option key={l.cnpj} value={l.cnpj}>{(l.nome || l.cnpj) + (l.sistema ? " · " + l.sistema : "") + ((l.recursos || []).includes("etiquetas") ? "" : "  (desativado)")}</option>)}
+          </select>
+        </div>
+        {loja && !ativo && <button className="btn btn-mg" disabled={ativando} onClick={ativar}><Ic d={icTag} /> {ativando ? "Ativando…" : "Ativar nesta loja"}</button>}
+        {mudou && <button className="btn btn-mg" disabled={salvando} onClick={salvar}>{salvando ? "Salvando…" : "Salvar layout"}</button>}
+      </div>
+
+      {erro && <div className="erro-inline"><Ic d={icAlert} /> {erro}</div>}
+
+      {loja && !ativo && (
+        <div className="panel"><div className="mini-empty">O Estúdio de Etiquetas ainda não está ativo em <b>{loja.nome}</b>. Clique em <b>Ativar nesta loja</b>.</div></div>
+      )}
+
+      {ativo && !cfg && !erro && <div className="panel"><div className="mini-empty">Carregando o layout da loja…</div></div>}
+
+      {ativo && cfg && (
+        <div style={{ display: "grid", gridTemplateColumns: "minmax(300px, 380px) 1fr", gap: 14, alignItems: "start" }} className="etq-grid">
+          {/* ---------------- ajustes ---------------- */}
+          <div className="panel" style={caixa}>
+            {titulo("Estilo")}
+            <EtqSeg value={cfg.estilo === "gondola" ? "gondola" : "classico"} onChange={(v) => set("estilo")(v)} opts={[["gondola", "Gôndola"], ["classico", "Clássico"]]} />
+            <div style={{ marginTop: 10 }}>
+              {cfg.estilo === "gondola"
+                ? <EtqSeg value={cfg.faixa} onChange={set("faixa")} opts={[["preta", "Faixa preta"], ["contorno", "Contorno"]]} />
+                : <EtqSeg value={cfg.estilo} onChange={set("estilo")} opts={[["classico", "Preço simples"], ["destaque", "Tarja preta"]]} />}
+            </div>
+
+            <div style={{ marginTop: 18 }}>{titulo("O que aparece")}</div>
+            <label style={{ display: "block", fontSize: 13, color: "var(--muted)", marginBottom: 10 }}>Nome da loja (rodapé)
+              <input value={cfg.textoTopo || ""} onChange={(e) => set("textoTopo")(e.target.value)} placeholder="Ex.: MERCADO BOM DIA"
+                style={{ width: "100%", marginTop: 4, padding: "9px 11px", borderRadius: 9, border: "1px solid var(--line)", background: "var(--ink-2)", color: "var(--text)" }} />
+            </label>
+            {[["mostrarBarras", "Código de barras"], ["mostrarCodigo", "Código interno (Cód.)"], ["mostrarUnidade", "Unidade (KG, LT…)"], ["nomeCaixaAlta", "Nome em maiúsculas"], ["moldura", "Moldura em volta"]].map(([k, t]) => (
+              <label key={k} className="chk-row" style={{ marginBottom: 8 }}><input type="checkbox" checked={!!cfg[k]} onChange={(e) => set(k)(e.target.checked)} /> {t}</label>
+            ))}
+
+            <div style={{ marginTop: 18 }}>{titulo("Tamanho das letras")}</div>
+            <EtqFaixa label="Nome do produto" value={cfg.tamNome} onChange={set("tamNome")} min={6} max={16} />
+            <EtqFaixa label="Preço" value={cfg.tamPreco} onChange={set("tamPreco")} min={14} max={60} step={1} />
+
+            <details style={{ marginTop: 14 }}>
+              <summary style={{ cursor: "pointer", fontWeight: 600, fontSize: 13.5 }}>Tamanho e posição (mm)</summary>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 12 }}>
+                <EtqNum label="Papel: largura" value={cfg.papelLargura} onChange={set("papelLargura")} />
+                <EtqNum label="Papel: altura (furo a furo)" value={cfg.papelAltura} onChange={set("papelAltura")} />
+                <EtqNum label="Conteúdo: da esquerda" value={cfg.areaX} onChange={set("areaX")} />
+                <EtqNum label="Conteúdo: do topo" value={cfg.areaY} onChange={set("areaY")} />
+                <EtqNum label="Conteúdo: largura" value={cfg.areaLargura} onChange={set("areaLargura")} />
+                <EtqNum label="Conteúdo: altura" value={cfg.areaAltura} onChange={set("areaAltura")} />
+              </div>
+              <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 8 }}>A área tracejada na prévia é onde o conteúdo cabe. Mexa de 0,5 em 0,5 mm se sair deslocado.</p>
+            </details>
+
+            <div style={{ marginTop: 18 }}>{titulo("Impressão")}</div>
+            <div className="field" style={{ marginBottom: 10 }}>
+              <select value={cfg.impressora} onChange={(e) => set("impressora")(e.target.value)}>
+                {!(info.impressoras || []).includes(cfg.impressora) && <option value={cfg.impressora}>{cfg.impressora} (não encontrada)</option>}
+                {(info.impressoras || []).map((n) => <option key={n} value={n}>{n}</option>)}
+              </select>
+            </div>
+            <label className="chk-row" style={{ marginBottom: 8 }}>
+              <input type="checkbox" checked={!!cfg.girar180} onChange={(e) => set("girar180")(e.target.checked)} />
+              Girar 180° (se sair de cabeça pra baixo)
+            </label>
+            <label className="chk-row" style={{ marginBottom: 8 }}>
+              <input type="checkbox" checked={cfg.modo === "meugiro"} onChange={(e) => set("modo")(e.target.checked ? "meugiro" : "sistema")} />
+              {loja.sistema === "Link" ? "Criar o modelo “Meu Giro” no LinkPro" : "O Host imprime com este layout"}
+            </label>
+            {cfg.modo === "meugiro" && loja.sistema !== "Link" && (info.modelosHost || []).length > 0 && (
+              <div className="field" style={{ marginBottom: 6 }}>
+                <select value={cfg.modeloHost} onChange={(e) => set("modeloHost")(e.target.value)}>
+                  {(info.modelosHost || []).map((n) => <option key={n} value={n}>{n.replace(/\.fr3$/i, "")}</option>)}
+                </select>
+              </div>
+            )}
+            <p style={{ fontSize: 12, color: "var(--muted)" }}>{loja.sistema === "Link"
+              ? (cfg.modo === "meugiro"
+                ? "Ao salvar, o LinkPro ganha o modelo “Meu Giro (gôndola)” com este tamanho e estilo. Escolha ele na tela de etiquetas do LinkPro."
+                : "O LinkPro continua com os modelos dele. Este layout vale para as impressões feitas por aqui.")
+              : (cfg.modo === "meugiro"
+                ? "Ao salvar, o modelo escolhido do Host vira este layout (o original fica guardado e volta se desligar)."
+                : "O Host continua com o modelo dele. Este layout vale para as impressões feitas por aqui.")}</p>
+
+            <button className="btn btn-mg" style={{ width: "100%", marginTop: 12 }} disabled={!mudou || salvando} onClick={salvar}>
+              {salvando ? "Salvando…" : mudou ? "Salvar layout" : "Layout salvo"}
+            </button>
+          </div>
+
+          {/* ---------------- prévia + impressão ---------------- */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <div className="panel" style={caixa}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                {titulo("Prévia")}
+                {carregandoPrevia && <span style={{ fontSize: 12, color: "var(--muted)" }}>atualizando…</span>}
+              </div>
+              <div style={{ background: ETQ_AMARELO, borderRadius: 10, padding: 6, boxShadow: "0 6px 24px rgba(0,0,0,.35)" }}>
+                {previa
+                  ? <img src={previa} alt="Prévia da etiqueta" style={{ width: "100%", display: "block", mixBlendMode: "multiply" }} />
+                  : <div style={{ aspectRatio: `${cfg.papelLargura} / ${cfg.papelAltura}`, display: "grid", placeItems: "center", color: "#6b5a00" }}>Montando a prévia…</div>}
+              </div>
+              <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 8 }}>{fila.length ? "Prévia do último produto da lista." : "Exemplo com um produto da loja. Adicione produtos abaixo pra ver com eles."}</p>
+            </div>
+
+            <div className="panel" style={caixa}>
+              {titulo("Imprimir na loja")}
+              <div className="search" style={{ marginBottom: 8 }}>
+                <Ic d={icSearch} />
+                <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar produto por nome, código ou código de barras" aria-label="Buscar produto" />
+              </div>
+              {achados.length > 0 && (
+                <div style={{ border: "1px solid var(--line)", borderRadius: 10, overflow: "hidden", marginBottom: 12 }}>
+                  {achados.map((p) => (
+                    <button key={p.id} type="button" onClick={() => adicionar(p)}
+                      style={{ display: "flex", width: "100%", gap: 10, alignItems: "center", padding: "9px 12px", background: "transparent", border: "none", borderBottom: "1px solid var(--line)", color: "var(--text)", cursor: "pointer", textAlign: "left" }}>
+                      <span style={{ flex: 1 }}><b style={{ fontWeight: 600 }}>{p.name}</b><div style={{ fontSize: 12, color: "var(--muted)" }}>{p.barras || "Cód. " + p.id}</div></span>
+                      <span style={{ fontFamily: "var(--mono)" }}>{p.price}</span>
+                      <span style={{ color: "var(--mg)", fontWeight: 700 }}>+</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {!fila.length ? <div className="mini-empty">Busque os produtos que vão ganhar etiqueta.</div> : (
+                <div className="tbl-wrap"><table>
+                  <thead><tr><th>Produto</th><th>Preço</th><th style={{ width: 150 }}>Etiquetas</th></tr></thead>
+                  <tbody>
+                    {fila.map((i) => (
+                      <tr key={i.p.id}>
+                        <td>{i.p.name}</td>
+                        <td style={{ fontFamily: "var(--mono)" }}>{i.p.price}</td>
+                        <td>
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                            <button className="btn btn-ghost btn-sm" onClick={() => setFila((f) => i.qtd > 1 ? f.map((x) => x === i ? { ...x, qtd: x.qtd - 1 } : x) : f.filter((x) => x !== i))}>−</button>
+                            <b style={{ minWidth: 26, textAlign: "center", fontFamily: "var(--mono)" }}>{i.qtd}</b>
+                            <button className="btn btn-ghost btn-sm" onClick={() => setFila((f) => f.map((x) => x === i ? { ...x, qtd: Math.min(200, x.qtd + 1) } : x))}>+</button>
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table></div>
+              )}
+              <button className="btn btn-mg" style={{ width: "100%", marginTop: 12 }} disabled={!fila.length || imprimindo} onClick={imprimir}>
+                {imprimindo ? "Enviando…" : !fila.length ? "Imprimir" : total === 1 ? "Imprimir 1 etiqueta" : `Imprimir ${total} etiquetas`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 /* ================= SHELL ================= */
 const NAV = [
   { k: "inicio", label: "Início", icon: icHome },
@@ -1815,11 +2111,12 @@ const NAV = [
   { k: "cobrancas", label: "Cobranças", icon: icCard },
   { k: "relatorios", label: "Relatórios", icon: icFile },
   { grp: "Recursos" },
+  { k: "etiquetas", label: "Estúdio de Etiquetas", icon: icTag },
   { k: "catalogo", label: "Catálogo", icon: icFile, masterOnly: true },
   { k: "instaladores", label: "Instaladores", icon: icDownload },
   { k: "config", label: "Configurações", icon: icGear },
 ];
-const CRUMB = { inicio: "início", lojas: "início / lojas", saude: "início / saúde das lojas", nova: "início / nova loja", usuarios: "início / usuários", masters: "início / usuários master", solicitacoes: "início / solicitações", revendas: "início / revendas", transferencias: "início / transferências", catalogo: "recursos / catálogo", cobrancas: "financeiro / cobranças", relatorios: "financeiro / relatórios", instaladores: "recursos / instaladores", config: "recursos / configurações" };
+const CRUMB = { inicio: "início", lojas: "início / lojas", saude: "início / saúde das lojas", nova: "início / nova loja", usuarios: "início / usuários", masters: "início / usuários master", solicitacoes: "início / solicitações", revendas: "início / revendas", transferencias: "início / transferências", catalogo: "recursos / catálogo", etiquetas: "recursos / estúdio de etiquetas", cobrancas: "financeiro / cobranças", relatorios: "financeiro / relatórios", instaladores: "recursos / instaladores", config: "recursos / configurações" };
 
 function Modal({ modal, onClose }) {
   const [vals, setVals] = useState(() => Object.fromEntries((modal.fields || []).map((f) => [f.key, f.value != null ? f.value : ""])));
@@ -2158,6 +2455,7 @@ function Painel({ sess, onLogout }) {
       case "revendas": return <ViewRevendas {...props} />;
       case "transferencias": return <ViewTransferencias {...props} />;
       case "catalogo": return <ViewCatalogo {...props} />;
+      case "etiquetas": return <ViewEtiquetas {...props} />;
       case "saude": return <ViewSaude {...props} />;
       case "cobrancas": return <ViewCobrancas {...props} />;
       case "relatorios": return <ViewRelatorios {...props} />;

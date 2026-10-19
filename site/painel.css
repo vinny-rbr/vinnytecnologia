@@ -296,3 +296,6 @@ tbody tr:hover{background:var(--surface)}
 .rec-chip svg{width:11px;height:11px}
 .rec-chip:disabled{opacity:.5;cursor:default}
 .rec-off{width:7px;height:7px;border-radius:50%;border:1.5px solid currentColor}
+
+/* Estúdio de Etiquetas: ajustes e prévia lado a lado; empilha no celular */
+@media (max-width:900px){.etq-grid{grid-template-columns:1fr !important}}
