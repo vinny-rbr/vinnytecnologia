@@ -1927,7 +1927,8 @@ function ViewEtiquetas({ sess, lojas, isMaster, onRecurso, mostrarToast }) {
     setFerr(qual);
     try {
       await api(rota(qual), { method: "POST", base, token: sess.token, body: {} });
-      mostrarToast(qual === "regua" ? "Régua enviada: tire uma foto da etiqueta pra ajustar a posição." : "A impressora puxou uma etiqueta.");
+      mostrarToast(qual === "regua" ? "Régua enviada: tire uma foto da etiqueta pra ajustar a posição."
+        : qual === "calibrar" ? "Calibração enviada: a impressora acertou o papel e puxou 2 etiquetas." : "A impressora puxou uma etiqueta.");
     } catch (e) { mostrarToast(e.message, false); }
     setFerr("");
   }
@@ -2007,6 +2008,15 @@ function ViewEtiquetas({ sess, lojas, isMaster, onRecurso, mostrarToast }) {
                 <EtqNum label="Conteúdo: altura" value={cfg.areaAltura} onChange={set("areaAltura")} />
               </div>
               <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 8 }}>A área tracejada na prévia é onde o conteúdo cabe. Mexa de 0,5 em 0,5 mm se sair deslocado.</p>
+              <div style={{ marginTop: 12, display: "grid", gap: 8 }}>
+                <label style={{ fontSize: 12.5, color: "var(--muted)" }}>Papel na impressora
+                  <div style={{ marginTop: 4 }}><EtqSeg value={cfg.sensorPapel || "continuo"} onChange={set("sensorPapel")} opts={[["continuo", "Contínuo"], ["espaco", "Com espaço/furo"]]} /></div>
+                </label>
+                <label style={{ fontSize: 12.5, color: "var(--muted)" }}>Língua da impressora
+                  <div style={{ marginTop: 4 }}><EtqSeg value={cfg.linguagem || "ppla"} onChange={set("linguagem")} opts={[["ppla", "PPLA (Argox)"], ["outra", "Outra"]]} /></div>
+                </label>
+                <p style={{ fontSize: 12, color: "var(--muted)" }}>"Contínuo" funcionou melhor na etiqueta amarela com furos: a impressora anda exatamente a altura da etiqueta. Depois de mudar, salve e clique em Calibrar papel.</p>
+              </div>
             </details>
 
             <div style={{ marginTop: 18 }}>{titulo("Impressão")}</div>
@@ -2067,8 +2077,13 @@ function ViewEtiquetas({ sess, lojas, isMaster, onRecurso, mostrarToast }) {
                     title="Imprime uma régua em mm: pela foto dá pra ver se o conteúdo está no lugar e ajustar a posição em Tamanho e posição">
                     {ferr === "regua" ? "Enviando…" : "Régua de teste"}</button>
                   <button className="btn btn-ghost btn-sm" disabled={!!ferr} onClick={() => ferramenta("avancar")}
-                    title="Puxa uma etiqueta em branco (pra acertar o começo do rolo)">
+                    title="Puxa uma etiqueta (pra acertar o começo do rolo)">
                     {ferr === "avancar" ? "Enviando…" : "Avançar 1 etiqueta"}</button>
+                  {cfg.linguagem !== "outra" && (
+                    <button className="btn btn-ghost btn-sm" disabled={!!ferr} onClick={() => ferramenta("calibrar")}
+                      title={"Manda pra impressora o tipo de papel (" + (cfg.sensorPapel === "espaco" ? "com espaço/furo" : "contínuo de " + cfg.papelAltura + " mm") + ") e puxa 2 etiquetas pra ela se acertar"}>
+                      {ferr === "calibrar" ? "Enviando…" : "Calibrar papel"}</button>
+                  )}
                 </div>
               </div>
               <div className="search" style={{ marginBottom: 8 }}>
