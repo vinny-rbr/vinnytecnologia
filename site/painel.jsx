@@ -2328,11 +2328,35 @@ function ViewEtiquetas({ sess, lojas, isMaster, onRecurso, mostrarToast }) {
             )}
             <p style={{ fontSize: 12, color: "var(--muted)" }}>{loja.sistema === "Link"
               ? (cfg.modo === "meugiro"
-                ? "Ao salvar, o LinkPro ganha o modelo “Meu Giro (gôndola)” no tamanho desta etiqueta. É a versão simples (nome, preço grande e código de barras embaixo): o LinkPro não faz faixa preta. O layout completo sai pela impressão daqui."
+                ? "Ao salvar, o LinkPro ganha o modelo “Meu Giro (gôndola)”, com o estilo escolhido aqui. No LinkPro, imprima na impressora “Meu Giro Etiquetas”: o layout completo sai na impressora de etiqueta."
                 : "O LinkPro continua com os modelos dele. Este layout vale para as impressões feitas por aqui.")
               : (cfg.modo === "meugiro"
                 ? "Ao salvar, o modelo escolhido do Host vira este layout (o original fica guardado e volta se desligar)."
                 : "O Host continua com o modelo dele. Este layout vale para as impressões feitas por aqui.")}</p>
+            {cfg.modo === "meugiro" && loja.sistema === "Link" && (() => {
+              const marcados = cfg.modelosLinkPro || [];
+              const troca = (v, on) => set("modelosLinkPro")(on ? [...marcados.filter((x) => x !== v), v] : marcados.filter((x) => x !== v));
+              return (
+                <div style={{ marginTop: 10 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12.5, color: "var(--muted)", marginBottom: 6 }}>
+                    <span>Estilos que aparecem no LinkPro ({marcados.length})</span>
+                    <span style={{ display: "flex", gap: 10 }}>
+                      <a href="#" onClick={(e) => { e.preventDefault(); set("modelosLinkPro")(ETQ_MODELOS.map(([v]) => v)); }}>todos</a>
+                      <a href="#" onClick={(e) => { e.preventDefault(); set("modelosLinkPro")([]); }}>nenhum</a>
+                    </span>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2px 10px", maxHeight: 220, overflowY: "auto", paddingRight: 4 }}>
+                    {ETQ_MODELOS.map(([v, nome]) => (
+                      <label key={v} className="chk-row" style={{ fontSize: 13 }}>
+                        <input type="checkbox" checked={marcados.includes(v)} onChange={(e) => troca(v, e.target.checked)} />
+                        {nome}
+                      </label>
+                    ))}
+                  </div>
+                  <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>Cada um vira “Meu Giro - Nome” na lista de etiquetas do LinkPro. Os desmarcados saem de lá ao salvar.</p>
+                </div>
+              );
+            })()}
 
             <button className="btn btn-mg" style={{ width: "100%", marginTop: 12 }} disabled={!mudou || salvando} onClick={salvar}>
               {salvando ? "Salvando…" : mudou ? "Salvar layout" : "Layout salvo"}
