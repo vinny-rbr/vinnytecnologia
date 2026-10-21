@@ -2291,7 +2291,16 @@ function ViewEtiquetas({ sess, lojas, isMaster, onRecurso, mostrarToast }) {
                 <EtqNum label="Conteúdo: do topo" value={cfg.areaY} onChange={set("areaY")} />
                 <EtqNum label="Conteúdo: largura" value={cfg.areaLargura} onChange={set("areaLargura")} />
                 <EtqNum label="Conteúdo: altura" value={cfg.areaAltura} onChange={set("areaAltura")} />
+                <EtqNum label="Colunas no rolo" value={cfg.colunas || 1} onChange={(v) => set("colunas")(Math.max(1, Math.min(6, Math.round(Number(v) || 1))))} />
+                <EtqNum label="Espaço entre colunas" value={cfg.espacoColunas ?? 2.5} onChange={set("espacoColunas")} />
               </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
+                <button className="btn btn-ghost btn-sm" onClick={() => setCfg((c) => ({ ...c, papelLargura: 33, papelAltura: 22, areaX: 1.5, areaY: 1.5, areaLargura: 30, areaAltura: 19, colunas: 3, espacoColunas: 2.5, sensorPapel: "espaco", estilo: "mini" }))}>
+                  Rolo 33 x 22 (3 colunas)</button>
+                <button className="btn btn-ghost btn-sm" onClick={() => setCfg((c) => ({ ...c, papelLargura: 104, papelAltura: 30, areaX: 3, areaY: 6.5, areaLargura: 98, areaAltura: 19.5, colunas: 1, sensorPapel: "continuo" }))}>
+                  Gôndola amarela 110 x 30</button>
+              </div>
+              {(cfg.colunas || 1) > 1 && <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 8 }}>Papel = uma etiqueta. A impressora puxa {cfg.colunas} lado a lado (linha de {((cfg.colunas) * cfg.papelLargura + (cfg.colunas - 1) * (cfg.espacoColunas ?? 2.5)).toFixed(1).replace(".", ",")} mm).</p>}
               <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 8 }}>A área tracejada na prévia é onde o conteúdo cabe. Mexa de 0,5 em 0,5 mm se sair deslocado.</p>
               <div style={{ marginTop: 12, display: "grid", gap: 8 }}>
                 <label style={{ fontSize: 12.5, color: "var(--muted)" }}>Papel na impressora
