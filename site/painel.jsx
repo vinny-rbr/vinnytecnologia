@@ -1847,7 +1847,13 @@ const ETQ_MODELOS = [
   ["minimalista", "Minimalista", "Só o número, sem R$"],
   ["invertido", "Invertido", "Etiqueta preta (gasta mais fita)"],
   ["redondo", "Adesivo redondo", "Círculo SÓ R$"],
+  ["peq", "Pequena: preço e barras", "Para 33x22: nome, preço e barras"],
+  ["peqpreco", "Pequena: só preço", "Para 33x22: nome e preço grande"],
+  ["peqbarras", "Pequena: código de barras", "Para 33x22: barras com os números"],
 ];
+/* Modelos que cabem em etiqueta pequena (menos de 50 mm de largura). */
+const ETQ_PEQUENOS = new Set(["peq", "peqpreco", "peqbarras", "mini", "minimalista"]);
+const etqModelosDoPapel = (largura) => ETQ_MODELOS.filter(([v]) => (Number(largura) < 50) === ETQ_PEQUENOS.has(v) || (Number(largura) < 50 ? false : v === "mini" || v === "minimalista"));
 
 /* Textos e números de cada modelo (o que não vem do cadastro): [chave, rótulo, padrão]. */
 const ETQ_PARAMS = {
@@ -2217,7 +2223,7 @@ function ViewEtiquetas({ sess, lojas, isMaster, onRecurso, mostrarToast }) {
           <div className="panel" style={caixa}>
             {titulo("Modelo")}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, maxHeight: 330, overflowY: "auto", paddingRight: 4 }}>
-              {ETQ_MODELOS.map(([v, nome, dica]) => {
+              {etqModelosDoPapel(cfg.papelLargura).map(([v, nome, dica]) => {
                 const on = (cfg.estilo === "destaque" ? "classico" : cfg.estilo) === v;
                 return (
                   <button key={v} type="button" title={dica} onClick={() => set("estilo")(v)}
@@ -2295,9 +2301,9 @@ function ViewEtiquetas({ sess, lojas, isMaster, onRecurso, mostrarToast }) {
                 <EtqNum label="Espaço entre colunas" value={cfg.espacoColunas ?? 2.5} onChange={set("espacoColunas")} />
               </div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
-                <button className="btn btn-ghost btn-sm" onClick={() => setCfg((c) => ({ ...c, papelLargura: 33, papelAltura: 22, areaX: 1.5, areaY: 1.5, areaLargura: 30, areaAltura: 19, colunas: 3, espacoColunas: 2.5, sensorPapel: "espaco", estilo: "mini" }))}>
+                <button className="btn btn-ghost btn-sm" onClick={() => setCfg((c) => ({ ...c, papelLargura: 33, papelAltura: 22, areaX: 1.5, areaY: 1.5, areaLargura: 30, areaAltura: 19, colunas: 3, espacoColunas: 2.5, sensorPapel: "espaco", estilo: "peq" }))}>
                   Rolo 33 x 22 (3 colunas)</button>
-                <button className="btn btn-ghost btn-sm" onClick={() => setCfg((c) => ({ ...c, papelLargura: 104, papelAltura: 30, areaX: 3, areaY: 6.5, areaLargura: 98, areaAltura: 19.5, colunas: 1, sensorPapel: "continuo" }))}>
+                <button className="btn btn-ghost btn-sm" onClick={() => setCfg((c) => ({ ...c, papelLargura: 104, papelAltura: 30, areaX: 3, areaY: 6.5, areaLargura: 98, areaAltura: 19.5, colunas: 1, sensorPapel: "continuo", estilo: ETQ_PEQUENOS.has(c.estilo) ? "gondola" : c.estilo }))}>
                   Gôndola amarela 110 x 30</button>
               </div>
               {(cfg.colunas || 1) > 1 && <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 8 }}>Papel = uma etiqueta. A impressora puxa {cfg.colunas} lado a lado (linha de {((cfg.colunas) * cfg.papelLargura + (cfg.colunas - 1) * (cfg.espacoColunas ?? 2.5)).toFixed(1).replace(".", ",")} mm).</p>}
@@ -2350,12 +2356,12 @@ function ViewEtiquetas({ sess, lojas, isMaster, onRecurso, mostrarToast }) {
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12.5, color: "var(--muted)", marginBottom: 6 }}>
                     <span>Estilos que aparecem no LinkPro ({marcados.length})</span>
                     <span style={{ display: "flex", gap: 10 }}>
-                      <a href="#" onClick={(e) => { e.preventDefault(); set("modelosLinkPro")(ETQ_MODELOS.map(([v]) => v)); }}>todos</a>
+                      <a href="#" onClick={(e) => { e.preventDefault(); set("modelosLinkPro")(etqModelosDoPapel(cfg.papelLargura).map(([v]) => v)); }}>todos</a>
                       <a href="#" onClick={(e) => { e.preventDefault(); set("modelosLinkPro")([]); }}>nenhum</a>
                     </span>
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2px 10px", maxHeight: 220, overflowY: "auto", paddingRight: 4 }}>
-                    {ETQ_MODELOS.map(([v, nome]) => (
+                    {etqModelosDoPapel(cfg.papelLargura).map(([v, nome]) => (
                       <label key={v} className="chk-row" style={{ fontSize: 13 }}>
                         <input type="checkbox" checked={marcados.includes(v)} onChange={(e) => troca(v, e.target.checked)} />
                         {nome}
