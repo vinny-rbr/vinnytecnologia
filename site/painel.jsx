@@ -296,13 +296,15 @@ function RecursosChips({ l, busy, onRecurso }) {
 }
 
 /* Versão do agente da loja (só master): verde = última, laranja = desatualizada, cinza = ainda não sabemos. */
+/* Versao do agente pra mostrar: a partir da 100 vira 1.x (103 = "1.3"); por dentro continua o numero. */
+const fmtVerAg = (n) => (n >= 100 ? "1." + (n - 100) : String(n));
 const agenteDesatualizado = (l) => !!(l.versaoAtual && l.versaoAgente && l.versaoAgente < l.versaoAtual);
 function VerChip({ l }) {
   const v = l.versaoAgente, ult = l.versaoAtual;
   const cor = !v ? ["#7d8a96", "rgba(125,138,150,.15)"] : agenteDesatualizado(l) ? ["#f5a524", "rgba(245,165,36,.15)"] : ["#22c55e", "rgba(34,197,94,.15)"];
-  const txt = !v ? "versão ?" : agenteDesatualizado(l) ? "v" + v + " · atualizar (v" + ult + ")" : "v" + v;
+  const txt = !v ? "versão ?" : agenteDesatualizado(l) ? "v" + fmtVerAg(v) + " · atualizar (v" + fmtVerAg(ult) + ")" : "v" + fmtVerAg(v);
   const dica = !v ? "Ainda não sabemos a versão: aparece quando o agente conectar." : agenteDesatualizado(l)
-    ? "Agente na v" + v + "; a última é a v" + ult + ". Ele atualiza sozinho, ou reinicie o serviço Meu Giro na loja." : "Agente na última versão.";
+    ? "Agente na v" + fmtVerAg(v) + "; a última é a v" + fmtVerAg(ult) + ". Ele atualiza sozinho, ou reinicie o serviço Meu Giro na loja." : "Agente na última versão.";
   return <span title={dica} style={{ marginLeft: 6, padding: "1px 7px", borderRadius: 999, fontSize: 11, fontWeight: 700, color: cor[0], background: cor[1], whiteSpace: "nowrap" }}>{txt}</span>;
 }
 
