@@ -34,16 +34,22 @@
   .abrir { display: inline-block; margin-top: 18px; color: var(--orange); font-weight: 700; text-decoration: none; font-size: 14px; }
 
   .celular { width: 390px; height: 820px; border-radius: 54px; padding: 12px; background: #11151d;
-    box-shadow: 0 0 0 2px #2a3140, 0 40px 90px rgba(0,0,0,.6), inset 0 0 0 2px #1d2230; position: relative; }
-  .celular::before { content: ""; position: absolute; top: 22px; left: 50%; transform: translateX(-50%); width: 108px; height: 30px; border-radius: 20px; background: #000; z-index: 2; }
-  .celular iframe { width: 100%; height: 100%; border: 0; border-radius: 42px; background: #0a0f1c; display: block; }
+    box-shadow: 0 0 0 2px #2a3140, 0 40px 90px rgba(0,0,0,.6), inset 0 0 0 2px #1d2230; }
+  .tela { width: 100%; height: 100%; border-radius: 42px; overflow: hidden; background: #0a0f1c; display: flex; flex-direction: column; }
+  /* barra de status de mentira: o recorte fica aqui, o app começa embaixo (como a área segura do iPhone) */
+  .status { flex: none; height: 46px; display: flex; align-items: center; justify-content: space-between; padding: 6px 30px 0; font-size: 14px; font-weight: 700; position: relative; }
+  .status::after { content: ""; position: absolute; top: 9px; left: 50%; transform: translateX(-50%); width: 104px; height: 28px; border-radius: 18px; background: #000; }
+  .status .ic { display: flex; gap: 6px; align-items: center; }
+  .status .bat { width: 23px; height: 11px; border: 1.5px solid rgba(238,242,248,.55); border-radius: 4px; padding: 1.5px; }
+  .status .bat i { display: block; width: 80%; height: 100%; background: var(--text); border-radius: 1.5px; }
+  .tela iframe { flex: 1; width: 100%; border: 0; display: block; background: #0a0f1c; }
 
   @media (max-width: 900px) {
     .wrap { grid-template-columns: 1fr; gap: 28px; padding: 24px 16px; min-height: auto; }
     h1 { font-size: 32px; }
     .celular { width: 100%; max-width: 420px; height: 80vh; min-height: 640px; margin: 0 auto; border-radius: 36px; padding: 8px; }
-    .celular::before { display: none; }
-    .celular iframe { border-radius: 30px; }
+    .tela { border-radius: 30px; }
+    .status { display: none; }
   }
 </style>
 </head>
@@ -62,8 +68,24 @@
     <a class="abrir" href="https://raizestecnologia-relay.onrender.com/demo/" target="_blank" rel="noopener">Abrir em tela cheia &rarr;</a>
   </section>
   <div class="celular">
-    <iframe src="https://raizestecnologia-relay.onrender.com/demo/" title="Aplicativo Meu Giro (demonstração)" allow="clipboard-write"></iframe>
+    <div class="tela">
+      <div class="status">
+        <span id="hora">9:41</span>
+        <span class="ic">
+          <svg width="17" height="11" viewBox="0 0 18 12" fill="#eef2f8"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/><rect x="10" y="2.5" width="3" height="9.5" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+          <span class="bat"><i></i></span>
+        </span>
+      </div>
+      <iframe src="https://raizestecnologia-relay.onrender.com/demo/" title="Aplicativo Meu Giro (demonstração)" allow="clipboard-write"></iframe>
+    </div>
   </div>
+<script>
+  (function () {
+    var el = document.getElementById('hora');
+    function tick() { var d = new Date(); el.textContent = d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0'); }
+    tick(); setInterval(tick, 20000);
+  })();
+</script>
 </main>
 </body>
 </html>
