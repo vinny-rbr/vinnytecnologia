@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meu Giro - Demonstração</title>
+<meta name="description" content="Veja o aplicativo Meu Giro funcionando com uma loja de demonstração.">
+<link rel="icon" type="image/svg+xml" href="vinny-mark.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #070b14; --card: #0f1626; --line: #1c2740; --text: #eef2f8; --muted: #8391ab;
+    --orange: #ff9a2e; --green: #34d399;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { min-height: 100%; background: var(--bg); color: var(--text); font-family: "Space Grotesk", "Segoe UI", sans-serif; }
+  body { background: radial-gradient(900px 520px at 70% -10%, rgba(255,138,30,.16), transparent 60%), var(--bg); }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 40px 24px; display: grid; grid-template-columns: 1fr auto; gap: 56px; align-items: center; min-height: 100vh; }
+  .marca { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
+  .marca img { height: 40px; }
+  .marca b { font-size: 20px; letter-spacing: .04em; } .marca b span { color: var(--orange); }
+  h1 { font-size: 44px; line-height: 1.08; letter-spacing: -.02em; margin-bottom: 16px; }
+  h1 em { font-style: normal; color: var(--orange); }
+  .sub { font-size: 17px; color: var(--muted); line-height: 1.55; max-width: 470px; margin-bottom: 28px; }
+  .passos { list-style: none; display: grid; gap: 12px; margin-bottom: 28px; max-width: 470px; }
+  .passos li { display: flex; gap: 12px; align-items: flex-start; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; font-size: 15px; line-height: 1.45; }
+  .passos .n { flex: none; width: 26px; height: 26px; border-radius: 8px; background: rgba(255,154,46,.14); color: var(--orange); font-weight: 700; display: grid; place-items: center; font-size: 14px; }
+  .cred { display: inline-flex; gap: 8px; margin-top: 6px; }
+  .cred code { background: #182238; border: 1px solid var(--line); border-radius: 8px; padding: 3px 9px; font-family: "Space Grotesk", monospace; font-weight: 700; color: var(--text); }
+  .nota { font-size: 13px; color: var(--muted); display: flex; gap: 8px; align-items: center; }
+  .nota i { width: 8px; height: 8px; border-radius: 50%; background: var(--green); display: inline-block; }
+  .abrir { display: inline-block; margin-top: 18px; color: var(--orange); font-weight: 700; text-decoration: none; font-size: 14px; }
+
+  .celular { width: 390px; height: 820px; border-radius: 54px; padding: 12px; background: #11151d;
+    box-shadow: 0 0 0 2px #2a3140, 0 40px 90px rgba(0,0,0,.6), inset 0 0 0 2px #1d2230; position: relative; }
+  .celular::before { content: ""; position: absolute; top: 22px; left: 50%; transform: translateX(-50%); width: 108px; height: 30px; border-radius: 20px; background: #000; z-index: 2; }
+  .celular iframe { width: 100%; height: 100%; border: 0; border-radius: 42px; background: #0a0f1c; display: block; }
+
+  @media (max-width: 900px) {
+    .wrap { grid-template-columns: 1fr; gap: 28px; padding: 24px 16px; min-height: auto; }
+    h1 { font-size: 32px; }
+    .celular { width: 100%; max-width: 420px; height: 80vh; min-height: 640px; margin: 0 auto; border-radius: 36px; padding: 8px; }
+    .celular::before { display: none; }
+    .celular iframe { border-radius: 30px; }
+  }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <section>
+    <div class="marca"><img src="meugiro-logo.png" alt="Meu Giro"><b>MEU <span>GIRO</span></b></div>
+    <h1>Veja o <em>Meu Giro</em> funcionando agora</h1>
+    <p class="sub">Este é o aplicativo de verdade, ligado a uma loja de demonstração. Vendas, caixa, contas, estoque e relatórios, do jeito que o lojista vê no celular.</p>
+    <ol class="passos">
+      <li><span class="n">1</span><div>Toque em <b>Entrar</b>. O acesso de demonstração já vem preenchido:<div class="cred"><code>demo</code><code>demo</code></div></div></li>
+      <li><span class="n">2</span><div>Escolha a <b>Loja Demonstração</b>: uma com o sistema Host e outra com o LinkPro.</div></li>
+      <li><span class="n">3</span><div>Navegue à vontade. A demonstração é <b>só para visualizar</b>: nada é alterado na loja.</div></li>
+    </ol>
+    <p class="nota"><i></i>No celular, o app tem ainda leitor de código de barras, digital e avisos no celular.</p>
+    <a class="abrir" href="https://raizestecnologia-relay.onrender.com/demo/" target="_blank" rel="noopener">Abrir em tela cheia &rarr;</a>
+  </section>
+  <div class="celular">
+    <iframe src="https://raizestecnologia-relay.onrender.com/demo/" title="Aplicativo Meu Giro (demonstração)" allow="clipboard-write"></iframe>
+  </div>
+</main>
+</body>
+</html>
