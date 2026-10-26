@@ -12,7 +12,7 @@ function Nav({ t, lang, setLang }) {
   }, []);
   const links = [
     ["#produto", "Produto"], ["#recursos", "Recursos"],
-    ["#sistemas", "Sistemas"], ["#revenda", "Revenda"], ["tv.html", "Painel TV"],
+    ["#sistemas", "Sistemas"], ["#revenda", "Revenda"], ["demo.html", "Demonstração"], ["tv.html", "Painel TV"],
   ];
   const go = (e, href) => { setOpen(false); };
   return (

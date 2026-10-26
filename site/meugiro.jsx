@@ -93,6 +93,7 @@ function MgHero() {
           <Reveal delay={180}>
             <div className="mg-cta">
               <Btn href="#revenda" variant="primary" icon={<Icon.arrow />}>Começar agora</Btn>
+              <Btn href="demo.html" variant="ghost">Testar a demonstração</Btn>
               <Btn href="#recursos" variant="ghost">Ver recursos</Btn>
             </div>
           </Reveal>
