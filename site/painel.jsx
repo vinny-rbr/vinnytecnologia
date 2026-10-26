@@ -85,6 +85,7 @@ const icUsers = <><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle c
 const icPlus = <><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>;
 const icCard = <><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></>;
 const icFile = <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>;
+const icImage = <><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></>;
 const icDownload = <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></>;
 const icGear = <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></>;
 const icCheck = <polyline points="20 6 9 17 4 12"/>;
@@ -308,7 +309,7 @@ function VerChip({ l }) {
   return <span title={dica} style={{ marginLeft: 6, padding: "1px 7px", borderRadius: 999, fontSize: 11, fontWeight: 700, color: cor[0], background: cor[1], whiteSpace: "nowrap" }}>{txt}</span>;
 }
 
-function Linha({ l, onAtivar, busy, m, onGrupo, rev, onHist, sel, onSel, onRecurso }) {
+function Linha({ l, onAtivar, busy, m, onGrupo, onLogo, rev, onHist, sel, onSel, onRecurso }) {
   const soon = vencendoEmBreve(l);
   const nomeCell = (
     <td className="loja">
@@ -353,6 +354,7 @@ function Linha({ l, onAtivar, busy, m, onGrupo, rev, onHist, sel, onSel, onRecur
             <button className="iconbtn" title="Data de início (base da cobrança)" disabled={busy} onClick={() => m.definirAtivacao(l)}><Ic d={icEdit} /></button>
             {!l.implantacaoPaga && !l.revendaCodigo && <button className="iconbtn" title="Vencimento da implantação" disabled={busy} onClick={() => m.definirImplantacaoVence(l)}><Ic d={icClock} /></button>}
             <button className="iconbtn" title="Grupo" disabled={busy} onClick={() => onGrupo(l)}><Ic d={icFolder} /></button>
+            <button className="iconbtn" title="Logo da loja (vai nos PDFs do app)" disabled={busy} onClick={() => onLogo(l)}><Ic d={icImage} /></button>
             <button className="iconbtn" title="Mover para outra revenda" disabled={busy} onClick={() => m.moverRevenda(l)}><Ic d={icUsers} /></button>
             {l.revendaCodigo && <button className="iconbtn" title="Remover da revenda (pra reinstalar)" disabled={busy} onClick={() => m.removerRevenda(l)}><Ic d={icLogout} /></button>}
             <button className="iconbtn" title="Parcelas pagas" disabled={busy} onClick={() => onHist(l)}><Ic d={icFile} /></button>
@@ -388,6 +390,7 @@ function Linha({ l, onAtivar, busy, m, onGrupo, rev, onHist, sel, onSel, onRecur
             </>
           )}
           <button className="iconbtn" title="Grupo" disabled={busy} onClick={() => onGrupo(l)}><Ic d={icFolder} /></button>
+            <button className="iconbtn" title="Logo da loja (vai nos PDFs do app)" disabled={busy} onClick={() => onLogo(l)}><Ic d={icImage} /></button>
           <button className="iconbtn" title="Parcelas pagas" disabled={busy} onClick={() => onHist(l)}><Ic d={icFile} /></button>
         </div>
       </td>
@@ -395,7 +398,7 @@ function Linha({ l, onAtivar, busy, m, onGrupo, rev, onHist, sel, onSel, onRecur
   );
 }
 
-function TabelaLojas({ lojas, onAtivar, ativando, vazio, m, onGrupo, rev, onHist, sel, onSel, onRecurso }) {
+function TabelaLojas({ lojas, onAtivar, ativando, vazio, m, onGrupo, onLogo, rev, onHist, sel, onSel, onRecurso }) {
   if (lojas.length === 0) {
     return <div className="state"><div className="big">{vazio.t}</div>{vazio.s}</div>;
   }
@@ -410,7 +413,7 @@ function TabelaLojas({ lojas, onAtivar, ativando, vazio, m, onGrupo, rev, onHist
           </tr>
         </thead>
         <tbody>
-          {lojas.map((l) => <Linha key={l.cnpj} l={l} busy={ativando === l.cnpj} onAtivar={onAtivar} m={m} rev={rev} onGrupo={onGrupo} onHist={onHist} sel={sel} onSel={onSel} onRecurso={onRecurso} />)}
+          {lojas.map((l) => <Linha key={l.cnpj} l={l} busy={ativando === l.cnpj} onAtivar={onAtivar} m={m} rev={rev} onGrupo={onGrupo} onLogo={onLogo} onHist={onHist} sel={sel} onSel={onSel} onRecurso={onRecurso} />)}
         </tbody>
       </table>
     </div>
@@ -478,7 +481,7 @@ function ViewInicio({ lojas, sess, onAtivar, ativando, goto, isMaster }) {
   );
 }
 
-function ViewLojas({ lojas, onAtivar, ativando, isMaster, master, rev, onGrupo, onHist, onRecurso }) {
+function ViewLojas({ lojas, onAtivar, ativando, isMaster, master, rev, onGrupo, onLogo, onHist, onRecurso }) {
   const [tab, setTab] = useState("todas");
   const [q, setQ] = useState("");
   const [grupo, setGrupo] = useState("__todos");
@@ -559,7 +562,7 @@ function ViewLojas({ lojas, onAtivar, ativando, isMaster, master, rev, onGrupo, 
             <button className="btn btn-mg btn-sm" onClick={() => (isMaster ? master : rev).pagarLote([...sel], () => setSel(new Set()))}><Ic d={icCard} /> Gerar boleto / Pix</button>
           </div>
         )}
-        <TabelaLojas lojas={filtradas} onAtivar={onAtivar} ativando={ativando} m={isMaster ? master : null} rev={rev} onGrupo={onGrupo}
+        <TabelaLojas lojas={filtradas} onAtivar={onAtivar} ativando={ativando} m={isMaster ? master : null} rev={rev} onGrupo={onGrupo} onLogo={onLogo}
           onHist={onHist} sel={sel} onSel={toggleSel} onRecurso={onRecurso}
           vazio={{ t: lojas.length === 0 ? "Nenhuma loja ainda" : "Nada nesse filtro", s: lojas.length === 0 ? (isMaster ? "Nenhuma loja conectou ainda." : "Instale o agente com o seu código de revenda numa loja e ela aparece aqui.") : "Tente outro filtro ou limpe a busca." }} />
         <div className="foot">
@@ -2762,6 +2765,33 @@ function Painel({ sess, onLogout }) {
     }
   }
 
+  // logo da loja (vai nos PDFs do app): escolhe a imagem, reduz pra no maximo 512 px e envia. Master e revendedor.
+  function subirLogo(l) {
+    const inp = document.createElement("input");
+    inp.type = "file";
+    inp.accept = "image/png,image/jpeg,image/webp";
+    inp.onchange = () => {
+      const f = inp.files && inp.files[0];
+      if (!f) return;
+      const img = new Image();
+      img.onload = () => {
+        const k = Math.min(1, 512 / Math.max(img.width, img.height));
+        const cv = document.createElement("canvas");
+        cv.width = Math.max(1, Math.round(img.width * k));
+        cv.height = Math.max(1, Math.round(img.height * k));
+        cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height);
+        let dados = cv.toDataURL("image/png");
+        if (dados.length > 700000) dados = cv.toDataURL("image/jpeg", 0.85);
+        URL.revokeObjectURL(img.src);
+        runAction(() => api(`/lojas/${l.cnpj}/logo`, { method: "POST", base: isMaster ? ADMIN_API : API, token: sess.token, body: { logo: dados } }),
+          `Logo de “${l.nome}” salvo: vai sair nos PDFs do app.`).catch(() => {});
+      };
+      img.onerror = () => mostrarToast("Não consegui abrir essa imagem.", false);
+      img.src = URL.createObjectURL(f);
+    };
+    inp.click();
+  }
+
   // grupos: organiza lojas (ex.: um cliente com varias lojas). Master e revendedor.
   function definirGrupo(l) {
     const grupos = [...new Set(lojas.map((x) => x.grupo).filter(Boolean))];
@@ -2815,7 +2845,7 @@ function Painel({ sess, onLogout }) {
     },
   };
 
-  const props = { recarregar: carregar, onSolicitacoes: setNSolic, lojas, sess, onAtivar: ativar, ativando, goto: setView, onLogout, mostrarToast, isMaster, master, rev: revenda, onGrupo: definirGrupo, onHist: verHistorico, onRecurso: alternarRecurso };
+  const props = { recarregar: carregar, onSolicitacoes: setNSolic, lojas, sess, onAtivar: ativar, ativando, goto: setView, onLogout, mostrarToast, isMaster, master, rev: revenda, onGrupo: definirGrupo, onLogo: subirLogo, onHist: verHistorico, onRecurso: alternarRecurso };
   const conteudo = () => {
     switch (view) {
       case "lojas": return <ViewLojas {...props} />;
