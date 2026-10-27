@@ -273,6 +273,8 @@ const RECURSOS = [
   { id: "forca_vendas", nome: "Força de vendas", sis: "Host" },
   { id: "etiquetas", nome: "Etiquetas", sis: "Host" },
   { id: "etiquetas", nome: "Etiquetas", sis: "Link" },
+  { id: "saude", nome: "Saúde +R$10", sis: "Host" },
+  { id: "saude", nome: "Saúde +R$10", sis: "Link" },
 ];
 
 function RecursosChips({ l, busy, onRecurso }) {
@@ -2755,6 +2757,10 @@ function Painel({ sess, onLogout }) {
 
   // recursos extras do app (Salão / Painel TV / Força de vendas): liga e desliga na hora.
   async function alternarRecurso(l, r, ativo) {
+    // Saúde da loja: avisos no celular quando o agente/impressora cai; soma R$10 na mensalidade desta loja
+    if (r.id === "saude" && ativo && !window.confirm(`Ativar a Saúde da loja em ${l.nome || "loja"}?
+
+Você passa a receber no app os avisos quando o computador ou a impressora da loja cair, e a mensalidade desta loja fica R$ 10,00 mais cara a partir da próxima cobrança.`)) return;
     try {
       await api(`/lojas/${l.cnpj}/recursos`, { method: "POST", base: isMaster ? ADMIN_API : API, token: sess.token, body: { recurso: r.id, ativo } });
       await carregar();
