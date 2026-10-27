@@ -2719,7 +2719,7 @@ function ViewSuporte({ sess, mostrarToast }) {
 
       {aba === "equipe" && (
         <div className="panel" style={{ padding: 16 }}>
-          <p className="sub" style={{ marginBottom: 12 }}>Mensagem da equipe não abre chamado. <b>Técnico</b>: quando escreve no grupo assume o chamado (o último técnico que escreveu fica como atendente). <b>Comercial</b>: não abre nem atende. As suas mensagens (o número conectado) contam como técnico "{cfg && cfg.nomeDono || "Lucas"}".</p>
+          <p className="sub" style={{ marginBottom: 12 }}>Mensagem da equipe não abre chamado. <b>Técnico</b>: quando escreve no grupo assume o chamado (o último técnico que escreveu fica como atendente). <b>Comercial</b>: pode abrir chamado (como cliente), mas nunca fica como atendente. As suas mensagens (o número conectado) contam como técnico "{cfg && cfg.nomeDono || "Lucas"}".</p>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "end", marginBottom: 14 }}>
             <div className="field" style={{ marginBottom: 0 }}><label>Nome</label><input value={novo.nome} placeholder="Wilton" onChange={(e) => setNovo({ ...novo, nome: e.target.value })} /></div>
             <div className="field" style={{ marginBottom: 0 }}><label>WhatsApp com DDD</label><input value={novo.numero} placeholder="96 99123-4567" onChange={(e) => setNovo({ ...novo, numero: e.target.value })} /></div>
