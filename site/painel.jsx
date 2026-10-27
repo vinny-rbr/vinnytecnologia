@@ -2618,14 +2618,16 @@ function ViewSuporte({ sess, mostrarToast }) {
         <thead><tr><th>Grupo</th><th>Cliente</th><th>Mensagem</th><th>Aberto</th><th>{comAcoes ? "Esperando" : "Resposta"}</th><th>Atendido por</th><th>{comAcoes ? "" : "Situação"}</th></tr></thead>
         <tbody>
           {lista.map((c) => {
-            const espera = supDesde(c.status === "ABERTO" ? c.abertoEm : c.atendidoEm);
+            // minutos que o cliente espera resposta (aguardando ou em atendimento): 5 amarelo, 10 vermelho
+            const espera = c.esperandoDesde ? supDesde(c.esperandoDesde) : null;
+            const corEsp = espera == null ? undefined : espera >= 10 ? { color: "var(--neg)", fontWeight: 800 } : espera >= 5 ? { color: "var(--mg)", fontWeight: 700 } : undefined;
             return (
               <tr key={c.id}>
                 <td><b>{supGrupo(c.grupo)}</b></td>
                 <td>{c.cliente || c.clienteNumero || "-"}</td>
                 <td style={{ maxWidth: 320, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={c.primeiraMensagem}>{c.ultimaMensagem || c.primeiraMensagem}</td>
                 <td className="mono">{supQuando(c.abertoEm)}</td>
-                <td className="mono" style={comAcoes && c.status === "ABERTO" && espera >= 30 ? { color: "var(--neg)", fontWeight: 700 } : undefined}>{comAcoes ? supMin(espera) : supMin(c.minutosResposta)}</td>
+                <td className="mono" style={comAcoes ? corEsp : undefined}>{comAcoes ? (espera == null ? "respondido" : supMin(espera)) : supMin(c.minutosResposta)}</td>
                 <td>{c.atendidoPor || "-"}</td>
                 <td>
                   {comAcoes ? (

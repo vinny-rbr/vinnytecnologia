@@ -57,6 +57,12 @@
   footer .off { color: var(--red); font-weight: 800; }
   footer .rank b { color: var(--text); }
 
+  #alerta { display: none; align-items: center; justify-content: center; gap: 1.5vw; padding: 1.4vh 2.5vw;
+    font-size: 3.4vh; font-weight: 900; letter-spacing: .02em; }
+  #alerta.amarelo { display: flex; background: rgba(247,148,29,.18); color: var(--orange); }
+  #alerta.vermelho { display: flex; background: var(--red); color: #fff; animation: alarme 1s infinite; }
+  .ok-resp { color: var(--green); font-weight: 800; }
+  @keyframes alarme { 50% { background: #b62a2a; } }
   #erro { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; text-align: center;
     font-size: 3.4vh; color: var(--muted); padding: 6vw; }
 
@@ -76,6 +82,7 @@
     </div>
     <div class="hora" id="hora"></div>
   </header>
+  <div id="alerta"></div>
   <div class="cols">
     <section class="col esp"><h2><i class="dot"></i>AGUARDANDO <span class="n" id="nEsp">0</span></h2><div class="lista" id="esp"></div></section>
     <section class="col atd"><h2><i class="dot"></i>EM ATENDIMENTO <span class="n" id="nAtd">0</span></h2><div class="lista" id="atd"></div></section>
@@ -103,12 +110,19 @@
     } catch (e) {}
   }
 
+  var AMARELO = 5, VERMELHO = 10; // minutos esperando resposta
+
+  // minutos que o cliente está esperando resposta (null = respondido, ninguém esperando)
+  function espera(c) { return c.esperandoDesde ? minDesde(c.esperandoDesde) : null; }
+
   function card(c, novo) {
     var esperando = c.status === "ABERTO";
-    var m = minDesde(esperando ? c.abertoEm : c.atendidoEm);
-    var cor = !esperando ? "" : m >= 30 ? " vermelho" : m >= 10 ? " amarelo" : "";
+    var e = espera(c);
+    var m = e != null ? e : minDesde(c.atendidoEm);
+    var cor = e == null ? "" : e >= VERMELHO ? " vermelho" : e >= AMARELO ? " amarelo" : "";
     return '<div class="item' + cor + (novo ? " novo" : "") + '">' +
-      '<div class="linha1"><div class="grupo">' + esc(nomeGrupo(c.grupo)) + '</div><div class="tempo">' + fmtMin(m) + '</div></div>' +
+      '<div class="linha1"><div class="grupo">' + esc(nomeGrupo(c.grupo)) + '</div><div class="tempo">' +
+        (e == null ? '<span class="ok-resp">respondido</span>' : (esperando ? "" : "sem resposta ") + fmtMin(e)) + '</div></div>' +
       '<div class="quem">' + (esperando
         ? "<b>" + esc(c.cliente || c.clienteNumero || "cliente") + "</b> · " + c.mensagens + (c.mensagens > 1 ? " mensagens" : " mensagem")
         : 'atendido por <span class="atendente">' + esc(c.atendidoPor || "-") + "</span> · cliente " + esc(c.cliente || "")) + '</div>' +
@@ -131,6 +145,7 @@
     document.getElementById("nAtd").textContent = atd.length;
     if (temNovo) bip();
     vistos = ids;
+    alerta(lista);
     var h = d.hoje || {};
     document.getElementById("kAbertos").textContent = h.total != null ? h.total : "-";
     document.getElementById("kFin").textContent = h.finalizados != null ? h.finalizados : "-";
@@ -138,6 +153,25 @@
     var r = (h.ranking || []).slice(0, 4).map(function (x, i) { return (i + 1) + "º <b>" + esc(x.nome) + "</b> " + x.atendidos; });
     document.getElementById("rank").innerHTML = r.length ? "Hoje: " + r.join(" &nbsp;·&nbsp; ") : "Hoje ainda sem atendimentos";
     document.getElementById("status").innerHTML = d.conector ? "WhatsApp conectado" : '<span class="off">WhatsApp do suporte desconectado</span>';
+  }
+
+  var ultimoBipAlerta = 0;
+  function alerta(lista) {
+    var amar = [], verm = [];
+    lista.forEach(function (c) { var e = espera(c); if (e == null) return; if (e >= VERMELHO) verm.push(c); else if (e >= AMARELO) amar.push(c); });
+    var el = document.getElementById("alerta");
+    if (verm.length) {
+      var pior = verm.slice().sort(function (a, b) { return espera(b) - espera(a); })[0];
+      el.className = "vermelho";
+      el.innerHTML = "⚠ " + verm.length + (verm.length > 1 ? " clientes esperando" : " cliente esperando") + " resposta há mais de " + VERMELHO +
+        " min &nbsp;·&nbsp; " + esc(nomeGrupo(pior.grupo)) + " (" + fmtMin(espera(pior)) + ")";
+      if (Date.now() - ultimoBipAlerta > 60000) { ultimoBipAlerta = Date.now(); bip(); setTimeout(bip, 500); }
+    } else if (amar.length) {
+      el.className = "amarelo";
+      el.innerHTML = "⏱ " + amar.length + (amar.length > 1 ? " clientes esperando" : " cliente esperando") + " resposta há mais de " + AMARELO + " min";
+    } else {
+      el.className = ""; el.innerHTML = "";
+    }
   }
 
   function carregar() {
