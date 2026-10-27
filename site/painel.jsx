@@ -2555,7 +2555,8 @@ function ViewSuporte({ sess, mostrarToast }) {
   const [de, setDe] = useState(new Date(Date.now() - 29 * 864e5).toISOString().slice(0, 10));
   const [ate, setAte] = useState(hoje);
   const [busca, setBusca] = useState("");
-  const [novo, setNovo] = useState({ nome: "", numero: "" });
+  const [novo, setNovo] = useState({ nome: "", numero: "", funcao: "TECNICO" });
+  const [autores, setAutores] = useState(null);
   const [busy, setBusy] = useState(null);
   const req = (p, o = {}) => api("/suporte" + p, { base: ADMIN_API, token: sess.token, ...o });
 
@@ -2569,7 +2570,10 @@ function ViewSuporte({ sess, mostrarToast }) {
     try { setRel(await req(`/relatorio?de=${de}&ate=${ate}`)); } catch (e) { mostrarToast(e.message, false); }
   }, [sess.token, de, ate]);
   const carregarEqp = useCallback(async () => {
-    try { setEqp(await req("/equipe") || []); } catch (e) { mostrarToast(e.message, false); }
+    try {
+      const [e, a] = await Promise.all([req("/equipe"), req("/autores")]);
+      setEqp(e || []); setAutores(a || []);
+    } catch (e) { mostrarToast(e.message, false); }
   }, [sess.token]);
   useEffect(() => { carregar(); const t = setInterval(carregar, 15000); return () => clearInterval(t); }, [carregar]);
   useEffect(() => { if (aba === "relatorio") carregarRel(); if (aba === "equipe") carregarEqp(); }, [aba, carregarRel, carregarEqp]);
@@ -2583,7 +2587,16 @@ function ViewSuporte({ sess, mostrarToast }) {
   async function salvarEqp() {
     try {
       await req("/equipe", { method: "POST", body: novo });
-      setNovo({ nome: "", numero: "" }); await carregarEqp(); mostrarToast("Adicionado à equipe.");
+      setNovo({ nome: "", numero: "", funcao: "TECNICO" }); await carregarEqp(); mostrarToast("Adicionado à equipe.");
+    } catch (e) { mostrarToast(e.message, false); }
+  }
+  // quem escreveu nos grupos -> equipe (o nome pode ser trocado: "Danone" vira "Ingrid")
+  async function marcarAutor(a, funcao) {
+    const nome = window.prompt(`Nome de quem é ${funcao === "COMERCIAL" ? "comercial" : "técnico"}:`, a.nome || "");
+    if (!nome || !nome.trim()) return;
+    try {
+      await req("/equipe", { method: "POST", body: { numero: a.numero, nome: nome.trim(), funcao } });
+      await carregarEqp(); mostrarToast(`${nome.trim()} marcado como ${funcao === "COMERCIAL" ? "comercial" : "técnico"}.`);
     } catch (e) { mostrarToast(e.message, false); }
   }
   async function removerEqp(x) {
@@ -2706,17 +2719,36 @@ function ViewSuporte({ sess, mostrarToast }) {
 
       {aba === "equipe" && (
         <div className="panel" style={{ padding: 16 }}>
-          <p className="sub" style={{ marginBottom: 12 }}>Quem é da sua equipe de suporte. Mensagem desses números no grupo não abre chamado: a primeira resposta marca quem atendeu. As suas mensagens (o número conectado) já contam como "{cfg && cfg.nomeDono || "Lucas"}".</p>
+          <p className="sub" style={{ marginBottom: 12 }}>Mensagem da equipe não abre chamado. <b>Técnico</b>: quando escreve no grupo assume o chamado (o último técnico que escreveu fica como atendente). <b>Comercial</b>: não abre nem atende. As suas mensagens (o número conectado) contam como técnico "{cfg && cfg.nomeDono || "Lucas"}".</p>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "end", marginBottom: 14 }}>
             <div className="field" style={{ marginBottom: 0 }}><label>Nome</label><input value={novo.nome} placeholder="Wilton" onChange={(e) => setNovo({ ...novo, nome: e.target.value })} /></div>
             <div className="field" style={{ marginBottom: 0 }}><label>WhatsApp com DDD</label><input value={novo.numero} placeholder="96 99123-4567" onChange={(e) => setNovo({ ...novo, numero: e.target.value })} /></div>
+            <div className="field" style={{ marginBottom: 0 }}><label>Função</label><select value={novo.funcao} onChange={(e) => setNovo({ ...novo, funcao: e.target.value })}><option value="TECNICO">Técnico</option><option value="COMERCIAL">Comercial</option></select></div>
             <button className="btn btn-mg" onClick={salvarEqp}><Ic d={icPlus} /> Adicionar</button>
           </div>
           <div className="tbl-wrap"><table className="tbl">
-            <thead><tr><th>Nome</th><th>Número</th><th></th></tr></thead>
-            <tbody>{(eqp || []).map((x) => <tr key={x.numero}><td><b>{x.nome}</b></td><td className="mono">{x.numero}</td><td><button className="iconbtn iconbtn-danger" title="Remover" onClick={() => removerEqp(x)}><Ic d={icTrash} /></button></td></tr>)}</tbody>
+            <thead><tr><th>Nome</th><th>Função</th><th>Número</th><th></th></tr></thead>
+            <tbody>{(eqp || []).map((x) => <tr key={x.numero}><td><b>{x.nome}</b></td><td><span className={"pill " + (x.funcao === "COMERCIAL" ? "pill-wait" : "pill-ok")}>{x.funcao === "COMERCIAL" ? "comercial" : "técnico"}</span></td><td className="mono">{x.numero}</td><td><button className="iconbtn iconbtn-danger" title="Remover" onClick={() => removerEqp(x)}><Ic d={icTrash} /></button></td></tr>)}</tbody>
           </table></div>
           {eqp && !eqp.length && <div className="mini-empty" style={{ padding: 12 }}>Ninguém cadastrado ainda.</div>}
+          <h3 style={{ margin: "22px 0 6px" }}>Quem escreveu nos grupos</h3>
+          <p className="sub" style={{ marginBottom: 10 }}>Todo mundo que mandou mensagem nos grupos SUP desde que o conector foi ligado (clientes e equipe). Marque quem é da equipe; o resto é cliente.</p>
+          <div className="tbl-wrap"><table className="tbl">
+            <thead><tr><th>Nome no WhatsApp</th><th>Último grupo</th><th>Quando</th><th>Msgs</th><th></th></tr></thead>
+            <tbody>{(autores || []).map((a) => (
+              <tr key={a.numero}>
+                <td><b>{a.nome || "-"}</b><div className="mono sub">{a.numero}</div></td>
+                <td>{supGrupo(a.grupo)}</td>
+                <td className="mono">{supQuando(a.ultimaVez)}</td>
+                <td className="mono">{a.mensagens}</td>
+                <td><div className="row-actions">
+                  <button className="btn btn-ghost btn-sm" onClick={() => marcarAutor(a, "TECNICO")}>É técnico</button>
+                  <button className="btn btn-ghost btn-sm" onClick={() => marcarAutor(a, "COMERCIAL")}>É comercial</button>
+                </div></td>
+              </tr>
+            ))}</tbody>
+          </table></div>
+          {autores && !autores.length && <div className="mini-empty" style={{ padding: 12 }}>Ninguém escreveu ainda. Assim que a equipe responder num grupo SUP, o nome aparece aqui.</div>}
         </div>
       )}
 
