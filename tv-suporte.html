@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* TV do suporte (chamados dos grupos "SUP" do WhatsApp). Dois temas: Escuro (neon) e Claro (corporativo).
-   Tela fixa de 1920x1080 escalada pro tamanho da TV. Tecla T troca o tema (fica salvo), N mostra um chamado de teste. */
+   Tela fixa de 1920x1080 escalada pro tamanho da TV. Tema automático (claro 8h-15h, escuro 15h-8h); tecla T troca até a próxima virada, N mostra um chamado de teste. */
 html, body { margin: 0; padding: 0; overflow: hidden; height: 100%; }
 * { box-sizing: border-box; }
 #stage { position: fixed; inset: 0; overflow: hidden; }
@@ -371,13 +371,25 @@ var CHAVE = qs.get("k") || "", DEMO = qs.get("demo") === "1";
 var AMARELO = 300, VERMELHO = 600; // segundos esperando resposta (5 e 10 min)
 var POP_SEG = 8;                  // quanto tempo o aviso de chamado novo fica na tela
 
-// ---------- tema (T troca e fica salvo) ----------
+// ---------- tema: automático pelo horário de Brasília (claro das 8h às 15h, escuro das 15h às 8h) ----------
+// T troca na mão até a próxima virada (8h ou 15h); ?tema=claro|escuro fixa.
+function temaDoHorario() {
+  var h = +new Date(Date.now() + (window.desvio || 0)).toLocaleString("en-US", { timeZone: "America/Sao_Paulo", hour: "numeric", hourCycle: "h23" });
+  return h >= 8 && h < 15 ? "claro" : "escuro";
+}
 function temaAtual() {
   var t = (qs.get("tema") || "").toLowerCase();
-  if (t !== "claro" && t !== "escuro") { try { t = localStorage.getItem("tvSuporteTema") || "escuro"; } catch (e) { t = "escuro"; } }
-  return t === "claro" ? "claro" : "escuro";
+  if (t === "claro" || t === "escuro") return t;
+  var auto = temaDoHorario();
+  try {
+    var m = JSON.parse(localStorage.getItem("tvSuporteTemaManual") || "null");
+    if (m && m.faixa === auto) return m.tema; // trocou no T nesta faixa de horário
+    localStorage.removeItem("tvSuporteTemaManual");
+  } catch (e) {}
+  return auto;
 }
 var tema = temaAtual();
+setInterval(function () { var t = temaAtual(); if (t !== tema) { tema = t; aplicarTema(); } }, 60e3);
 function aplicarTema() {
   document.body.className = tema;
   document.querySelector(".logo-d").style.display = tema === "escuro" ? "grid" : "none";
@@ -417,7 +429,7 @@ function bip(vezes, freq) {
 addEventListener("pointerdown", liberarSom);
 addEventListener("keydown", function (e) {
   liberarSom();
-  if (e.key === "t" || e.key === "T") { tema = tema === "escuro" ? "claro" : "escuro"; try { localStorage.setItem("tvSuporteTema", tema); } catch (x) {} aplicarTema(); }
+  if (e.key === "t" || e.key === "T") { tema = tema === "escuro" ? "claro" : "escuro"; try { localStorage.setItem("tvSuporteTemaManual", JSON.stringify({ tema: tema, faixa: temaDoHorario() })); } catch (x) {} aplicarTema(); }
   if (e.key === "n" || e.key === "N") mostrarNovo({ grupo: "SUP TESTE", cliente: "Teste", primeiraMensagem: "Chamado de teste (tecla N)", abertoEm: new Date().toISOString() });
   if (e.key === "Escape") fecharPop();
 });
