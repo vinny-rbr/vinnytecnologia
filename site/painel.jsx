@@ -2631,7 +2631,8 @@ function ViewSuporte({ sess, mostrarToast }) {
             const corEsp = espera == null ? undefined : espera >= 10 ? { color: "var(--neg)", fontWeight: 800 } : espera >= 5 ? { color: "var(--mg)", fontWeight: 700 } : undefined;
             return (
               <tr key={c.id} onClick={(e) => { if (!e.target.closest("button")) abrirConversa(c); }} style={{ cursor: "pointer" }} title="Ver a conversa">
-                <td><b>{supGrupo(c.grupo)}</b></td>
+                <td><b>{supGrupo(c.grupo)}</b> <span className="sub mono">#{c.id}</span>
+                  {c.retornoDe && <div><span className="pill pill-block" title="Esse cliente já teve um chamado finalizado nas últimas 24h" style={{ whiteSpace: "nowrap" }}>retorno do #{c.retornoDe}</span></div>}</td>
                 {!comAcoes && <td><span className="pill pill-wait" style={{ whiteSpace: "nowrap" }}>{c.categoria || "Outros"}</span></td>}
                 <td>{c.cliente || c.clienteNumero || "-"}</td>
                 <td style={{ maxWidth: 320, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={c.primeiraMensagem}>{c.ultimaMensagem || c.primeiraMensagem}</td>
@@ -2694,7 +2695,7 @@ function ViewSuporte({ sess, mostrarToast }) {
           {!rel ? <div className="mini-empty">Carregando...</div> : (
             <>
               <div className="kpis" style={{ marginBottom: 14 }}>
-                <div className="kpi"><div className="k-ic ic-blue"><Ic d={icChat} /></div><div className="k-l">Chamados</div><div className="k-v tnum">{rel.total}</div><div className="k-s">{rel.finalizados} finalizados · {rel.emAberto} em aberto</div></div>
+                <div className="kpi"><div className="k-ic ic-blue"><Ic d={icChat} /></div><div className="k-l">Chamados</div><div className="k-v tnum">{rel.total}</div><div className="k-s">{rel.finalizados} finalizados · {rel.emAberto} em aberto · {rel.retornos || 0} retornos</div></div>
                 <div className="kpi"><div className="k-ic ic-amber"><Ic d={icClock} /></div><div className="k-l">Resposta média</div><div className="k-v tnum">{supMin(rel.mediaRespostaMin)}</div><div className="k-s">do cliente escrever até a 1ª resposta</div></div>
                 <div className="kpi"><div className="k-ic ic-green"><Ic d={icCheck} /></div><div className="k-l">Solução média</div><div className="k-v tnum">{supMin(rel.mediaSolucaoMin)}</div><div className="k-s">até finalizar</div></div>
                 <div className="kpi"><div className="k-ic ic-blue"><Ic d={icUsers} /></div><div className="k-l">Quem mais atendeu</div><div className="k-v" style={{ fontSize: 22 }}>{rel.ranking && rel.ranking[0] ? rel.ranking[0].nome : "-"}</div><div className="k-s">{rel.ranking && rel.ranking[0] ? rel.ranking[0].atendidos + " chamados" : ""}</div></div>
@@ -2723,8 +2724,8 @@ function ViewSuporte({ sess, mostrarToast }) {
                 <div className="panel">
                   <div className="p-head"><span className="p-title"><Ic d={icUsers} /> Ranking da equipe</span></div>
                   <div className="tbl-wrap"><table className="tbl">
-                    <thead><tr><th>#</th><th>Atendente</th><th>Atendidos</th><th>Finalizados</th><th>Resposta média</th></tr></thead>
-                    <tbody>{(rel.ranking || []).map((r, i) => <tr key={r.nome}><td>{i + 1}º</td><td><b>{r.nome}</b></td><td className="mono">{r.atendidos}</td><td className="mono">{r.finalizados}</td><td className="mono">{supMin(r.mediaRespostaMin)}</td></tr>)}</tbody>
+                    <thead><tr><th>#</th><th>Atendente</th><th>Atendidos</th><th>Finalizados</th><th title="Chamados que ele finalizou e o cliente voltou a chamar em até 24h">Retornos</th><th>Resposta média</th></tr></thead>
+                    <tbody>{(rel.ranking || []).map((r, i) => <tr key={r.nome}><td>{i + 1}º</td><td><b>{r.nome}</b></td><td className="mono">{r.atendidos}</td><td className="mono">{r.finalizados}</td><td className="mono">{r.retornos || 0}</td><td className="mono">{supMin(r.mediaRespostaMin)}</td></tr>)}</tbody>
                   </table></div>
                 </div>
                 <div className="panel">
@@ -2793,7 +2794,7 @@ function ViewSuporte({ sess, mostrarToast }) {
         <div onClick={() => setConv(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", zIndex: 50, display: "flex", justifyContent: "flex-end" }}>
           <div className="panel" onClick={(e) => e.stopPropagation()} style={{ width: "min(560px, 100%)", height: "100%", borderRadius: 0, overflowY: "auto", padding: 0, display: "flex", flexDirection: "column" }}>
             <div className="p-head" style={{ position: "sticky", top: 0, zIndex: 1, background: "var(--card)" }}>
-              <span className="p-title"><Ic d={icChat} /> {supGrupo((conv.chamado || {}).grupo)}</span>
+              <span className="p-title"><Ic d={icChat} /> {supGrupo((conv.chamado || {}).grupo)} <span className="sub mono">#{(conv.chamado || {}).id}</span>{(conv.chamado || {}).retornoDe && <span className="pill pill-block">retorno do #{conv.chamado.retornoDe}</span>}</span>
               <button className="iconbtn" title="Fechar" onClick={() => setConv(null)}>✕</button>
             </div>
             {conv.carregando ? <div className="mini-empty" style={{ padding: 20 }}>Carregando a conversa...</div> : (

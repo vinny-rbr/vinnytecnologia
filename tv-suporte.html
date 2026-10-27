@@ -565,7 +565,7 @@ function desenhar() {
     el.style.setProperty("--tint", tema === "escuro" ? hexA(k, lv === "ok" ? .08 : .16) : TINT_CLARO[lv]);
     el.style.setProperty("--borda", hexA(k, lv === "ok" ? .22 : .55));
     setCls(el, "cw", lv === "crit" ? "crit" : "");
-    setTxt(el, ".g", nomeGrupo(c.grupo));
+    setTxt(el, ".g", nomeGrupo(c.grupo) + (c.retornoDe ? " ↺ RETORNO" : ""));
     setTxt(el, ".c b", c.cliente || c.clienteNumero || "-");
     setTxt(el, ".m", "“" + (c.ultimaMensagem || c.primeiraMensagem || "") + "”");
     setTxt(el, ".tm", fmt(s));
@@ -583,7 +583,7 @@ function desenhar() {
     if (longo) { lv = "crit"; s = seg(c.abertoEm); }
     setCls(el, "ca", lv === "ok" ? "" : lv);
     setTxt(el, ".av", iniciais(tec));
-    setTxt(el, ".g", nomeGrupo(c.grupo));
+    setTxt(el, ".g", nomeGrupo(c.grupo) + (c.retornoDe ? " ↺ RETORNO" : ""));
     setTxt(el, ".ap", tema === "escuro" ? "atendido por" : "Atendido por");
     setTxt(el, ".c b", tec);
     setTxt(el, ".cl", c.cliente || "");
