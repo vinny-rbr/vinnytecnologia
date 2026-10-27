@@ -2584,7 +2584,10 @@ function ViewSuporte({ sess, mostrarToast }) {
   async function acao(c, qual) {
     if (qual === "descartar" && !confirm(`Descartar o chamado #${c.id} (${c.grupo})?\n\nSai da TV e dos relatórios. Use para chamado aberto de brincadeira ou por engano.`)) return;
     setBusy(c.id);
-    try { await req(`/chamados/${c.id}/${qual}`, { method: "POST", body: {} }); await carregar(); mostrarToast(qual === "atender" ? "Chamado com você." : qual === "descartar" ? "Chamado descartado." : "Chamado finalizado."); }
+    try {
+      await req(`/chamados/${c.id}/${qual}`, { method: "POST", body: {} }); await carregar();
+      if (qual === "descartar") { setConv(null); if (aba === "relatorio") await carregarRel(); }
+      mostrarToast(qual === "atender" ? "Chamado com você." : qual === "descartar" ? "Chamado descartado." : "Chamado finalizado."); }
     catch (e) { mostrarToast(e.message, false); }
     setBusy(null);
   }
@@ -2648,7 +2651,10 @@ function ViewSuporte({ sess, mostrarToast }) {
                       <button className="btn btn-ghost btn-sm" title="Aberto de brincadeira ou por engano: tira da TV e dos relatórios" disabled={busy === c.id} onClick={() => acao(c, "descartar")}>Descartar</button>
                     </div>
                   ) : (
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                    <button className="iconbtn" title="Descartar (aberto de brincadeira ou por engano): tira dos relatórios" disabled={busy === c.id} onClick={() => acao(c, "descartar")}>✕</button>
                     <span className={"pill " + (c.status === "FINALIZADO" ? "pill-ok" : "pill-wait")}>{c.status === "FINALIZADO" ? "finalizado" + (c.minutosSolucao != null ? " em " + supMin(c.minutosSolucao) : "") : c.status === "ATENDIMENTO" ? "em atendimento" : "aguardando"}</span>
+                    </span>
                   )}
                 </td>
               </tr>
@@ -2797,7 +2803,10 @@ function ViewSuporte({ sess, mostrarToast }) {
           <div className="panel" onClick={(e) => e.stopPropagation()} style={{ width: "min(560px, 100%)", height: "100%", borderRadius: 0, overflowY: "auto", padding: 0, display: "flex", flexDirection: "column" }}>
             <div className="p-head" style={{ position: "sticky", top: 0, zIndex: 1, background: "var(--card)" }}>
               <span className="p-title"><Ic d={icChat} /> {supGrupo((conv.chamado || {}).grupo)} <span className="sub mono">#{(conv.chamado || {}).id}</span>{(conv.chamado || {}).retornoDe && <span className="pill pill-block">retorno do #{conv.chamado.retornoDe}</span>}</span>
-              <button className="iconbtn" title="Fechar" onClick={() => setConv(null)}>✕</button>
+              <span style={{ display: "inline-flex", gap: 8 }}>
+                {conv.chamado && conv.chamado.status !== "DESCARTADO" && <button className="btn btn-ghost btn-sm" disabled={busy === conv.chamado.id} onClick={() => acao(conv.chamado, "descartar")}>Descartar</button>}
+                <button className="iconbtn" title="Fechar" onClick={() => setConv(null)}>✕</button>
+              </span>
             </div>
             {conv.carregando ? <div className="mini-empty" style={{ padding: 20 }}>Carregando a conversa...</div> : (
               <>
