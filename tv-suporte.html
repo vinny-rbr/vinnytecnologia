@@ -5,195 +5,668 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Suporte na TV</title>
 <link rel="icon" href="vinny-mark.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #0b1322; --card: #121e33; --line: #1f2f4d; --text: #eef3fa; --muted: #8aa1c4;
-    --orange: #f7941d; --green: #33c15a; --blue: #3aa0e8; --red: #ef4b4b;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; background: var(--bg); color: var(--text); overflow: hidden;
-    font-family: "Segoe UI", Roboto, Arial, sans-serif; }
-  #app { height: 100%; display: flex; flex-direction: column; }
+/* TV do suporte (chamados dos grupos "SUP" do WhatsApp). Dois temas: Escuro (neon) e Claro (corporativo).
+   Tela fixa de 1920x1080 escalada pro tamanho da TV. Tecla T troca o tema (fica salvo), N mostra um chamado de teste. */
+html, body { margin: 0; padding: 0; overflow: hidden; height: 100%; }
+* { box-sizing: border-box; }
+#stage { position: fixed; inset: 0; overflow: hidden; }
+#tela { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; overflow: hidden;
+  display: grid; grid-template-rows: auto auto 1fr auto; }
+.mono { font-variant-numeric: tabular-nums; }
+.so-escuro, .so-claro { display: none; }
+body.escuro .so-escuro, body.claro .so-claro { display: initial; }
+body.escuro .so-escuro.flex, body.claro .so-claro.flex { display: flex; }
 
-  header { display: flex; align-items: center; justify-content: space-between; gap: 2vw;
-    padding: 1.6vh 2.5vw; border-bottom: 1px solid var(--line); }
-  header .tit { font-size: 3.4vh; font-weight: 800; letter-spacing: .02em; }
-  header .tit small { color: var(--muted); font-weight: 600; font-size: 2.2vh; margin-left: 1vw; }
-  .kpis { display: flex; gap: 1.2vw; }
-  .kpi { background: var(--card); border-radius: 1.4vh; padding: .8vh 1.2vw; text-align: center; min-width: 8vw; }
-  .kpi b { display: block; font-size: 3.6vh; font-weight: 900; }
-  .kpi span { font-size: 1.6vh; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
-  header .hora { font-size: 3.4vh; font-weight: 700; color: var(--muted); }
+@keyframes pulse { 0%,100% { opacity: 1; transform: scale(1) } 50% { opacity: .35; transform: scale(.8) } }
+@keyframes pisca { 0%,100% { opacity: 1 } 50% { opacity: .35 } }
+@keyframes scan { 0% { transform: translateY(-100%) } 100% { transform: translateY(1100%) } }
+@keyframes shrink { from { transform: scaleX(1) } to { transform: scaleX(0) } }
+@keyframes popIn { 0% { opacity: 0; transform: scale(.92) translateY(30px); filter: blur(10px) } 100% { opacity: 1; transform: none; filter: none } }
+@keyframes rise { 0% { opacity: 0; transform: translateY(24px) } 100% { opacity: 1; transform: none } }
+@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+@keyframes ring { 0% { transform: translate(-50%,-50%) scale(.4); opacity: .9 } 100% { transform: translate(-50%,-50%) scale(2.4); opacity: 0 } }
+@keyframes slideIn { from { opacity: 0; transform: translateX(-24px) } to { opacity: 1; transform: none } }
+@keyframes stripe { from { background-position: 0 0 } to { background-position: 56px 0 } }
+@keyframes glowText { 0%,100% { text-shadow: 0 0 18px rgba(91,231,255,.55) } 50% { text-shadow: 0 0 36px rgba(91,231,255,.95) } }
+@keyframes critDark { 0%,100% { box-shadow: 0 0 0 1px rgba(255,77,94,.9), 0 0 30px rgba(255,77,94,.35) } 50% { box-shadow: 0 0 0 1px rgba(255,77,94,.4), 0 0 70px rgba(255,77,94,.7) } }
+@keyframes critLight { 0%,100% { box-shadow: 0 0 0 1px rgba(197,48,48,.9), 0 6px 18px rgba(197,48,48,.12) } 50% { box-shadow: 0 0 0 3px rgba(197,48,48,.55), 0 6px 26px rgba(197,48,48,.28) } }
 
-  .cols { flex: 1; display: flex; min-height: 0; }
-  .col { flex: 1; display: flex; flex-direction: column; padding: 2.2vh 2vw; min-height: 0; }
-  .col + .col { border-left: 1px solid var(--line); }
-  .col h2 { font-size: 3.6vh; letter-spacing: .12em; margin-bottom: 1.8vh; display: flex; align-items: center; }
-  .col h2 .n { margin-left: auto; font-size: 3.2vh; background: var(--card); border-radius: 1vh; padding: .2vh 1vw; }
-  .col h2 .dot { width: 1.8vh; height: 1.8vh; border-radius: 50%; margin-right: 1vw; }
-  .esp h2 { color: var(--orange); } .esp .dot { background: var(--orange); animation: pisca 1.4s infinite; }
-  .atd h2 { color: var(--blue); } .atd .dot { background: var(--blue); }
-  .lista { flex: 1; overflow: hidden; display: flex; flex-direction: column; gap: 1.2vh; }
+/* ===================== TEMA ESCURO ===================== */
+body.escuro { background: #03050b; font-family: 'Chakra Petch', sans-serif; }
+body.escuro #tela { background: radial-gradient(ellipse 70% 55% at 15% 0%, rgba(40,90,170,.22), transparent 70%),
+  radial-gradient(ellipse 60% 50% at 100% 100%, rgba(120,60,200,.16), transparent 70%), #04070f; color: #e8f1ff;
+  padding: 36px 48px 28px; gap: 24px; }
+body.escuro .grade { position: absolute; inset: 0; pointer-events: none; background-size: 48px 48px;
+  background-image: linear-gradient(rgba(91,231,255,.045) 1px, transparent 1px), linear-gradient(90deg, rgba(91,231,255,.045) 1px, transparent 1px); }
+body.escuro .scan { position: absolute; left: 0; right: 0; height: 90px; pointer-events: none;
+  background: linear-gradient(180deg, transparent, rgba(91,231,255,.05), transparent); animation: scan 9s linear infinite; }
+body.escuro .mono, body.escuro .num { font-family: 'JetBrains Mono', monospace; }
 
-  .item { background: var(--card); border-radius: 1.6vh; padding: 1.5vh 1.4vw; border-left: .8vh solid var(--green);
-    animation: entra .5s ease-out; }
-  .item.amarelo { border-left-color: var(--orange); }
-  .item.vermelho { border-left-color: var(--red); background: rgba(239,75,75,.10); }
-  .item.vermelho .tempo { color: var(--red); animation: pisca 1.2s infinite; }
-  .item.novo { animation: entra .5s ease-out, brilho 1.2s ease-in-out 4; }
-  .linha1 { display: flex; align-items: baseline; gap: 1vw; }
-  .grupo { font-size: 3.4vh; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
-  .tempo { font-size: 3.4vh; font-weight: 900; color: var(--muted); white-space: nowrap; }
-  .quem { font-size: 2.2vh; color: var(--muted); margin-top: .4vh; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .quem b { color: var(--text); }
-  .msg { font-size: 2.3vh; margin-top: .6vh; color: #c9d6ea; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .atd .item { border-left-color: var(--blue); }
-  .atendente { color: var(--blue); font-weight: 800; }
+body.escuro header { position: relative; display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 48px; }
+.logo-d { position: relative; width: 64px; height: 64px; border: 1.5px solid rgba(91,231,255,.7); transform: rotate(45deg); display: grid; place-items: center;
+  box-shadow: 0 0 24px rgba(91,231,255,.35), inset 0 0 18px rgba(91,231,255,.25); }
+.logo-d i { width: 22px; height: 22px; background: #5be7ff; box-shadow: 0 0 20px #5be7ff; animation: pulse 2.4s ease-in-out infinite; }
+body.escuro .tit1 { font-size: 44px; font-weight: 700; letter-spacing: .14em; line-height: 1; animation: glowText 4s ease-in-out infinite; }
+body.escuro .tit2 { font-family: 'JetBrains Mono', monospace; font-size: 16px; letter-spacing: .32em; color: #7d93b8; }
+body.escuro .kpis { display: flex; gap: 16px; }
+body.escuro .kpi { min-width: 190px; padding: 14px 26px; border: 1px solid rgba(91,231,255,.22); display: flex; flex-direction: column-reverse; gap: 6px;
+  background: linear-gradient(180deg, rgba(91,231,255,.08), rgba(91,231,255,.02));
+  clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px); }
+body.escuro .kpi .v { font-family: 'JetBrains Mono', monospace; font-size: 48px; font-weight: 800; line-height: 1; }
+body.escuro .kpi .l { font-size: 15px; letter-spacing: .22em; color: #7d93b8; font-weight: 600; }
+body.escuro .kpi .u { font-size: 20px; font-weight: 600; margin-left: 8px; }
+body.escuro #kAbertos { color: #fff; } body.escuro #kFin { color: #7dffb2; } body.escuro #kResp, body.escuro .kpi .u { color: #5be7ff; }
+body.escuro .relogio { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; min-width: 260px; }
+body.escuro #hora { font-family: 'JetBrains Mono', monospace; font-size: 62px; font-weight: 600; line-height: 1; color: #fff; }
+body.escuro #hora span { color: #5be7ff; font-size: 34px; }
+body.escuro #data { font-size: 17px; letter-spacing: .24em; color: #7d93b8; font-weight: 600; }
 
-  .vazio { color: var(--muted); font-size: 2.8vh; margin-top: 2vh; }
+body.escuro .faixa { height: 46px; display: flex; align-items: center; gap: 18px; padding: 0 22px; position: relative; }
+body.escuro .faixa.ok { gap: 14px; border-top: 1px solid rgba(91,231,255,.14); border-bottom: 1px solid rgba(91,231,255,.14);
+  font-family: 'JetBrains Mono', monospace; font-size: 15px; letter-spacing: .2em; color: #5d7396; }
+body.escuro .faixa.crit { background: repeating-linear-gradient(135deg, rgba(255,77,94,.22) 0 14px, rgba(255,77,94,.08) 14px 28px); background-size: 56px 100%;
+  animation: stripe 1.2s linear infinite; border: 1px solid rgba(255,77,94,.7); color: #ffd9dd; font-size: 21px; font-weight: 600; letter-spacing: .08em; }
+body.escuro .faixa.warn { border: 1px solid rgba(255,200,61,.6); background: rgba(255,200,61,.1); color: #ffe8a8; font-size: 21px; font-weight: 600; letter-spacing: .08em; }
+.faixa .pt { width: 12px; height: 12px; border-radius: 50%; flex: none; }
+body.escuro .faixa.crit .pt { background: #ff4d5e; box-shadow: 0 0 14px #ff4d5e; animation: pulse .8s infinite; }
+body.escuro .faixa.warn .pt { background: #ffc83d; box-shadow: 0 0 14px #ffc83d; animation: pulse 1.4s infinite; }
+body.escuro .faixa.ok .pt { width: 8px; height: 8px; background: #7dffb2; box-shadow: 0 0 10px #7dffb2; }
+body.escuro .faixa b { color: #fff; font-weight: 700; letter-spacing: .2em; }
+body.escuro .faixa .nomes { color: #fff; font-weight: 700; letter-spacing: .04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.faixa .linha { flex: 1; height: 1px; }
+body.escuro .faixa .linha { background: linear-gradient(90deg, rgba(91,231,255,.25), transparent); }
+.faixa .sw { width: 18px; height: 4px; }
 
-  footer { padding: 1vh 2.5vw; color: var(--muted); font-size: 1.9vh; display: flex; justify-content: space-between; gap: 2vw;
-    border-top: 1px solid var(--line); }
-  footer .off { color: var(--red); font-weight: 800; }
-  footer .rank b { color: var(--text); }
+body.escuro main { position: relative; display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 40px; min-height: 0; }
+.col { display: flex; flex-direction: column; gap: 18px; min-height: 0; }
+.col-h { display: flex; align-items: center; gap: 18px; }
+body.escuro .col-h .dia { width: 14px; height: 14px; transform: rotate(45deg); }
+body.escuro .col-h .t { font-size: 34px; font-weight: 700; letter-spacing: .24em; }
+body.escuro .col-h .linha { flex: 1; height: 1px; }
+body.escuro .col-h .n { font-family: 'JetBrains Mono', monospace; font-size: 40px; font-weight: 800; }
+body.escuro .esp .dia { background: #ffc83d; box-shadow: 0 0 16px #ffc83d; animation: pulse 1.6s infinite; }
+body.escuro .esp .t, body.escuro .esp .n { color: #ffc83d; } body.escuro .esp .linha { background: linear-gradient(90deg, rgba(255,200,61,.5), transparent); }
+body.escuro .atd .dia { background: #5be7ff; box-shadow: 0 0 16px #5be7ff; }
+body.escuro .atd .t, body.escuro .atd .n { color: #5be7ff; } body.escuro .atd .linha { background: linear-gradient(90deg, rgba(91,231,255,.5), transparent); }
+.lista { display: flex; flex-direction: column; gap: 14px; min-height: 0; overflow: hidden; }
 
-  #alerta { display: none; align-items: center; justify-content: center; gap: 1.5vw; padding: 1.4vh 2.5vw;
-    font-size: 3.4vh; font-weight: 900; letter-spacing: .02em; }
-  #alerta.amarelo { display: flex; background: rgba(247,148,29,.18); color: var(--orange); }
-  #alerta.vermelho { display: flex; background: var(--red); color: #fff; animation: alarme 1s infinite; }
-  .ok-resp { color: var(--green); font-weight: 800; }
-  @keyframes alarme { 50% { background: #b62a2a; } }
-  #erro { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; text-align: center;
-    font-size: 3.4vh; color: var(--muted); padding: 6vw; }
+/* card aguardando (escuro) */
+body.escuro .cw { position: relative; padding: 20px 28px 18px 32px; display: flex; flex-direction: column; gap: 12px;
+  background: linear-gradient(90deg, var(--tint), rgba(12,20,38,.75) 55%); border: 1px solid var(--borda);
+  clip-path: polygon(18px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%, 0 18px); }
+body.escuro .cw.novo { animation: slideIn .5s ease-out; }
+body.escuro .cw.crit { animation: critDark 1.2s ease-in-out infinite; }
+body.escuro .cw .barra-l { position: absolute; left: 0; top: 18px; bottom: 0; width: 4px; background: var(--cor); box-shadow: 0 0 16px var(--cor); }
+.cw .topo, .ca .topo { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 24px; align-items: start; }
+.cw .info, .ca .info { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+body.escuro .cw .g { font-size: 32px; font-weight: 700; letter-spacing: .04em; line-height: 1.1; }
+.g, .uma { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body.escuro .cw .c { font-size: 19px; color: #8aa0c4; } body.escuro .cw .c b { color: #d8e4f7; font-weight: 600; }
+body.escuro .cw .m { font-size: 21px; color: #c3d1e8; line-height: 1.35; }
+.m2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.tempo { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+body.escuro .cw .tm { font-family: 'JetBrains Mono', monospace; font-size: 46px; font-weight: 800; line-height: 1; color: var(--cor); text-shadow: 0 0 22px var(--cor); }
+body.escuro .cw .lb { font-size: 14px; letter-spacing: .24em; color: var(--cor); font-weight: 600; }
+.prog { position: relative; height: 6px; }
+body.escuro .prog { background: rgba(255,255,255,.07); }
+.prog .p { position: absolute; left: 0; top: 0; bottom: 0; background: var(--cor); }
+body.escuro .prog .p { box-shadow: 0 0 12px var(--cor); }
+.prog .marca { position: absolute; left: 50%; top: -4px; bottom: -4px; width: 2px; }
+body.escuro .prog .marca { background: rgba(255,200,61,.8); }
 
-  @keyframes pisca { 50% { opacity: .35; } }
-  @keyframes entra { from { opacity: 0; transform: translateY(1.5vh); } to { opacity: 1; transform: none; } }
-  @keyframes brilho { 50% { box-shadow: 0 0 0 .6vh rgba(247,148,29,.6); } }
+/* card em atendimento (escuro) */
+body.escuro .ca { position: relative; display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 22px; align-items: center;
+  padding: 18px 28px 18px 22px; background: linear-gradient(90deg, rgba(91,231,255,.09), rgba(12,20,38,.75) 50%);
+  border: 1px solid rgba(91,231,255,.22); clip-path: polygon(18px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%, 0 18px); }
+body.escuro .ca.novo { animation: slideIn .5s ease-out; }
+body.escuro .ca.crit { border-color: rgba(255,77,94,.7); animation: critDark 1.2s ease-in-out infinite; }
+body.escuro .ca.warn { border-color: rgba(255,200,61,.6); }
+body.escuro .ca .av { width: 68px; height: 68px; border-radius: 50%; border: 2px solid var(--tec); display: grid; place-items: center;
+  box-shadow: 0 0 20px var(--tecg), inset 0 0 14px var(--tecg); font-size: 24px; font-weight: 700; color: var(--tec); }
+body.escuro .ca .g { font-size: 28px; font-weight: 700; letter-spacing: .04em; line-height: 1.1; }
+body.escuro .ca .c { font-size: 19px; color: #8aa0c4; } body.escuro .ca .c b { color: var(--tec); font-weight: 700; }
+body.escuro .ca .m { font-size: 19px; color: #aebdd6; }
+body.escuro .ca .tm { font-family: 'JetBrains Mono', monospace; font-size: 34px; font-weight: 700; color: #d8e4f7; line-height: 1; }
+body.escuro .ca .lb { font-size: 13px; letter-spacing: .24em; color: #5d7396; font-weight: 600; }
+body.escuro .ca.warn .tm, body.escuro .ca.warn .lb { color: #ffc83d; }
+body.escuro .ca.crit .tm, body.escuro .ca.crit .lb { color: #ff4d5e; text-shadow: 0 0 18px #ff4d5e; }
+
+body.escuro .vazio-w { flex: 1; min-height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+  border: 1px dashed rgba(125,255,178,.25); color: #7dffb2; }
+body.escuro .vazio-w .bola { width: 70px; height: 70px; border: 2px solid #7dffb2; border-radius: 50%; display: grid; place-items: center; box-shadow: 0 0 30px rgba(125,255,178,.3); }
+body.escuro .vazio-w .bola i { width: 14px; height: 14px; border-radius: 50%; background: #7dffb2; animation: pulse 2s infinite; }
+body.escuro .vazio-w .t1 { font-size: 28px; font-weight: 600; letter-spacing: .16em; }
+body.escuro .vazio-w .t2 { font-size: 19px; color: #7d93b8; }
+body.escuro .vazio-a { min-height: 200px; display: flex; align-items: center; justify-content: center; border: 1px dashed rgba(91,231,255,.2); font-size: 22px; color: #5d7396; letter-spacing: .1em; }
+
+body.escuro footer { position: relative; display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 28px; align-items: center; padding-top: 18px; border-top: 1px solid rgba(91,231,255,.16); }
+body.escuro .rk-t { font-family: 'JetBrains Mono', monospace; font-size: 15px; letter-spacing: .26em; color: #5d7396; }
+.rank { display: flex; gap: 14px; min-width: 0; }
+.rk { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+body.escuro .rk { padding: 10px 16px; background: rgba(91,231,255,.03); border: 1px solid rgba(91,231,255,.12); }
+body.escuro .rk.lider { background: rgba(91,231,255,.09); }
+.rk .ln { display: flex; align-items: baseline; gap: 10px; white-space: nowrap; }
+body.escuro .rk .ps { font-family: 'JetBrains Mono', monospace; font-size: 15px; color: #5d7396; }
+body.escuro .rk .nm { font-size: 20px; font-weight: 700; color: var(--cor); overflow: hidden; text-overflow: ellipsis; }
+body.escuro .rk .ct { margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 800; color: #fff; }
+.rk .br { height: 4px; } .rk .br div { height: 100%; background: var(--cor); }
+body.escuro .rk .br { background: rgba(255,255,255,.06); } body.escuro .rk .br div { box-shadow: 0 0 10px var(--cor); }
+.st { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.st .s1 { display: flex; align-items: center; gap: 10px; font-size: 19px; font-weight: 600; }
+.st .s1 i { width: 10px; height: 10px; border-radius: 50%; animation: pulse 2s infinite; }
+body.escuro .st .s1 { color: #7dffb2; } body.escuro .st .s1 i { background: #7dffb2; box-shadow: 0 0 12px #7dffb2; }
+body.escuro .st.off .s1 { color: #ff4d5e; } body.escuro .st.off .s1 i { background: #ff4d5e; box-shadow: 0 0 12px #ff4d5e; animation: pulse .8s infinite; }
+body.escuro .st .s2 { font-family: 'JetBrains Mono', monospace; font-size: 13px; letter-spacing: .2em; color: #5d7396; }
+
+/* pop-up novo chamado (escuro) */
+#pop { position: absolute; inset: 0; z-index: 10; display: none; place-items: center; animation: fadeIn .35s ease-out; }
+#pop.on { display: grid; }
+body.escuro #pop { background: radial-gradient(ellipse at center, rgba(8,30,60,.82), rgba(2,4,10,.93) 70%); backdrop-filter: blur(10px); }
+body.escuro #pop .anel { position: absolute; left: 50%; top: 50%; width: 900px; height: 900px; border-radius: 50%; border: 2px solid rgba(91,231,255,.5); animation: ring 2.4s ease-out infinite; }
+body.escuro #pop .anel.a2 { border-color: rgba(91,231,255,.4); animation-delay: 1.2s; }
+body.escuro #pop .box { position: relative; width: 1280px; padding: 56px 72px 0; display: flex; flex-direction: column; gap: 28px;
+  background: linear-gradient(180deg, rgba(18,40,72,.92), rgba(6,12,26,.95)); border: 1px solid rgba(91,231,255,.6);
+  clip-path: polygon(36px 0, 100% 0, 100% calc(100% - 36px), calc(100% - 36px) 100%, 0 100%, 0 36px); box-shadow: 0 0 120px rgba(91,231,255,.3);
+  animation: popIn .6s cubic-bezier(.2,.9,.3,1.2); }
+body.escuro #pop .cab { display: flex; align-items: center; gap: 18px; }
+body.escuro #pop .cab i { width: 16px; height: 16px; border-radius: 50%; background: #5be7ff; box-shadow: 0 0 20px #5be7ff; animation: pulse .7s infinite; }
+body.escuro #pop .cab .tt { font-size: 28px; font-weight: 700; letter-spacing: .4em; color: #5be7ff; }
+body.escuro #pop .cab .linha { flex: 1; height: 1px; background: linear-gradient(90deg, rgba(91,231,255,.6), transparent); }
+body.escuro #pop .cab .hr { font-family: 'JetBrains Mono', monospace; font-size: 24px; color: #7d93b8; }
+.pop-corpo { display: flex; flex-direction: column; gap: 28px; }
+.pop-g { display: flex; flex-direction: column; gap: 10px; }
+body.escuro #pop .rot { font-family: 'JetBrains Mono', monospace; font-size: 18px; letter-spacing: .3em; color: #7d93b8; }
+body.escuro #pop .grp { font-size: 88px; font-weight: 700; line-height: 1; letter-spacing: .02em; color: #fff; text-shadow: 0 0 40px rgba(91,231,255,.6); text-wrap: balance; }
+body.escuro #pop .por { font-size: 28px; color: #8aa0c4; } body.escuro #pop .por b { color: #fff; font-weight: 600; }
+body.escuro #pop .msg { padding: 30px 40px; background: rgba(91,231,255,.07); border-left: 4px solid #5be7ff; font-size: 40px; line-height: 1.35; color: #e8f1ff; text-wrap: pretty; }
+#pop .tempo-pop { height: 6px; overflow: hidden; }
+body.escuro #pop .tempo-pop { margin: 12px -72px 0; background: rgba(91,231,255,.12); }
+#pop .tempo-pop div { height: 100%; transform-origin: left; }
+body.escuro #pop .tempo-pop div { background: #5be7ff; box-shadow: 0 0 14px #5be7ff; }
+
+/* ===================== TEMA CLARO ===================== */
+body.claro { background: #e9ecf1; font-family: 'IBM Plex Sans', sans-serif; }
+body.claro #tela { background: #f4f6f9; color: #0f1b2d; }
+body.claro .mono, body.claro .num { font-family: 'IBM Plex Mono', monospace; }
+body.claro .grade, body.claro .scan { display: none; }
+body.claro header { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 56px; padding: 30px 56px; background: #0f1b2d; color: #fff; }
+body.claro .logo-s { display: grid; }
+.logo-s { width: 52px; height: 52px; background: #1f4fd1; place-items: center; font-weight: 700; font-size: 24px; }
+body.claro .tit1 { font-size: 34px; font-weight: 600; line-height: 1; }
+body.claro .tit2 { font-size: 17px; color: #9fb0c8; }
+body.claro .kpis { display: flex; gap: 0; }
+body.claro .kpi { padding: 2px 40px; border-left: 1px solid #2a3a52; display: flex; flex-direction: column; gap: 6px; }
+body.claro .kpi:last-child { border-right: 1px solid #2a3a52; }
+body.claro .kpi .l { font-size: 14px; letter-spacing: .12em; color: #9fb0c8; font-weight: 500; }
+body.claro .kpi .v { font-family: 'IBM Plex Mono', monospace; font-size: 44px; font-weight: 600; line-height: 1; }
+body.claro .kpi .u { font-size: 20px; color: #9fb0c8; margin-left: 8px; }
+body.claro .relogio { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; min-width: 220px; }
+body.claro #hora { font-family: 'IBM Plex Mono', monospace; font-size: 52px; font-weight: 500; line-height: 1; }
+body.claro #hora span { color: #7f93b0; font-size: 28px; }
+body.claro #data { font-size: 16px; color: #9fb0c8; letter-spacing: .08em; }
+
+body.claro .faixa { height: 52px; display: flex; align-items: center; gap: 16px; padding: 0 56px; font-size: 20px; }
+body.claro .faixa.crit { background: #c53030; color: #fff; animation: fadeIn .3s ease-out; }
+body.claro .faixa.warn { background: #fffaf0; color: #7b4a0e; border-bottom: 1px solid #f0d9a8; }
+body.claro .faixa.ok { background: #fff; border-bottom: 1px solid #dde2ea; font-size: 16px; color: #5a6b82; gap: 14px; }
+body.claro .faixa.crit .pt { width: 10px; height: 10px; background: #fff; animation: pisca 1s infinite; }
+body.claro .faixa.warn .pt { width: 10px; height: 10px; background: #b7791f; animation: pisca 1.4s infinite; }
+body.claro .faixa.ok .pt { width: 8px; height: 8px; background: #2f855a; }
+body.claro .faixa b { font-weight: 700; letter-spacing: .1em; }
+body.claro .faixa .nomes { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body.claro .faixa .sw { width: 14px; height: 14px; }
+
+body.claro main { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 40px; padding: 32px 56px 24px; min-height: 0; }
+body.claro .col-h { gap: 14px; padding-bottom: 14px; }
+body.claro .col-h .dia, body.claro .col-h .linha { display: none; }
+body.claro .col-h .t { font-size: 28px; font-weight: 600; flex: 1; }
+body.claro .col-h .n { min-width: 52px; height: 44px; padding: 0 12px; display: grid; place-items: center; color: #fff; font-family: 'IBM Plex Mono', monospace; font-size: 26px; font-weight: 600; }
+body.claro .esp .col-h { border-bottom: 2px solid #0f1b2d; } body.claro .esp .n { background: #0f1b2d; }
+body.claro .atd .col-h { border-bottom: 2px solid #1f4fd1; } body.claro .atd .t { color: #1f4fd1; } body.claro .atd .n { background: #1f4fd1; }
+
+body.claro .cw { position: relative; display: flex; flex-direction: column; gap: 14px; padding: 20px 28px 20px 34px; background: var(--tint);
+  border: 1px solid #dde2ea; box-shadow: 0 1px 2px rgba(15,27,45,.05); }
+body.claro .cw.novo { animation: slideIn .4s ease-out; }
+body.claro .cw.crit { animation: critLight 1.6s ease-in-out infinite; }
+body.claro .cw .barra-l { position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: var(--cor); }
+body.claro .cw .g { font-size: 28px; font-weight: 600; line-height: 1.15; }
+body.claro .cw .c { font-size: 18px; color: #5a6b82; } body.claro .cw .c b { color: #0f1b2d; font-weight: 500; }
+body.claro .cw .m { font-size: 20px; color: #2c3a4f; line-height: 1.4; }
+body.claro .cw .tempo { gap: 6px; }
+body.claro .cw .tm { font-family: 'IBM Plex Mono', monospace; font-size: 42px; font-weight: 600; line-height: 1; color: var(--cor); }
+body.claro .cw .lb { padding: 3px 10px; font-size: 13px; letter-spacing: .1em; font-weight: 600; color: #fff; background: var(--cor); }
+body.claro .prog { height: 4px; background: #e6eaf0; }
+body.claro .prog .marca { top: -3px; bottom: -3px; background: #b7791f; }
+
+body.claro .ca { display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 22px; align-items: center; padding: 18px 28px 18px 22px;
+  background: #fff; border: 1px solid #dde2ea; box-shadow: 0 1px 2px rgba(15,27,45,.05); }
+body.claro .ca.novo { animation: slideIn .4s ease-out; }
+body.claro .ca.warn { background: #fffaf0; border-color: #f0d9a8; }
+body.claro .ca.crit { background: #fff5f5; animation: critLight 1.6s ease-in-out infinite; }
+body.claro .ca .av { width: 60px; height: 60px; border-radius: 50%; background: var(--tec); color: #fff; display: grid; place-items: center; font-size: 21px; font-weight: 600; }
+body.claro .ca .info { gap: 4px; }
+body.claro .ca .g { font-size: 25px; font-weight: 600; line-height: 1.15; }
+body.claro .ca .c { font-size: 18px; color: #5a6b82; } body.claro .ca .c b { color: var(--tec); font-weight: 600; }
+body.claro .ca .m { font-size: 18px; color: #2c3a4f; }
+body.claro .ca .tempo { gap: 4px; }
+body.claro .ca .tm { font-family: 'IBM Plex Mono', monospace; font-size: 30px; font-weight: 500; line-height: 1; }
+body.claro .ca .lb { font-size: 13px; letter-spacing: .1em; color: #5a6b82; }
+body.claro .ca.warn .tm, body.claro .ca.warn .lb { color: #b7791f; font-weight: 600; }
+body.claro .ca.crit .tm, body.claro .ca.crit .lb { color: #c53030; font-weight: 600; }
+
+body.claro .vazio-w { min-height: 280px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; background: #fff; border: 1px solid #dde2ea; }
+body.claro .vazio-w .bola { display: none; }
+body.claro .vazio-w .t1 { font-size: 26px; font-weight: 600; color: #2f855a; }
+body.claro .vazio-w .t2 { font-size: 18px; color: #5a6b82; }
+body.claro .vazio-a { min-height: 180px; display: flex; align-items: center; justify-content: center; background: #fff; border: 1px solid #dde2ea; font-size: 20px; color: #5a6b82; }
+
+body.claro footer { display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 32px; align-items: center; padding: 18px 56px; background: #fff; border-top: 1px solid #dde2ea; }
+body.claro .rk-t { font-size: 15px; font-weight: 600; letter-spacing: .1em; color: #5a6b82; }
+body.claro .rank { gap: 12px; }
+body.claro .rk { padding: 10px 14px; border: 1px solid #e6eaf0; background: #f8f9fb; }
+body.claro .rk .ln { gap: 8px; }
+body.claro .rk .ps { font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #8593a8; }
+body.claro .rk .nm { font-size: 18px; font-weight: 600; color: #0f1b2d; overflow: hidden; text-overflow: ellipsis; }
+body.claro .rk .ct { margin-left: auto; font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 600; }
+body.claro .rk .br { background: #e6eaf0; }
+body.claro .st { gap: 4px; }
+body.claro .st .s1 { font-size: 18px; color: #2f855a; } body.claro .st .s1 i { background: #2f855a; }
+body.claro .st.off .s1 { color: #c53030; } body.claro .st.off .s1 i { background: #c53030; animation: pisca .8s infinite; }
+body.claro .st .s2 { font-size: 14px; color: #8593a8; }
+
+body.claro #pop { background: rgba(15,27,45,.62); backdrop-filter: blur(4px); }
+body.claro #pop .anel { display: none; }
+body.claro #pop .box { width: 1200px; background: #fff; box-shadow: 0 30px 80px rgba(15,27,45,.35); animation: rise .45s cubic-bezier(.2,.8,.3,1); display: flex; flex-direction: column; }
+body.claro #pop .cab { display: flex; align-items: center; gap: 16px; padding: 22px 56px; background: #1f4fd1; color: #fff; }
+body.claro #pop .cab i { width: 12px; height: 12px; border-radius: 50%; background: #fff; animation: pisca .9s infinite; }
+body.claro #pop .cab .tt { font-size: 24px; font-weight: 600; letter-spacing: .12em; }
+body.claro #pop .cab .linha { flex: 1; }
+body.claro #pop .cab .hr { font-family: 'IBM Plex Mono', monospace; font-size: 22px; }
+body.claro #pop .pop-corpo { padding: 48px 56px 52px; }
+body.claro #pop .rot { font-size: 16px; letter-spacing: .14em; color: #5a6b82; font-weight: 600; }
+body.claro #pop .grp { font-size: 76px; font-weight: 700; line-height: 1.05; color: #0f1b2d; text-wrap: balance; }
+body.claro #pop .por { font-size: 26px; color: #5a6b82; } body.claro #pop .por b { color: #0f1b2d; font-weight: 600; }
+body.claro #pop .msg { padding: 28px 36px; background: #f4f6f9; border-left: 5px solid #1f4fd1; font-size: 36px; line-height: 1.4; color: #0f1b2d; text-wrap: pretty; }
+body.claro #pop .tempo-pop { background: #e6eaf0; } body.claro #pop .tempo-pop div { background: #1f4fd1; }
+
+/* aviso pra liberar o som / link inválido */
+#som { position: fixed; right: 16px; bottom: 16px; z-index: 20; padding: 10px 16px; border-radius: 10px; font: 600 15px 'IBM Plex Sans', sans-serif;
+  background: rgba(0,0,0,.75); color: #fff; cursor: pointer; }
+#erro { position: fixed; inset: 0; z-index: 30; display: none; place-items: center; text-align: center; padding: 6vw;
+  background: #04070f; color: #8aa0c4; font: 600 3.2vh 'IBM Plex Sans', sans-serif; }
 </style>
 </head>
-<body>
-<div id="app">
+<body class="escuro">
+<div id="stage">
+<div id="tela">
+  <div class="grade"></div>
+  <div style="position:absolute;inset:0;overflow:hidden;pointer-events:none"><div class="scan"></div></div>
+
   <header>
-    <div class="tit">Suporte <small>chamados do WhatsApp</small></div>
-    <div class="kpis">
-      <div class="kpi"><b id="kAbertos">-</b><span>abertos hoje</span></div>
-      <div class="kpi"><b id="kFin">-</b><span>finalizados hoje</span></div>
-      <div class="kpi"><b id="kResp">-</b><span>resposta média</span></div>
+    <div style="display:flex;align-items:center;gap:22px">
+      <div class="logo-d so-escuro" style="display:none"><i></i></div>
+      <div class="logo-s so-claro">S</div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <div class="tit1"><span class="so-escuro">SUPORTE</span><span class="so-claro">Central de Suporte</span></div>
+        <div class="tit2"><span class="so-escuro">CENTRAL DE CHAMADOS · WHATSAPP</span><span class="so-claro">Chamados via WhatsApp · monitoramento em tempo real</span></div>
+      </div>
     </div>
-    <div class="hora" id="hora"></div>
+    <div class="kpis">
+      <div class="kpi"><div class="l">ABERTOS HOJE</div><div class="v" id="kAbertos">-</div></div>
+      <div class="kpi"><div class="l">FINALIZADOS HOJE</div><div class="v" id="kFin">-</div></div>
+      <div class="kpi"><div class="l">RESPOSTA MÉDIA</div><div style="display:flex;align-items:baseline"><span class="v" id="kResp">-</span><span class="u">min</span></div></div>
+    </div>
+    <div class="relogio"><div id="hora"></div><div id="data"></div></div>
   </header>
-  <div id="alerta"></div>
-  <div class="cols">
-    <section class="col esp"><h2><i class="dot"></i>AGUARDANDO <span class="n" id="nEsp">0</span></h2><div class="lista" id="esp"></div></section>
-    <section class="col atd"><h2><i class="dot"></i>EM ATENDIMENTO <span class="n" id="nAtd">0</span></h2><div class="lista" id="atd"></div></section>
+
+  <div id="faixa" class="faixa ok"></div>
+
+  <main>
+    <section class="col esp">
+      <div class="col-h"><span class="dia"></span><span class="t" id="tEsp">AGUARDANDO</span><span class="linha"></span><span class="n" id="nEsp">0</span></div>
+      <div class="lista" id="esp"></div>
+    </section>
+    <section class="col atd">
+      <div class="col-h"><span class="dia"></span><span class="t" id="tAtd">EM ATENDIMENTO</span><span class="linha"></span><span class="n" id="nAtd">0</span></div>
+      <div class="lista" id="atd"></div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="rk-t" id="rkT">RANKING<br>DE HOJE</div>
+    <div class="rank" id="rank"></div>
+    <div class="st" id="st"><div class="s1"><i></i><span id="stTxt">WhatsApp conectado</span></div><div class="s2" id="stSub">ROBÔ ATIVO · GRUPOS "SUP"</div></div>
+  </footer>
+
+  <div id="pop">
+    <div class="anel"></div><div class="anel a2"></div>
+    <div class="box">
+      <div class="cab"><i></i><span class="tt">NOVO CHAMADO ABERTO</span><span class="linha"></span><span class="hr" id="popHora"></span></div>
+      <div class="pop-corpo">
+        <div class="pop-g">
+          <div class="rot">GRUPO</div>
+          <div class="grp" id="popGrupo"></div>
+          <div class="por"><span id="popPor">enviado por</span> <b id="popCli"></b></div>
+        </div>
+        <div class="msg" id="popMsg"></div>
+      </div>
+      <div class="tempo-pop"><div id="popBarra"></div></div>
+    </div>
   </div>
-  <footer><span id="rank" class="rank"></span><span id="status"></span></footer>
 </div>
+</div>
+<div id="som">🔊 Clique para ativar o som</div>
 <div id="erro"></div>
+
 <script>
-  // TV do suporte: chamados abertos pelos grupos "SUP" do WhatsApp. Link com a chave: tv-suporte.html?k=CHAVE
-  var API = "https://raizestecnologia-relay.onrender.com/api/tv/suporte";
-  var k = new URLSearchParams(location.search).get("k") || "";
-  var vistos = null; // ids já mostrados (pra destacar e tocar no chamado novo)
+// TV do suporte: chamados abertos pelos grupos "SUP" do WhatsApp (central do Meu Giro).
+// Link com a chave: tv-suporte.html?k=CHAVE (opcional: &tema=claro, &demo=1 pra ver com dados de exemplo).
+var API = "https://raizestecnologia-relay.onrender.com/api/tv/suporte";
+var qs = new URLSearchParams(location.search);
+var CHAVE = qs.get("k") || "", DEMO = qs.get("demo") === "1";
+var AMARELO = 300, VERMELHO = 600; // segundos esperando resposta (5 e 10 min)
+var POP_SEG = 8;                  // quanto tempo o aviso de chamado novo fica na tela
 
-  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
-  function minDesde(iso) { return iso ? Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60000)) : 0; }
-  function fmtMin(m) { if (m == null) return "-"; if (m < 60) return m + " min"; var h = Math.floor(m / 60); return h + "h" + String(m % 60).padStart(2, "0"); }
-  // "SUPORTE POSTO BEATRIZ - WEBPOSTO" -> "POSTO BEATRIZ - WEBPOSTO"
-  function nomeGrupo(g) { return String(g || "").replace(/^\s*sup(orte)?\.?\s*/i, "") || g; }
+// ---------- tema (T troca e fica salvo) ----------
+function temaAtual() {
+  var t = (qs.get("tema") || "").toLowerCase();
+  if (t !== "claro" && t !== "escuro") { try { t = localStorage.getItem("tvSuporteTema") || "escuro"; } catch (e) { t = "escuro"; } }
+  return t === "claro" ? "claro" : "escuro";
+}
+var tema = temaAtual();
+function aplicarTema() {
+  document.body.className = tema;
+  document.querySelector(".logo-d").style.display = tema === "escuro" ? "grid" : "none";
+  document.getElementById("tEsp").textContent = tema === "escuro" ? "AGUARDANDO" : "Aguardando resposta";
+  document.getElementById("tAtd").textContent = tema === "escuro" ? "EM ATENDIMENTO" : "Em atendimento";
+  document.getElementById("rkT").innerHTML = tema === "escuro" ? "RANKING<br>DE HOJE" : "RANKING<br>DO DIA";
+  document.getElementById("popPor").textContent = tema === "escuro" ? "enviado por" : "Enviado por";
+  lojaCards.clear(); // recria os cards no estilo do tema
+  desenhar();
+}
 
-  function bip() {
-    try {
-      var a = new (window.AudioContext || window.webkitAudioContext)(), o = a.createOscillator(), v = a.createGain();
-      o.frequency.value = 880; o.connect(v); v.connect(a.destination); v.gain.value = .15; o.start();
-      setTimeout(function () { o.frequency.value = 1175; }, 180); setTimeout(function () { o.stop(); a.close(); }, 420);
-    } catch (e) {}
-  }
+// ---------- escala 1920x1080 -> tamanho da TV ----------
+function ajustar() {
+  var s = Math.min(innerWidth / 1920, innerHeight / 1080);
+  document.getElementById("tela").style.transform = "translate(" + (innerWidth - 1920 * s) / 2 + "px," + (innerHeight - 1080 * s) / 2 + "px) scale(" + s + ")";
+}
+addEventListener("resize", ajustar);
 
-  var AMARELO = 5, VERMELHO = 10; // minutos esperando resposta
-
-  // minutos que o cliente está esperando resposta (null = respondido, ninguém esperando)
-  function espera(c) { return c.esperandoDesde ? minDesde(c.esperandoDesde) : null; }
-
-  function card(c, novo) {
-    var esperando = c.status === "ABERTO";
-    var e = espera(c);
-    var m = e != null ? e : minDesde(c.atendidoEm);
-    var cor = e == null ? "" : e >= VERMELHO ? " vermelho" : e >= AMARELO ? " amarelo" : "";
-    return '<div class="item' + cor + (novo ? " novo" : "") + '">' +
-      '<div class="linha1"><div class="grupo">' + esc(nomeGrupo(c.grupo)) + '</div><div class="tempo">' +
-        (e == null ? '<span class="ok-resp">respondido</span>' : (esperando ? "" : "sem resposta ") + fmtMin(e)) + '</div></div>' +
-      '<div class="quem">' + (esperando
-        ? "<b>" + esc(c.cliente || c.clienteNumero || "cliente") + "</b> · " + c.mensagens + (c.mensagens > 1 ? " mensagens" : " mensagem")
-        : 'atendido por <span class="atendente">' + esc(c.atendidoPor || "-") + "</span> · cliente " + esc(c.cliente || "")) + '</div>' +
-      '<div class="msg">' + esc(c.ultimaMensagem || c.primeiraMensagem || "") + '</div></div>';
-  }
-
-  function render(d) {
-    var lista = d.chamados || [];
-    var esp = lista.filter(function (c) { return c.status === "ABERTO"; });
-    var atd = lista.filter(function (c) { return c.status === "ATENDIMENTO"; });
-    var ids = {}; lista.forEach(function (c) { ids[c.id] = 1; });
-    var temNovo = false;
-    function html(arr) {
-      return arr.length ? arr.map(function (c) { var novo = vistos && !vistos[c.id]; if (novo && c.status === "ABERTO") temNovo = true; return card(c, novo); }).join("")
-        : '<div class="vazio">Nenhum chamado.</div>';
+// ---------- som ----------
+var ctx = null, somOk = false;
+function liberarSom() {
+  try { ctx = ctx || new (window.AudioContext || window.webkitAudioContext)(); ctx.resume(); somOk = true; document.getElementById("som").style.display = "none"; } catch (e) {}
+}
+function bip(vezes, freq) {
+  if (!ctx || !somOk) return;
+  try {
+    var t0 = ctx.currentTime;
+    for (var i = 0; i < vezes; i++) {
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = "sine"; o.frequency.value = freq; o.connect(g); g.connect(ctx.destination);
+      var t = t0 + i * 0.28;
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.3, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+      o.start(t); o.stop(t + 0.24);
     }
-    document.getElementById("esp").innerHTML = html(esp);
-    document.getElementById("atd").innerHTML = html(atd);
-    document.getElementById("nEsp").textContent = esp.length;
-    document.getElementById("nAtd").textContent = atd.length;
-    if (temNovo) bip();
+  } catch (e) {}
+}
+addEventListener("pointerdown", liberarSom);
+addEventListener("keydown", function (e) {
+  liberarSom();
+  if (e.key === "t" || e.key === "T") { tema = tema === "escuro" ? "claro" : "escuro"; try { localStorage.setItem("tvSuporteTema", tema); } catch (x) {} aplicarTema(); }
+  if (e.key === "n" || e.key === "N") mostrarNovo({ grupo: "SUP TESTE", cliente: "Teste", primeiraMensagem: "Chamado de teste (tecla N)", abertoEm: new Date().toISOString() });
+  if (e.key === "Escape") fecharPop();
+});
+
+// ---------- utilidades ----------
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+function pad(n) { return String(n).padStart(2, "0"); }
+function fmt(s) { s = Math.max(0, Math.floor(s)); var m = Math.floor(s / 60); return m >= 100 ? Math.floor(m / 60) + "h" + pad(m % 60) : pad(m) + ":" + pad(s % 60); }
+// "SUPORTE POSTO BEATRIZ - WEBPOSTO" -> "POSTO BEATRIZ - WEBPOSTO"
+function nomeGrupo(g) { return String(g || "").replace(/^\s*sup(orte)?\.?\s*/i, "") || g || ""; }
+var desvio = 0; // relógio do servidor - relógio da TV
+function agora() { return Date.now() + desvio; }
+function seg(iso) { return iso ? (agora() - new Date(iso).getTime()) / 1000 : 0; }
+function hexA(h, a) { var n = parseInt(h.slice(1), 16); return "rgba(" + (n >> 16) + "," + ((n >> 8) & 255) + "," + (n & 255) + "," + a + ")"; }
+
+var COR_ESC = { "Lucas": "#5be7ff", "Emerson": "#b18cff", "Ingrid": "#ff7ad9", "Renzo": "#7dffb2", "Wilton": "#4da3ff", "Raizes Tecnologia": "#ffb35b" };
+var COR_CLA = { "Lucas": "#1f4fd1", "Emerson": "#5a4fcf", "Ingrid": "#b83280", "Renzo": "#2f855a", "Wilton": "#0b7285", "Raizes Tecnologia": "#9c4221" };
+var EXTRA_ESC = ["#ffd166", "#06d6a0", "#ef476f", "#8ecae6"], EXTRA_CLA = ["#7b341e", "#285e61", "#702459", "#2c5282"];
+function corTec(nome) {
+  var m = tema === "escuro" ? COR_ESC : COR_CLA;
+  if (m[nome]) return m[nome];
+  var x = tema === "escuro" ? EXTRA_ESC : EXTRA_CLA, h = 0;
+  for (var i = 0; i < (nome || "").length; i++) h = (h * 31 + nome.charCodeAt(i)) >>> 0;
+  return x[h % x.length];
+}
+function iniciais(n) { return String(n || "?").split(/\s+/).map(function (x) { return x[0] || ""; }).join("").slice(0, 2).toUpperCase(); }
+var CORES = { escuro: { ok: "#5be7ff", warn: "#ffc83d", crit: "#ff4d5e" }, claro: { ok: "#3d5a80", warn: "#b7791f", crit: "#c53030" } };
+var TINT_CLARO = { ok: "#ffffff", warn: "#fffaf0", crit: "#fff5f5" };
+function nivel(s) { return s >= VERMELHO ? "crit" : s >= AMARELO ? "warn" : "ok"; }
+
+// ---------- dados ----------
+var dados = { chamados: [], hoje: {}, tecnicos: [], conector: true };
+var vistos = null, lojaCards = new Map(), bipados = new Set(), ultimoBipCrit = 0;
+
+function carregar() {
+  if (DEMO) { if (!dados._demo) dados = demo(); desenhar(); return; }
+  fetch(API + "?k=" + encodeURIComponent(CHAVE)).then(function (r) {
+    if (r.status === 401) throw new Error("chave");
+    return r.json();
+  }).then(function (j) {
+    var d = j.data || {};
+    if (d.agora) desvio = new Date(d.agora).getTime() - Date.now();
+    // chamado novo (aguardando) que ainda não tinha aparecido: aviso grande na tela
+    var ids = {};
+    (d.chamados || []).forEach(function (c) { ids[c.id] = 1; });
+    if (vistos) (d.chamados || []).forEach(function (c) { if (!vistos[c.id] && c.status === "ABERTO") mostrarNovo(c); });
     vistos = ids;
-    alerta(lista);
-    var h = d.hoje || {};
-    document.getElementById("kAbertos").textContent = h.total != null ? h.total : "-";
-    document.getElementById("kFin").textContent = h.finalizados != null ? h.finalizados : "-";
-    document.getElementById("kResp").textContent = fmtMin(h.mediaRespostaMin);
-    var r = (h.ranking || []).slice(0, 4).map(function (x, i) { return (i + 1) + "º <b>" + esc(x.nome) + "</b> " + x.atendidos; });
-    document.getElementById("rank").innerHTML = r.length ? "Hoje: " + r.join(" &nbsp;·&nbsp; ") : "Hoje ainda sem atendimentos";
-    document.getElementById("status").innerHTML = d.conector ? "WhatsApp conectado" : '<span class="off">WhatsApp do suporte desconectado</span>';
-  }
-
-  var ultimoBipAlerta = 0;
-  function alerta(lista) {
-    var amar = [], verm = [];
-    lista.forEach(function (c) { var e = espera(c); if (e == null) return; if (e >= VERMELHO) verm.push(c); else if (e >= AMARELO) amar.push(c); });
-    var el = document.getElementById("alerta");
-    if (verm.length) {
-      var pior = verm.slice().sort(function (a, b) { return espera(b) - espera(a); })[0];
-      el.className = "vermelho";
-      el.innerHTML = "⚠ " + verm.length + (verm.length > 1 ? " clientes esperando" : " cliente esperando") + " resposta há mais de " + VERMELHO +
-        " min &nbsp;·&nbsp; " + esc(nomeGrupo(pior.grupo)) + " (" + fmtMin(espera(pior)) + ")";
-      if (Date.now() - ultimoBipAlerta > 60000) { ultimoBipAlerta = Date.now(); bip(); setTimeout(bip, 500); }
-    } else if (amar.length) {
-      el.className = "amarelo";
-      el.innerHTML = "⏱ " + amar.length + (amar.length > 1 ? " clientes esperando" : " cliente esperando") + " resposta há mais de " + AMARELO + " min";
+    dados = d;
+    document.getElementById("erro").style.display = "none";
+    desenhar();
+  }).catch(function (e) {
+    if (e.message === "chave") {
+      var el = document.getElementById("erro"); el.style.display = "grid";
+      el.textContent = "Link da TV inválido. Abra pelo painel: Suporte > Conector e TV > Abrir.";
     } else {
-      el.className = ""; el.innerHTML = "";
+      dados.conector = false; dados._semCentral = true; desenhar();
     }
-  }
+  });
+}
 
-  function carregar() {
-    fetch(API + "?k=" + encodeURIComponent(k)).then(function (r) {
-      if (r.status === 401) throw new Error("chave");
-      return r.json();
-    }).then(function (j) {
-      document.getElementById("erro").style.display = "none";
-      render(j.data || {});
-    }).catch(function (e) {
-      if (e.message === "chave") {
-        var el = document.getElementById("erro");
-        el.style.display = "flex";
-        el.textContent = "Link da TV inválido. Abra pelo painel: Suporte > Abrir na TV.";
-      } else {
-        document.getElementById("status").innerHTML = '<span class="off">Sem conexão com a central, tentando de novo...</span>';
-      }
-    });
+// ---------- aviso de chamado novo ----------
+var fila = [], popT = null;
+function mostrarNovo(c) { fila.push(c); if (!popT) proximoPop(); }
+function proximoPop() {
+  var c = fila.shift();
+  if (!c) { popT = null; document.getElementById("pop").className = ""; return; }
+  var d = new Date(c.abertoEm || agora());
+  document.getElementById("popHora").textContent = pad(d.getHours()) + ":" + pad(d.getMinutes());
+  document.getElementById("popGrupo").textContent = nomeGrupo(c.grupo);
+  document.getElementById("popCli").textContent = c.cliente || c.clienteNumero || "cliente";
+  document.getElementById("popMsg").textContent = "“" + (c.primeiraMensagem || c.ultimaMensagem || "") + "”";
+  var b = document.getElementById("popBarra");
+  b.style.animation = "none"; void b.offsetWidth; b.style.animation = "shrink " + POP_SEG + "s linear forwards";
+  var p = document.getElementById("pop"); p.className = ""; void p.offsetWidth; p.className = "on";
+  bip(2, tema === "escuro" ? 1046 : 988);
+  popT = setTimeout(proximoPop, POP_SEG * 1000);
+}
+function fecharPop() { clearTimeout(popT); fila = []; popT = null; document.getElementById("pop").className = ""; }
+
+// ---------- cards (atualiza no lugar pra não reiniciar as animações a cada segundo) ----------
+function cardEspera(c) {
+  var el = document.createElement("div");
+  el.className = "cw novo";
+  el.innerHTML = '<div class="barra-l"></div><div class="topo"><div class="info"><div class="g"></div><div class="c">' +
+    (tema === "escuro" ? "cliente" : "Cliente:") + ' <b></b></div><div class="m m2"></div></div>' +
+    '<div class="tempo"><div class="tm"></div><div class="lb"></div></div></div><div class="prog"><div class="p"></div><div class="marca"></div></div>';
+  setTimeout(function () { el.classList.remove("novo"); }, 700);
+  return el;
+}
+function cardAtend(c) {
+  var el = document.createElement("div");
+  el.className = "ca novo";
+  el.innerHTML = '<div class="av"></div><div class="info"><div class="g"></div><div class="c uma"><span class="ap"></span> <b></b> · cliente <span class="cl"></span></div>' +
+    '<div class="m uma"></div></div><div class="tempo"><div class="tm"></div><div class="lb"></div></div>';
+  setTimeout(function () { el.classList.remove("novo"); }, 700);
+  return el;
+}
+function setTxt(el, sel, v) { var x = el.querySelector(sel); if (x.textContent !== v) x.textContent = v; }
+function setCls(el, base, nv) { var c = base + (nv ? " " + nv : "") + (el.classList.contains("novo") ? " novo" : ""); if (el.className !== c) el.className = c; }
+
+function sincronizar(box, itens, criar, atualizar, vazioHtml) {
+  if (!itens.length) {
+    if (box.dataset.vazio !== tema) { box.innerHTML = vazioHtml; box.dataset.vazio = tema; }
+    return;
   }
-  function relogio() { document.getElementById("hora").textContent = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }); }
-  relogio(); setInterval(relogio, 10000);
-  carregar(); setInterval(carregar, 10000);
+  if (box.dataset.vazio) { box.innerHTML = ""; delete box.dataset.vazio; }
+  var manter = new Set();
+  itens.forEach(function (c, i) {
+    var k = box.id + ":" + c.id + ":" + tema;
+    var el = lojaCards.get(k);
+    if (!el) { el = criar(c); lojaCards.set(k, el); }
+    atualizar(el, c);
+    manter.add(el);
+    if (box.children[i] !== el) box.insertBefore(el, box.children[i] || null);
+  });
+  Array.prototype.slice.call(box.children).forEach(function (el) { if (!manter.has(el)) box.removeChild(el); });
+}
+
+function desenhar() {
+  var cor = CORES[tema];
+  var lista = dados.chamados || [];
+  var esp = lista.filter(function (c) { return c.status === "ABERTO"; })
+    .sort(function (a, b) { return new Date(a.abertoEm) - new Date(b.abertoEm); });
+  var atd = lista.filter(function (c) { return c.status === "ATENDIMENTO"; });
+
+  sincronizar(document.getElementById("esp"), esp.slice(0, 5), cardEspera, function (el, c) {
+    var s = seg(c.esperandoDesde || c.abertoEm), lv = nivel(s), k = cor[lv];
+    el.style.setProperty("--cor", k);
+    el.style.setProperty("--tint", tema === "escuro" ? hexA(k, lv === "ok" ? .08 : .16) : TINT_CLARO[lv]);
+    el.style.setProperty("--borda", hexA(k, lv === "ok" ? .22 : .55));
+    setCls(el, "cw", lv === "crit" ? "crit" : "");
+    setTxt(el, ".g", nomeGrupo(c.grupo));
+    setTxt(el, ".c b", c.cliente || c.clienteNumero || "-");
+    setTxt(el, ".m", "“" + (c.ultimaMensagem || c.primeiraMensagem || "") + "”");
+    setTxt(el, ".tm", fmt(s));
+    setTxt(el, ".lb", lv === "crit" ? (tema === "escuro" ? "ATRASADO" : "CRÍTICO") : lv === "warn" ? "ATENÇÃO" : (tema === "escuro" ? "ESPERANDO" : "NO PRAZO"));
+    el.querySelector(".p").style.width = Math.min(100, s / 6) + "%";
+  }, tema === "escuro"
+    ? '<div class="vazio-w"><div class="bola"><i></i></div><div class="t1">FILA LIMPA</div><div class="t2">Nenhum cliente aguardando resposta.</div></div>'
+    : '<div class="vazio-w"><div class="t1">Fila em dia</div><div class="t2">Nenhum cliente aguardando resposta.</div></div>');
+
+  sincronizar(document.getElementById("atd"), atd.slice(0, 6), cardAtend, function (el, c) {
+    var tec = c.atendidoPor || "-", tc = corTec(tec);
+    el.style.setProperty("--tec", tc); el.style.setProperty("--tecg", hexA(tc, .35));
+    var esperando = !!c.esperandoDesde, s = esperando ? seg(c.esperandoDesde) : seg(c.atendidoEm), lv = esperando ? nivel(s) : "ok";
+    setCls(el, "ca", lv === "ok" ? "" : lv);
+    setTxt(el, ".av", iniciais(tec));
+    setTxt(el, ".g", nomeGrupo(c.grupo));
+    setTxt(el, ".ap", tema === "escuro" ? "atendido por" : "Atendido por");
+    setTxt(el, ".c b", tec);
+    setTxt(el, ".cl", c.cliente || "");
+    setTxt(el, ".m", c.ultimaMensagem || "");
+    setTxt(el, ".tm", fmt(s));
+    setTxt(el, ".lb", esperando ? (lv === "crit" ? "SEM RESPOSTA" : lv === "warn" ? "CLIENTE ESPERANDO" : "AGUARD. RESPOSTA") : "EM CURSO");
+  }, '<div class="vazio-a">Nenhum atendimento em curso</div>');
+
+  document.getElementById("nEsp").textContent = esp.length;
+  document.getElementById("nAtd").textContent = atd.length;
+
+  // faixa: crítico (10 min) > atenção (5 min) > tudo em dia
+  var crit = [], warn = [];
+  lista.forEach(function (c) { if (!c.esperandoDesde) return; var lv = nivel(seg(c.esperandoDesde)); if (lv === "crit") crit.push(c); else if (lv === "warn") warn.push(c); });
+  var f = document.getElementById("faixa");
+  var html, cls;
+  if (crit.length) {
+    cls = "faixa crit";
+    html = '<span class="pt"></span><b>ALERTA</b><span>' + (tema === "escuro" ? "Cliente esperando há mais de 10 min:" : "Cliente aguardando há mais de 10 minutos:") +
+      '</span><span class="nomes">' + crit.map(function (c) { return esc(nomeGrupo(c.grupo)); }).join(" · ") + "</span>";
+  } else if (warn.length) {
+    cls = "faixa warn";
+    html = '<span class="pt"></span><b>ATENÇÃO</b><span>Esperando resposta há mais de 5 min:</span><span class="nomes">' +
+      warn.map(function (c) { return esc(nomeGrupo(c.grupo)); }).join(" · ") + "</span>";
+  } else if (tema === "escuro") {
+    cls = "faixa ok";
+    html = '<span class="pt"></span><span>TODOS OS CLIENTES DENTRO DO TEMPO</span><span class="linha"></span>' +
+      '<span>AMARELO 5 MIN</span><span class="sw" style="background:#ffc83d"></span><span>VERMELHO 10 MIN</span><span class="sw" style="background:#ff4d5e"></span>';
+  } else {
+    cls = "faixa ok";
+    html = '<span class="pt"></span><span>Todos os clientes dentro do tempo de resposta</span><span class="linha"></span>' +
+      '<span class="sw" style="background:#b7791f"></span><span>Atenção a partir de 5 min</span><span class="sw" style="background:#c53030;margin-left:18px"></span><span>Crítico a partir de 10 min</span>';
+  }
+  if (f.className !== cls) f.className = cls;
+  if (f.innerHTML !== html) f.innerHTML = html;
+
+  // bip: 3 quando um cliente passa de 10 min; depois 2 a cada minuto enquanto alguém continuar no vermelho
+  crit.forEach(function (c) { var k = c.id + "|" + c.esperandoDesde; if (!bipados.has(k)) { bipados.add(k); bip(3, 660); ultimoBipCrit = Date.now(); } });
+  if (crit.length && Date.now() - ultimoBipCrit > 60000) { ultimoBipCrit = Date.now(); bip(2, 660); }
+
+  // números do dia
+  var h = dados.hoje || {};
+  document.getElementById("kAbertos").textContent = h.total != null ? h.total : "-";
+  document.getElementById("kFin").textContent = h.finalizados != null ? h.finalizados : "-";
+  document.getElementById("kResp").textContent = h.mediaRespostaMin != null ? Number(h.mediaRespostaMin).toFixed(1).replace(".", ",") : "-";
+
+  // ranking: todos os técnicos, quem atendeu mais primeiro
+  var cont = {};
+  (h.ranking || []).forEach(function (r) { cont[r.nome] = r.atendidos; });
+  var nomes = (dados.tecnicos || []).slice();
+  Object.keys(cont).forEach(function (n) { if (nomes.indexOf(n) < 0) nomes.push(n); });
+  var rk = nomes.map(function (n) { return { nome: n, n: cont[n] || 0 }; }).sort(function (a, b) { return b.n - a.n; }).slice(0, 7);
+  var max = Math.max(1, Math.max.apply(null, rk.map(function (r) { return r.n; }).concat([0])));
+  var rh = rk.map(function (r, i) {
+    var k = r.n ? corTec(r.nome) : (tema === "escuro" ? "#5d7396" : "#c3cbd6");
+    return '<div class="rk' + (i === 0 && r.n ? " lider" : "") + '" style="--cor:' + k + '"><div class="ln"><span class="ps">' + (i + 1) + 'º</span><span class="nm">' +
+      esc(r.nome) + '</span><span class="ct">' + r.n + '</span></div><div class="br"><div style="width:' + (r.n / max * 100) + '%"></div></div></div>';
+  }).join("");
+  var rkEl = document.getElementById("rank");
+  if (rkEl.innerHTML !== rh) rkEl.innerHTML = rh;
+
+  // status do robô
+  var st = document.getElementById("st");
+  st.className = dados.conector ? "st" : "st off";
+  document.getElementById("stTxt").textContent = dados._semCentral ? "Sem conexão com a central" : dados.conector ? "WhatsApp conectado" : "WhatsApp do suporte desconectado";
+  document.getElementById("stSub").textContent = tema === "escuro" ? 'ROBÔ ' + (dados.conector ? "ATIVO" : "PARADO") + ' · GRUPOS "SUP"' : "Robô " + (dados.conector ? "ativo" : "parado") + ' · grupos "SUP"';
+}
+
+// ---------- relógio ----------
+var DIAS_E = ["DOMINGO", "SEGUNDA", "TERÇA", "QUARTA", "QUINTA", "SEXTA", "SÁBADO"], MES_E = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"];
+var DIAS_C = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"], MES_C = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+function relogio() {
+  var d = new Date(agora());
+  document.getElementById("hora").innerHTML = pad(d.getHours()) + ":" + pad(d.getMinutes()) + "<span>:" + pad(d.getSeconds()) + "</span>";
+  document.getElementById("data").textContent = tema === "escuro"
+    ? DIAS_E[d.getDay()] + " · " + pad(d.getDate()) + " " + MES_E[d.getMonth()]
+    : DIAS_C[d.getDay()] + ", " + pad(d.getDate()) + " " + MES_C[d.getMonth()] + " " + d.getFullYear();
+}
+
+// ---------- dados de exemplo (?demo=1) ----------
+function demo() {
+  var n = Date.now(), iso = function (ms) { return new Date(n - ms).toISOString(); };
+  return { _demo: true, conector: true, tecnicos: ["Lucas", "Emerson", "Ingrid", "Renzo", "Wilton", "Raizes Tecnologia"],
+    hoje: { total: 9, finalizados: 3, mediaRespostaMin: 1.9, ranking: [{ nome: "Lucas", atendidos: 3 }, { nome: "Ingrid", atendidos: 1 }, { nome: "Wilton", atendidos: 1 }] },
+    chamados: [
+      { id: 1, status: "ABERTO", grupo: "SUP. AUTO PEÇAS CENTRAL", cliente: "Patrícia Rocha", ultimaMensagem: "Impressora de etiqueta parou de imprimir", abertoEm: iso(698e3), esperandoDesde: iso(698e3) },
+      { id: 2, status: "ABERTO", grupo: "SUPORTE FARMÁCIA VIDA NOVA", cliente: "Jorge Lima", ultimaMensagem: "A nota fiscal está dando rejeição 539, podem ver?", abertoEm: iso(448e3), esperandoDesde: iso(448e3) },
+      { id: 3, status: "ABERTO", grupo: "SUP MERCADO BOM PREÇO", cliente: "Carla Mendes", ultimaMensagem: "Bom dia, o PDV 2 travou e não abre o caixa", abertoEm: iso(188e3), esperandoDesde: iso(188e3) },
+      { id: 4, status: "ATENDIMENTO", grupo: "SUP LOJA CASA & CIA", cliente: "Fernanda Alves", ultimaMensagem: "Preciso cadastrar um usuário novo para o caixa", atendidoPor: "Lucas", atendidoEm: iso(10e3) },
+      { id: 5, status: "ATENDIMENTO", grupo: "SUP RESTAURANTE SABOR DA TERRA", cliente: "Marcos Paulo", ultimaMensagem: "O sistema não está puxando os pedidos do delivery", atendidoPor: "Ingrid", atendidoEm: iso(400e3), esperandoDesde: iso(380e3) },
+      { id: 6, status: "ATENDIMENTO", grupo: "SUP. ADM POSTO BEIRA RIO", cliente: "Michel Veiga", ultimaMensagem: "[vídeo]", atendidoPor: "Wilton", atendidoEm: iso(128e3) }
+    ] };
+}
+
+ajustar();
+aplicarTema();
+relogio();
+carregar();
+setInterval(function () { relogio(); desenhar(); }, 1000);
+setInterval(carregar, 10000);
+if (DEMO) setTimeout(function () { mostrarNovo({ grupo: "SUP PADARIA PÃO QUENTE", cliente: "Luciana Prado", primeiraMensagem: "Balança não comunica com o PDV desde ontem", abertoEm: new Date().toISOString() }); }, 2500);
 </script>
 </body>
 </html>
