@@ -210,12 +210,14 @@ function Auth({ onAuth }) {
 }
 
 /* ================= peças ================= */
+// loja de revenda que a revenda ainda não ativou: não gera mensalidade (no master ela aparece como "ativa")
+const naoAtivadaRevenda = (l) => !!(l.situacaoRevenda && l.situacaoRevenda.tipo === "aguardando");
 function Kpis({ lojas, isMaster }) {
   const ativas = lojas.filter((l) => l.status === "ativa").length;
   // pagantes: ativas que geram mensalidade (fora as do próprio CNPJ da revenda e as que a revenda ainda não ativou)
   // receita/mês: todas as lojas com mensalidade, menos as sem cobrança e as bloqueadas por falta
   // de pagamento (bloqueio feito pela própria revenda continua pagando ao master)
-  const pagantes = lojas.filter((l) => !l.cortesia && l.status !== "aguardando"
+  const pagantes = lojas.filter((l) => !l.cortesia && l.status !== "aguardando" && !naoAtivadaRevenda(l)
     && (!l.bloqueada || /^Bloqueado pela revenda/i.test(l.motivo || "")));
   const aguardando = lojas.filter((l) => l.status === "aguardando").length;
   const bloqueadas = lojas.filter((l) => l.status === "bloqueada").length;
@@ -395,7 +397,8 @@ function Linha({ l, onAtivar, busy, m, onGrupo, onLogo, rev, onHist, sel, onSel,
         <td><span className={"on-dot " + (l.online ? "on" : "off")}><i></i> {l.online ? "online" : "offline"}</span></td>
         <td className="mono" style={{ fontWeight: 600 }}>R$ {(Number(l.mensalidade) || 0).toFixed(0)}</td>
         <td className={"venc" + (soon ? " soon" : "")}>{l.vencimento ? fmtData(l.vencimento) : "—"}</td>
-        <td><StatusPill l={l} />{l.situacaoRevenda && <SituacaoRevenda s={l.situacaoRevenda} />}</td>
+        <td><StatusPill l={l} />{l.situacaoRevenda && <SituacaoRevenda s={l.situacaoRevenda} />}
+          {l.cortesia && <span className="pill pill-ok" style={{ marginLeft: 6 }} title="Não entra na receita nem é cobrada">sem cobrança</span>}</td>
         <td>
           <div className="row-actions">
             {!l.revendaCodigo && !l.cortesia && (
@@ -415,6 +418,7 @@ function Linha({ l, onAtivar, busy, m, onGrupo, onLogo, rev, onHist, sel, onSel,
             <button className="iconbtn" title="Mover para outra revenda" disabled={busy} onClick={() => m.moverRevenda(l)}><Ic d={icUsers} /></button>
             {l.revendaCodigo && <button className="iconbtn" title="Remover da revenda (pra reinstalar)" disabled={busy} onClick={() => m.removerRevenda(l)}><Ic d={icLogout} /></button>}
             <button className="iconbtn" title="Parcelas pagas" disabled={busy} onClick={() => onHist(l)}><Ic d={icFile} /></button>
+            <button className={"btn btn-ghost btn-sm"} title={l.cortesia ? "Voltar a cobrar esta loja" : "Loja de teste/da casa: tirar da cobrança e da receita"} disabled={busy} onClick={() => m.toggleCortesia(l)}>{l.cortesia ? "Cobrar" : "Sem cobrança"}</button>
             <button className="iconbtn iconbtn-danger" title="Excluir loja" disabled={busy} onClick={() => m.excluir(l)}><Ic d={icTrash} /></button>
           </div>
         </td>
@@ -681,7 +685,7 @@ function ViewNova({ sess, goto, isMaster }) {
 }
 
 function ViewCobrancas({ lojas, onAtivar, ativando, isMaster, master }) {
-  const ativas = lojas.filter((l) => l.status === "ativa" && !l.cortesia);
+  const ativas = lojas.filter((l) => l.status === "ativa" && !l.cortesia && !naoAtivadaRevenda(l));
   const pend = lojas.filter((l) => l.status === "aguardando");
   if (isMaster) {
     const bloqueadas = lojas.filter((l) => l.status === "bloqueada");
@@ -743,7 +747,7 @@ function ViewCobrancas({ lojas, onAtivar, ativando, isMaster, master }) {
 }
 
 function ViewRelatorios({ lojas, isMaster }) {
-  const ativas = lojas.filter((l) => l.status === "ativa" && !l.cortesia).length;
+  const ativas = lojas.filter((l) => l.status === "ativa" && !l.cortesia && !naoAtivadaRevenda(l)).length;
   const aguardando = lojas.filter((l) => l.status === "aguardando").length;
   const bloqueadas = lojas.filter((l) => l.status === "bloqueada").length;
   const online = lojas.filter((l) => l.online).length;
@@ -2798,6 +2802,17 @@ function Painel({ sess, onLogout }) {
         desc: `Tirar “${l.nome}” da revenda ${l.revendaNome || l.revendaCodigo}? A loja fica sem dono e, na próxima instalação, entra na revenda de quem instalar.`,
         confirmLabel: "Remover", danger: true,
         onConfirm: () => runAction(adminReq(l, "revenda", { codigo: "" }), "Loja removida da revenda."),
+      });
+    },
+    toggleCortesia(l) {
+      const marcar = !l.cortesia;
+      setModal({
+        title: marcar ? "Sem cobrança" : "Voltar a cobrar", icon: { d: icMoney, cls: marcar ? "ic-blue" : "ic-amber" },
+        desc: marcar
+          ? `“${l.nome}” é loja de teste ou da casa? Ela sai da Receita/mês, não gera cobrança e não é bloqueada por atraso.`
+          : `Voltar a cobrar “${l.nome}”? Ela volta para a Receita/mês e para as cobranças.`,
+        confirmLabel: marcar ? "Tirar da cobrança" : "Voltar a cobrar",
+        onConfirm: () => runAction(adminReq(l, "cortesia", { cortesia: marcar }), marcar ? "Loja sem cobrança." : "Loja volta a ser cobrada."),
       });
     },
     excluir(l) {
