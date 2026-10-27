@@ -92,7 +92,10 @@ body.escuro .esp .dia { background: #ffc83d; box-shadow: 0 0 16px #ffc83d; anima
 body.escuro .esp .t, body.escuro .esp .n { color: #ffc83d; } body.escuro .esp .linha { background: linear-gradient(90deg, rgba(255,200,61,.5), transparent); }
 body.escuro .atd .dia { background: #5be7ff; box-shadow: 0 0 16px #5be7ff; }
 body.escuro .atd .t, body.escuro .atd .n { color: #5be7ff; } body.escuro .atd .linha { background: linear-gradient(90deg, rgba(91,231,255,.5), transparent); }
-.lista { display: flex; flex-direction: column; gap: 14px; min-height: 0; overflow: hidden; }
+.lista { display: flex; flex-direction: column; gap: 14px; min-height: 0; overflow-y: auto; scrollbar-width: none; }
+.lista::-webkit-scrollbar { display: none; }
+.lista > * { flex-shrink: 0; }
+.lista.mais { -webkit-mask-image: linear-gradient(#000 88%, transparent); mask-image: linear-gradient(#000 88%, transparent); }
 
 /* card aguardando (escuro) */
 body.escuro .cw { position: relative; padding: 20px 28px 18px 32px; display: flex; flex-direction: column; gap: 12px;
@@ -556,7 +559,7 @@ function desenhar() {
     .sort(function (a, b) { return new Date(a.abertoEm) - new Date(b.abertoEm); });
   var atd = lista.filter(function (c) { return c.status === "ATENDIMENTO"; });
 
-  sincronizar(document.getElementById("esp"), esp.slice(0, 5), cardEspera, function (el, c) {
+  sincronizar(document.getElementById("esp"), esp.slice(0, 30), cardEspera, function (el, c) {
     var s = seg(c.esperandoDesde || c.abertoEm), lv = nivel(s), k = cor[lv];
     el.style.setProperty("--cor", k);
     el.style.setProperty("--tint", tema === "escuro" ? hexA(k, lv === "ok" ? .08 : .16) : TINT_CLARO[lv]);
@@ -572,7 +575,7 @@ function desenhar() {
     ? '<div class="vazio-w"><div class="bola"><i></i></div><div class="t1">FILA LIMPA</div><div class="t2">Nenhum cliente aguardando resposta.</div></div>'
     : '<div class="vazio-w"><div class="t1">Fila em dia</div><div class="t2">Nenhum cliente aguardando resposta.</div></div>');
 
-  sincronizar(document.getElementById("atd"), atd.slice(0, 6), cardAtend, function (el, c) {
+  sincronizar(document.getElementById("atd"), atd.slice(0, 30), cardAtend, function (el, c) {
     var tec = c.atendidoPor || "-", tc = corTec(tec);
     el.style.setProperty("--tec", tc); el.style.setProperty("--tecg", hexA(tc, .35));
     var esperando = !!c.esperandoDesde, s = esperando ? seg(c.esperandoDesde) : seg(c.atendidoEm), lv = esperando ? nivel(s) : "ok";
@@ -685,6 +688,23 @@ function demo() {
 }
 
 ajustar();
+// ---------- colunas que não cabem na TV: rolam sozinhas (rodinha do mouse pausa 20s) ----------
+["esp", "atd"].forEach(function (id) {
+  var el = document.getElementById(id), pausa = 0, fimEm = 0;
+  el.addEventListener("wheel", function () { pausa = Date.now() + 20000; }, { passive: true });
+  setInterval(function () {
+    var max = el.scrollHeight - el.clientHeight;
+    el.classList.toggle("mais", max > 4 && el.scrollTop < max - 4);
+    if (max <= 4) { el.scrollTop = 0; return; }
+    if (Date.now() < pausa) return;
+    if (el.scrollTop >= max - 1) {
+      if (!fimEm) fimEm = Date.now();
+      else if (Date.now() - fimEm > 5000) { el.scrollTo({ top: 0, behavior: "smooth" }); fimEm = 0; pausa = Date.now() + 6000; }
+      return;
+    }
+    el.scrollTop += 1;
+  }, 40);
+});
 aplicarTema();
 relogio();
 carregar();
