@@ -990,6 +990,9 @@ function ViewUsuarios({ sess, lojas, mostrarToast }) {
   const [erro, setErro] = useState("");
   const [form, setForm] = useState(null);
   const [busca, setBusca] = useState("");
+  const [fCat, setFCat] = useState("");     // filtro: tipo de problema
+  const [fGrupo, setFGrupo] = useState(""); // filtro: cliente (grupo)
+  const [conv, setConv] = useState(null);   // conversa aberta (clicou no chamado)
   const [busy, setBusy] = useState(false);
 
   const carregar = useCallback(async () => {
@@ -2605,6 +2608,11 @@ function ViewSuporte({ sess, mostrarToast }) {
   async function salvarNome(nome) {
     try { setCfg(await req("/config", { method: "POST", body: { nomeDono: nome } })); mostrarToast("Nome salvo."); } catch (e) { mostrarToast(e.message, false); }
   }
+  async function abrirConversa(c) {
+    setConv({ carregando: true, chamado: c });
+    try { setConv(await req(`/chamados/${c.id}/conversa`)); }
+    catch (e) { setConv(null); mostrarToast(e.message, false); }
+  }
   const copiar = (t, msg) => { try { navigator.clipboard.writeText(t); mostrarToast(msg); } catch { mostrarToast(t); } };
   const linkTv = cfg && cfg.chaveTv ? `${location.origin}/tv-suporte.html?k=${cfg.chaveTv}` : "";
 
@@ -2615,15 +2623,16 @@ function ViewSuporte({ sess, mostrarToast }) {
   const tabelaChamados = (lista, comAcoes) => (
     <div className="tbl-wrap">
       <table className="tbl">
-        <thead><tr><th>Grupo</th><th>Cliente</th><th>Mensagem</th><th>Aberto</th><th>{comAcoes ? "Esperando" : "Resposta"}</th><th>Atendido por</th><th>{comAcoes ? "" : "Situação"}</th></tr></thead>
+        <thead><tr><th>Grupo</th>{!comAcoes && <th>Problema</th>}<th>Cliente</th><th>Mensagem</th><th>Aberto</th><th>{comAcoes ? "Esperando" : "Resposta"}</th><th>Atendido por</th><th>{comAcoes ? "" : "Situação"}</th></tr></thead>
         <tbody>
           {lista.map((c) => {
             // minutos que o cliente espera resposta (aguardando ou em atendimento): 5 amarelo, 10 vermelho
             const espera = c.esperandoDesde ? supDesde(c.esperandoDesde) : null;
             const corEsp = espera == null ? undefined : espera >= 10 ? { color: "var(--neg)", fontWeight: 800 } : espera >= 5 ? { color: "var(--mg)", fontWeight: 700 } : undefined;
             return (
-              <tr key={c.id}>
+              <tr key={c.id} onClick={(e) => { if (!e.target.closest("button")) abrirConversa(c); }} style={{ cursor: "pointer" }} title="Ver a conversa">
                 <td><b>{supGrupo(c.grupo)}</b></td>
+                {!comAcoes && <td><span className="pill pill-wait" style={{ whiteSpace: "nowrap" }}>{c.categoria || "Outros"}</span></td>}
                 <td>{c.cliente || c.clienteNumero || "-"}</td>
                 <td style={{ maxWidth: 320, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={c.primeiraMensagem}>{c.ultimaMensagem || c.primeiraMensagem}</td>
                 <td className="mono">{supQuando(c.abertoEm)}</td>
@@ -2690,6 +2699,26 @@ function ViewSuporte({ sess, mostrarToast }) {
                 <div className="kpi"><div className="k-ic ic-green"><Ic d={icCheck} /></div><div className="k-l">Solução média</div><div className="k-v tnum">{supMin(rel.mediaSolucaoMin)}</div><div className="k-s">até finalizar</div></div>
                 <div className="kpi"><div className="k-ic ic-blue"><Ic d={icUsers} /></div><div className="k-l">Quem mais atendeu</div><div className="k-v" style={{ fontSize: 22 }}>{rel.ranking && rel.ranking[0] ? rel.ranking[0].nome : "-"}</div><div className="k-s">{rel.ranking && rel.ranking[0] ? rel.ranking[0].atendidos + " chamados" : ""}</div></div>
               </div>
+              <div className="panel" style={{ marginBottom: 14 }}>
+                <div className="p-head"><span className="p-title"><Ic d={icAlert} /> Problemas que mais acontecem</span>{fCat && <button className="link" onClick={() => setFCat("")}>limpar filtro</button>}</div>
+                <div style={{ padding: "4px 18px 16px", display: "grid", gap: 8 }}>
+                  {(rel.porCategoria || []).map((x) => {
+                    const max = Math.max(1, ...(rel.porCategoria || []).map((y) => y.chamados));
+                    const on = fCat === x.categoria;
+                    return (
+                      <div key={x.categoria} onClick={() => setFCat(on ? "" : x.categoria)} title="Filtrar a lista por este problema"
+                        style={{ display: "grid", gridTemplateColumns: "230px 1fr 48px", gap: 12, alignItems: "center", cursor: "pointer", opacity: fCat && !on ? .45 : 1 }}>
+                        <span style={{ fontWeight: on ? 700 : 500 }}>{x.categoria}</span>
+                        <span style={{ height: 10, borderRadius: 6, background: "rgba(127,127,127,.15)", overflow: "hidden" }}>
+                          <span style={{ display: "block", height: "100%", width: (x.chamados / max * 100) + "%", background: "var(--mg)" }}></span>
+                        </span>
+                        <span className="mono" style={{ textAlign: "right", fontWeight: 700 }}>{x.chamados}</span>
+                      </div>
+                    );
+                  })}
+                  {!(rel.porCategoria || []).length && <div className="mini-empty">Nenhum chamado no período.</div>}
+                </div>
+              </div>
               <div className="two-col" style={{ marginBottom: 14 }}>
                 <div className="panel">
                   <div className="p-head"><span className="p-title"><Ic d={icUsers} /> Ranking da equipe</span></div>
@@ -2699,18 +2728,24 @@ function ViewSuporte({ sess, mostrarToast }) {
                   </table></div>
                 </div>
                 <div className="panel">
-                  <div className="p-head"><span className="p-title"><Ic d={icChat} /> Clientes que mais chamaram</span></div>
+                  <div className="p-head"><span className="p-title"><Ic d={icChat} /> Clientes que mais chamaram</span>{fGrupo && <button className="link" onClick={() => setFGrupo("")}>limpar filtro</button>}</div>
                   <div className="tbl-wrap"><table className="tbl">
-                    <thead><tr><th>Grupo</th><th>Chamados</th></tr></thead>
-                    <tbody>{(rel.porGrupo || []).map((g) => <tr key={g.grupo}><td>{supGrupo(g.grupo)}</td><td className="mono">{g.chamados}</td></tr>)}</tbody>
+                    <thead><tr><th>#</th><th>Cliente (grupo)</th><th>Chamados</th></tr></thead>
+                    <tbody>{(rel.porGrupo || []).map((g, i) => (
+                      <tr key={g.grupo} onClick={() => setFGrupo(fGrupo === g.grupo ? "" : g.grupo)} style={{ cursor: "pointer", fontWeight: fGrupo === g.grupo ? 700 : undefined }} title="Filtrar a lista por este cliente">
+                        <td>{i + 1}º</td><td>{supGrupo(g.grupo)}</td><td className="mono">{g.chamados}</td>
+                      </tr>
+                    ))}</tbody>
                   </table></div>
                 </div>
               </div>
               <div className="panel">
-                <div className="p-head"><span className="p-title"><Ic d={icFile} /> Todos os chamados do período</span></div>
+                <div className="p-head"><span className="p-title"><Ic d={icFile} /> Todos os chamados do período</span>
+                  <span className="sub">{[fCat, fGrupo && supGrupo(fGrupo)].filter(Boolean).join(" · ") || "clique num chamado pra ver a conversa"}</span></div>
                 {(() => {
                   const q = busca.trim().toLowerCase();
-                  const l = (rel.chamados || []).filter((c) => !q || [c.grupo, c.cliente, c.atendidoPor, c.finalizadoPor].some((x) => (x || "").toLowerCase().includes(q)));
+                  const l = (rel.chamados || []).filter((c) => (!fCat || c.categoria === fCat) && (!fGrupo || c.grupo === fGrupo)
+                    && (!q || [c.grupo, c.cliente, c.atendidoPor, c.finalizadoPor, c.categoria].some((x) => (x || "").toLowerCase().includes(q))));
                   return l.length ? tabelaChamados(l, false) : <div className="mini-empty" style={{ padding: 18 }}>Nenhum chamado no período.</div>;
                 })()}
               </div>
@@ -2751,6 +2786,39 @@ function ViewSuporte({ sess, mostrarToast }) {
             ))}</tbody>
           </table></div>
           {autores && !autores.length && <div className="mini-empty" style={{ padding: 12 }}>Ninguém escreveu ainda. Assim que a equipe responder num grupo SUP, o nome aparece aqui.</div>}
+        </div>
+      )}
+
+      {conv && (
+        <div onClick={() => setConv(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", zIndex: 50, display: "flex", justifyContent: "flex-end" }}>
+          <div className="panel" onClick={(e) => e.stopPropagation()} style={{ width: "min(560px, 100%)", height: "100%", borderRadius: 0, overflowY: "auto", padding: 0, display: "flex", flexDirection: "column" }}>
+            <div className="p-head" style={{ position: "sticky", top: 0, zIndex: 1, background: "var(--card)" }}>
+              <span className="p-title"><Ic d={icChat} /> {supGrupo((conv.chamado || {}).grupo)}</span>
+              <button className="iconbtn" title="Fechar" onClick={() => setConv(null)}>✕</button>
+            </div>
+            {conv.carregando ? <div className="mini-empty" style={{ padding: 20 }}>Carregando a conversa...</div> : (
+              <>
+                <div style={{ padding: "12px 18px", display: "grid", gap: 8, borderBottom: "1px solid rgba(127,127,127,.2)" }}>
+                  <div><span className="pill pill-wait">{conv.resumo.categoria}</span> <span className={"pill " + (conv.chamado.status === "FINALIZADO" ? "pill-ok" : "pill-wait")}>{conv.chamado.status === "FINALIZADO" ? "finalizado" : conv.chamado.status === "ATENDIMENTO" ? "em atendimento" : "aguardando"}</span></div>
+                  <div><span className="sub">Problema:</span> <b>{conv.resumo.problema || "-"}</b></div>
+                  <div className="sub">Cliente <b style={{ color: "var(--text, inherit)" }}>{conv.chamado.cliente || conv.chamado.clienteNumero || "-"}</b> · aberto {supQuando(conv.chamado.abertoEm)}</div>
+                  <div className="sub">Atendido por <b style={{ color: "var(--text, inherit)" }}>{conv.resumo.atendidoPor || "-"}</b> · respondeu em {supMin(conv.resumo.respostaMin)} · {conv.chamado.status === "FINALIZADO" ? "resolvido em " + supMin(conv.resumo.solucaoMin) : "ainda em aberto"}</div>
+                  {conv.resumo.ultimaRespostaTecnico && <div><span className="sub">Última resposta do técnico:</span> {conv.resumo.ultimaRespostaTecnico}</div>}
+                </div>
+                <div style={{ padding: "14px 18px 24px", display: "flex", flexDirection: "column", gap: 8 }}>
+                  {conv.semHistorico && <div className="mini-empty">Chamado de antes de a central guardar as conversas: só tem a primeira e a última mensagem.<br />“{conv.chamado.primeiraMensagem}”{conv.chamado.ultimaMensagem && conv.chamado.ultimaMensagem !== conv.chamado.primeiraMensagem ? " … “" + conv.chamado.ultimaMensagem + "”" : ""}</div>}
+                  {(conv.mensagens || []).map((m, i) => (
+                    <div key={i} style={{ alignSelf: m.equipe ? "flex-end" : "flex-start", maxWidth: "82%", padding: "8px 12px", borderRadius: 12,
+                      background: m.equipe ? "rgba(34,197,94,.16)" : "rgba(127,127,127,.14)" }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: m.equipe ? "#22c55e" : "var(--mg)" }}>{m.autor || (m.equipe ? "Equipe" : "Cliente")}</div>
+                      <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{m.texto}</div>
+                      <div className="mono sub" style={{ fontSize: 11, textAlign: "right" }}>{supQuando(m.em)}</div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       )}
 
