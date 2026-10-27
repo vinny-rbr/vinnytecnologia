@@ -990,9 +990,6 @@ function ViewUsuarios({ sess, lojas, mostrarToast }) {
   const [erro, setErro] = useState("");
   const [form, setForm] = useState(null);
   const [busca, setBusca] = useState("");
-  const [fCat, setFCat] = useState("");     // filtro: tipo de problema
-  const [fGrupo, setFGrupo] = useState(""); // filtro: cliente (grupo)
-  const [conv, setConv] = useState(null);   // conversa aberta (clicou no chamado)
   const [busy, setBusy] = useState(false);
 
   const carregar = useCallback(async () => {
@@ -2558,6 +2555,9 @@ function ViewSuporte({ sess, mostrarToast }) {
   const [de, setDe] = useState(new Date(Date.now() - 29 * 864e5).toISOString().slice(0, 10));
   const [ate, setAte] = useState(hoje);
   const [busca, setBusca] = useState("");
+  const [fCat, setFCat] = useState("");     // filtro: tipo de problema
+  const [fGrupo, setFGrupo] = useState(""); // filtro: cliente (grupo)
+  const [conv, setConv] = useState(null);   // conversa aberta (clicou no chamado)
   const [novo, setNovo] = useState({ nome: "", numero: "", funcao: "TECNICO" });
   const [autores, setAutores] = useState(null);
   const [busy, setBusy] = useState(null);
