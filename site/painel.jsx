@@ -2531,6 +2531,225 @@ function ViewEtiquetas({ sess, lojas, isMaster, onRecurso, mostrarToast }) {
   );
 }
 
+/* ================= SUPORTE (WhatsApp) =================
+   Chamados abertos pelos grupos "SUP" do WhatsApp do Lucas (conector no PC dele). Abas: chamados em aberto
+   (atender/finalizar), relatório (todos os chamados, quem atendeu, ranking), equipe (números que não abrem
+   chamado) e conector/TV (chave do conector e link da TV). */
+const icChat = <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>;
+const supMin = (m) => (m == null ? "-" : m < 60 ? m + " min" : Math.floor(m / 60) + "h" + String(m % 60).padStart(2, "0"));
+const supDesde = (iso) => (iso ? Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60000)) : null);
+const supQuando = (iso) => {
+  if (!iso) return "-";
+  const d = new Date(iso), p = (n) => String(n).padStart(2, "0");
+  return p(d.getDate()) + "/" + p(d.getMonth() + 1) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+};
+const supGrupo = (g) => String(g || "").replace(/^\s*sup(orte)?\.?\s*/i, "") || g;
+
+function ViewSuporte({ sess, mostrarToast }) {
+  const [aba, setAba] = useState("chamados");
+  const [ativos, setAtivos] = useState(null);
+  const [rel, setRel] = useState(null);
+  const [eqp, setEqp] = useState(null);
+  const [cfg, setCfg] = useState(null);
+  const hoje = new Date().toISOString().slice(0, 10);
+  const [de, setDe] = useState(new Date(Date.now() - 29 * 864e5).toISOString().slice(0, 10));
+  const [ate, setAte] = useState(hoje);
+  const [busca, setBusca] = useState("");
+  const [novo, setNovo] = useState({ nome: "", numero: "" });
+  const [busy, setBusy] = useState(null);
+  const req = (p, o = {}) => api("/suporte" + p, { base: ADMIN_API, token: sess.token, ...o });
+
+  const carregar = useCallback(async () => {
+    try {
+      const [a, c] = await Promise.all([req("/chamados"), req("/config")]);
+      setAtivos(a || []); setCfg(c || {});
+    } catch (e) { mostrarToast(e.message, false); if (ativos == null) setAtivos([]); }
+  }, [sess.token]);
+  const carregarRel = useCallback(async () => {
+    try { setRel(await req(`/relatorio?de=${de}&ate=${ate}`)); } catch (e) { mostrarToast(e.message, false); }
+  }, [sess.token, de, ate]);
+  const carregarEqp = useCallback(async () => {
+    try { setEqp(await req("/equipe") || []); } catch (e) { mostrarToast(e.message, false); }
+  }, [sess.token]);
+  useEffect(() => { carregar(); const t = setInterval(carregar, 15000); return () => clearInterval(t); }, [carregar]);
+  useEffect(() => { if (aba === "relatorio") carregarRel(); if (aba === "equipe") carregarEqp(); }, [aba, carregarRel, carregarEqp]);
+
+  async function acao(c, qual) {
+    setBusy(c.id);
+    try { await req(`/chamados/${c.id}/${qual}`, { method: "POST", body: {} }); await carregar(); mostrarToast(qual === "atender" ? "Chamado com você." : "Chamado finalizado."); }
+    catch (e) { mostrarToast(e.message, false); }
+    setBusy(null);
+  }
+  async function salvarEqp() {
+    try {
+      await req("/equipe", { method: "POST", body: novo });
+      setNovo({ nome: "", numero: "" }); await carregarEqp(); mostrarToast("Adicionado à equipe.");
+    } catch (e) { mostrarToast(e.message, false); }
+  }
+  async function removerEqp(x) {
+    try { await req("/equipe/" + x.numero, { method: "DELETE" }); await carregarEqp(); } catch (e) { mostrarToast(e.message, false); }
+  }
+  async function salvarNome(nome) {
+    try { setCfg(await req("/config", { method: "POST", body: { nomeDono: nome } })); mostrarToast("Nome salvo."); } catch (e) { mostrarToast(e.message, false); }
+  }
+  const copiar = (t, msg) => { try { navigator.clipboard.writeText(t); mostrarToast(msg); } catch { mostrarToast(t); } };
+  const linkTv = cfg && cfg.chaveTv ? `${location.origin}/tv-suporte.html?k=${cfg.chaveTv}` : "";
+
+  const abas = [["chamados", "Chamados"], ["relatorio", "Relatórios"], ["equipe", "Equipe"], ["conector", "Conector e TV"]];
+  const esp = (ativos || []).filter((c) => c.status === "ABERTO");
+  const atd = (ativos || []).filter((c) => c.status === "ATENDIMENTO");
+
+  const tabelaChamados = (lista, comAcoes) => (
+    <div className="tbl-wrap">
+      <table className="tbl">
+        <thead><tr><th>Grupo</th><th>Cliente</th><th>Mensagem</th><th>Aberto</th><th>{comAcoes ? "Esperando" : "Resposta"}</th><th>Atendido por</th><th>{comAcoes ? "" : "Situação"}</th></tr></thead>
+        <tbody>
+          {lista.map((c) => {
+            const espera = supDesde(c.status === "ABERTO" ? c.abertoEm : c.atendidoEm);
+            return (
+              <tr key={c.id}>
+                <td><b>{supGrupo(c.grupo)}</b></td>
+                <td>{c.cliente || c.clienteNumero || "-"}</td>
+                <td style={{ maxWidth: 320, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={c.primeiraMensagem}>{c.ultimaMensagem || c.primeiraMensagem}</td>
+                <td className="mono">{supQuando(c.abertoEm)}</td>
+                <td className="mono" style={comAcoes && c.status === "ABERTO" && espera >= 30 ? { color: "var(--neg)", fontWeight: 700 } : undefined}>{comAcoes ? supMin(espera) : supMin(c.minutosResposta)}</td>
+                <td>{c.atendidoPor || "-"}</td>
+                <td>
+                  {comAcoes ? (
+                    <div className="row-actions">
+                      {c.status === "ABERTO" && <button className="btn btn-ghost btn-sm" disabled={busy === c.id} onClick={() => acao(c, "atender")}>Atender</button>}
+                      <button className="btn btn-mg btn-sm" disabled={busy === c.id} onClick={() => acao(c, "finalizar")}><Ic d={icCheck} strokeWidth="3" /> Finalizar</button>
+                    </div>
+                  ) : (
+                    <span className={"pill " + (c.status === "FINALIZADO" ? "pill-ok" : "pill-wait")}>{c.status === "FINALIZADO" ? "finalizado" + (c.minutosSolucao != null ? " em " + supMin(c.minutosSolucao) : "") : c.status === "ATENDIMENTO" ? "em atendimento" : "aguardando"}</span>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+
+  return (
+    <>
+      <div className="head-row">
+        <div><h1>Suporte</h1><p className="sub">Chamados dos grupos "SUP" do WhatsApp. A primeira resposta da equipe no grupo já marca quem atendeu; #finalizado no grupo ou o botão finaliza.</p></div>
+        {linkTv && <a className="btn btn-ghost" href={linkTv} target="_blank" rel="noopener">Abrir na TV</a>}
+      </div>
+      {cfg && !cfg.conectorOnline && (
+        <div className="panel" style={{ padding: 14, marginBottom: 14, borderColor: "var(--neg)" }}>
+          <b style={{ color: "var(--neg)" }}>Conector do WhatsApp desligado.</b> <span className="sub">Abra o atalho "Suporte WhatsApp" na Área de Trabalho do seu PC. Enquanto ele estiver desligado, mensagem de cliente não vira chamado.{cfg.ultimoSinal ? " Último sinal: " + supQuando(cfg.ultimoSinal) + "." : ""}</span>
+        </div>
+      )}
+      <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+        {abas.map(([k, t]) => <button key={k} className={"btn btn-sm " + (aba === k ? "btn-mg" : "btn-ghost")} onClick={() => setAba(k)}>{t}{k === "chamados" && ativos ? " (" + ativos.length + ")" : ""}</button>)}
+      </div>
+
+      {aba === "chamados" && (
+        <>
+          <div className="panel" style={{ marginBottom: 14 }}>
+            <div className="p-head"><span className="p-title"><Ic d={icClock} /> Aguardando ({esp.length})</span></div>
+            {esp.length ? tabelaChamados(esp, true) : <div className="mini-empty" style={{ padding: 18 }}>Nenhum cliente esperando.</div>}
+          </div>
+          <div className="panel">
+            <div className="p-head"><span className="p-title"><Ic d={icChat} /> Em atendimento ({atd.length})</span></div>
+            {atd.length ? tabelaChamados(atd, true) : <div className="mini-empty" style={{ padding: 18 }}>Nenhum chamado em atendimento.</div>}
+          </div>
+        </>
+      )}
+
+      {aba === "relatorio" && (
+        <>
+          <div className="panel" style={{ padding: 14, marginBottom: 14, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "end" }}>
+            <div className="field" style={{ marginBottom: 0 }}><label>De</label><input type="date" value={de} max={ate} onChange={(e) => setDe(e.target.value)} /></div>
+            <div className="field" style={{ marginBottom: 0 }}><label>Até</label><input type="date" value={ate} min={de} max={hoje} onChange={(e) => setAte(e.target.value)} /></div>
+            <div className="field" style={{ marginBottom: 0, flex: 1, minWidth: 200 }}><label>Buscar</label><input placeholder="grupo, cliente ou atendente" value={busca} onChange={(e) => setBusca(e.target.value)} /></div>
+          </div>
+          {!rel ? <div className="mini-empty">Carregando...</div> : (
+            <>
+              <div className="kpis" style={{ marginBottom: 14 }}>
+                <div className="kpi"><div className="k-ic ic-blue"><Ic d={icChat} /></div><div className="k-l">Chamados</div><div className="k-v tnum">{rel.total}</div><div className="k-s">{rel.finalizados} finalizados · {rel.emAberto} em aberto</div></div>
+                <div className="kpi"><div className="k-ic ic-amber"><Ic d={icClock} /></div><div className="k-l">Resposta média</div><div className="k-v tnum">{supMin(rel.mediaRespostaMin)}</div><div className="k-s">do cliente escrever até a 1ª resposta</div></div>
+                <div className="kpi"><div className="k-ic ic-green"><Ic d={icCheck} /></div><div className="k-l">Solução média</div><div className="k-v tnum">{supMin(rel.mediaSolucaoMin)}</div><div className="k-s">até finalizar</div></div>
+                <div className="kpi"><div className="k-ic ic-blue"><Ic d={icUsers} /></div><div className="k-l">Quem mais atendeu</div><div className="k-v" style={{ fontSize: 22 }}>{rel.ranking && rel.ranking[0] ? rel.ranking[0].nome : "-"}</div><div className="k-s">{rel.ranking && rel.ranking[0] ? rel.ranking[0].atendidos + " chamados" : ""}</div></div>
+              </div>
+              <div className="two-col" style={{ marginBottom: 14 }}>
+                <div className="panel">
+                  <div className="p-head"><span className="p-title"><Ic d={icUsers} /> Ranking da equipe</span></div>
+                  <div className="tbl-wrap"><table className="tbl">
+                    <thead><tr><th>#</th><th>Atendente</th><th>Atendidos</th><th>Finalizados</th><th>Resposta média</th></tr></thead>
+                    <tbody>{(rel.ranking || []).map((r, i) => <tr key={r.nome}><td>{i + 1}º</td><td><b>{r.nome}</b></td><td className="mono">{r.atendidos}</td><td className="mono">{r.finalizados}</td><td className="mono">{supMin(r.mediaRespostaMin)}</td></tr>)}</tbody>
+                  </table></div>
+                </div>
+                <div className="panel">
+                  <div className="p-head"><span className="p-title"><Ic d={icChat} /> Clientes que mais chamaram</span></div>
+                  <div className="tbl-wrap"><table className="tbl">
+                    <thead><tr><th>Grupo</th><th>Chamados</th></tr></thead>
+                    <tbody>{(rel.porGrupo || []).map((g) => <tr key={g.grupo}><td>{supGrupo(g.grupo)}</td><td className="mono">{g.chamados}</td></tr>)}</tbody>
+                  </table></div>
+                </div>
+              </div>
+              <div className="panel">
+                <div className="p-head"><span className="p-title"><Ic d={icFile} /> Todos os chamados do período</span></div>
+                {(() => {
+                  const q = busca.trim().toLowerCase();
+                  const l = (rel.chamados || []).filter((c) => !q || [c.grupo, c.cliente, c.atendidoPor, c.finalizadoPor].some((x) => (x || "").toLowerCase().includes(q)));
+                  return l.length ? tabelaChamados(l, false) : <div className="mini-empty" style={{ padding: 18 }}>Nenhum chamado no período.</div>;
+                })()}
+              </div>
+            </>
+          )}
+        </>
+      )}
+
+      {aba === "equipe" && (
+        <div className="panel" style={{ padding: 16 }}>
+          <p className="sub" style={{ marginBottom: 12 }}>Quem é da sua equipe de suporte. Mensagem desses números no grupo não abre chamado: a primeira resposta marca quem atendeu. As suas mensagens (o número conectado) já contam como "{cfg && cfg.nomeDono || "Lucas"}".</p>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "end", marginBottom: 14 }}>
+            <div className="field" style={{ marginBottom: 0 }}><label>Nome</label><input value={novo.nome} placeholder="Wilton" onChange={(e) => setNovo({ ...novo, nome: e.target.value })} /></div>
+            <div className="field" style={{ marginBottom: 0 }}><label>WhatsApp com DDD</label><input value={novo.numero} placeholder="96 99123-4567" onChange={(e) => setNovo({ ...novo, numero: e.target.value })} /></div>
+            <button className="btn btn-mg" onClick={salvarEqp}><Ic d={icPlus} /> Adicionar</button>
+          </div>
+          <div className="tbl-wrap"><table className="tbl">
+            <thead><tr><th>Nome</th><th>Número</th><th></th></tr></thead>
+            <tbody>{(eqp || []).map((x) => <tr key={x.numero}><td><b>{x.nome}</b></td><td className="mono">{x.numero}</td><td><button className="iconbtn iconbtn-danger" title="Remover" onClick={() => removerEqp(x)}><Ic d={icTrash} /></button></td></tr>)}</tbody>
+          </table></div>
+          {eqp && !eqp.length && <div className="mini-empty" style={{ padding: 12 }}>Ninguém cadastrado ainda.</div>}
+        </div>
+      )}
+
+      {aba === "conector" && cfg && (
+        <div className="panel" style={{ padding: 16, display: "grid", gap: 16 }}>
+          <div><b>Conector do WhatsApp:</b> {cfg.conectorOnline ? <span className="pill pill-ok">ligado</span> : <span className="pill pill-block">desligado</span>} <span className="sub">{cfg.ultimoSinal ? "último sinal " + supQuando(cfg.ultimoSinal) : "ainda não conectou"}</span></div>
+          <div>
+            <b>Seu nome nos chamados</b> <span className="sub">(quando você responde pelo número conectado)</span>
+            <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+              <input defaultValue={cfg.nomeDono || ""} id="supNomeDono" style={{ maxWidth: 240 }} />
+              <button className="btn btn-ghost btn-sm" onClick={() => salvarNome(document.getElementById("supNomeDono").value)}>Salvar</button>
+            </div>
+          </div>
+          <div>
+            <b>Link da TV</b> <span className="sub">(abra no navegador da televisão; atualiza sozinho)</span>
+            <div style={{ display: "flex", gap: 8, marginTop: 6, flexWrap: "wrap" }}>
+              <code className="mono" style={{ padding: "6px 10px", background: "var(--card2, rgba(255,255,255,.05))", borderRadius: 8 }}>{linkTv}</code>
+              <button className="btn btn-ghost btn-sm" onClick={() => copiar(linkTv, "Link da TV copiado.")}><Ic d={icCopy} /> Copiar</button>
+              <a className="btn btn-ghost btn-sm" href={linkTv} target="_blank" rel="noopener">Abrir</a>
+            </div>
+          </div>
+          <div>
+            <b>Chave do conector</b> <span className="sub">(já vai configurada no conector do seu PC; só use se precisar reinstalar)</span>
+            <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+              <button className="btn btn-ghost btn-sm" onClick={() => copiar(cfg.tokenConector || "", "Chave copiada.")}><Ic d={icCopy} /> Copiar chave</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 /* ================= SHELL ================= */
 const NAV = [
   { k: "inicio", label: "Início", icon: icHome },
@@ -2542,6 +2761,7 @@ const NAV = [
   { k: "solicitacoes", label: "Solicitações", icon: icKey },
   { k: "revendas", label: "Revendas", icon: icUsers, masterOnly: true },
   { k: "transferencias", label: "Transferências", icon: icUsers, masterOnly: true },
+  { k: "suporte", label: "Suporte", icon: icChat, masterOnly: true },
   { grp: "Financeiro" },
   { k: "cobrancas", label: "Cobranças", icon: icCard },
   { k: "relatorios", label: "Relatórios", icon: icFile },
@@ -2551,7 +2771,7 @@ const NAV = [
   { k: "instaladores", label: "Instaladores", icon: icDownload },
   { k: "config", label: "Configurações", icon: icGear },
 ];
-const CRUMB = { inicio: "início", lojas: "início / lojas", saude: "início / saúde das lojas", nova: "início / nova loja", usuarios: "início / usuários", masters: "início / usuários master", solicitacoes: "início / solicitações", revendas: "início / revendas", transferencias: "início / transferências", catalogo: "recursos / catálogo", etiquetas: "recursos / estúdio de impressão", cobrancas: "financeiro / cobranças", relatorios: "financeiro / relatórios", instaladores: "recursos / instaladores", config: "recursos / configurações" };
+const CRUMB = { inicio: "início", lojas: "início / lojas", saude: "início / saúde das lojas", suporte: "início / suporte", nova: "início / nova loja", usuarios: "início / usuários", masters: "início / usuários master", solicitacoes: "início / solicitações", revendas: "início / revendas", transferencias: "início / transferências", catalogo: "recursos / catálogo", etiquetas: "recursos / estúdio de impressão", cobrancas: "financeiro / cobranças", relatorios: "financeiro / relatórios", instaladores: "recursos / instaladores", config: "recursos / configurações" };
 
 function Modal({ modal, onClose }) {
   const [vals, setVals] = useState(() => Object.fromEntries((modal.fields || []).map((f) => [f.key, f.value != null ? f.value : ""])));
@@ -2934,6 +3154,7 @@ Você passa a receber no app os avisos quando o computador ou a impressora da lo
       case "catalogo": return <ViewCatalogo {...props} />;
       case "etiquetas": return <ViewEtiquetas {...props} />;
       case "saude": return <ViewSaude {...props} />;
+      case "suporte": return <ViewSuporte {...props} />;
       case "cobrancas": return <ViewCobrancas {...props} />;
       case "relatorios": return <ViewRelatorios {...props} />;
       case "instaladores": return <ViewInstaladores {...props} />;

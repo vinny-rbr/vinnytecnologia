@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Suporte na TV</title>
+<link rel="icon" href="vinny-mark.svg">
+<style>
+  :root {
+    --bg: #0b1322; --card: #121e33; --line: #1f2f4d; --text: #eef3fa; --muted: #8aa1c4;
+    --orange: #f7941d; --green: #33c15a; --blue: #3aa0e8; --red: #ef4b4b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); overflow: hidden;
+    font-family: "Segoe UI", Roboto, Arial, sans-serif; }
+  #app { height: 100%; display: flex; flex-direction: column; }
+
+  header { display: flex; align-items: center; justify-content: space-between; gap: 2vw;
+    padding: 1.6vh 2.5vw; border-bottom: 1px solid var(--line); }
+  header .tit { font-size: 3.4vh; font-weight: 800; letter-spacing: .02em; }
+  header .tit small { color: var(--muted); font-weight: 600; font-size: 2.2vh; margin-left: 1vw; }
+  .kpis { display: flex; gap: 1.2vw; }
+  .kpi { background: var(--card); border-radius: 1.4vh; padding: .8vh 1.2vw; text-align: center; min-width: 8vw; }
+  .kpi b { display: block; font-size: 3.6vh; font-weight: 900; }
+  .kpi span { font-size: 1.6vh; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+  header .hora { font-size: 3.4vh; font-weight: 700; color: var(--muted); }
+
+  .cols { flex: 1; display: flex; min-height: 0; }
+  .col { flex: 1; display: flex; flex-direction: column; padding: 2.2vh 2vw; min-height: 0; }
+  .col + .col { border-left: 1px solid var(--line); }
+  .col h2 { font-size: 3.6vh; letter-spacing: .12em; margin-bottom: 1.8vh; display: flex; align-items: center; }
+  .col h2 .n { margin-left: auto; font-size: 3.2vh; background: var(--card); border-radius: 1vh; padding: .2vh 1vw; }
+  .col h2 .dot { width: 1.8vh; height: 1.8vh; border-radius: 50%; margin-right: 1vw; }
+  .esp h2 { color: var(--orange); } .esp .dot { background: var(--orange); animation: pisca 1.4s infinite; }
+  .atd h2 { color: var(--blue); } .atd .dot { background: var(--blue); }
+  .lista { flex: 1; overflow: hidden; display: flex; flex-direction: column; gap: 1.2vh; }
+
+  .item { background: var(--card); border-radius: 1.6vh; padding: 1.5vh 1.4vw; border-left: .8vh solid var(--green);
+    animation: entra .5s ease-out; }
+  .item.amarelo { border-left-color: var(--orange); }
+  .item.vermelho { border-left-color: var(--red); background: rgba(239,75,75,.10); }
+  .item.vermelho .tempo { color: var(--red); animation: pisca 1.2s infinite; }
+  .item.novo { animation: entra .5s ease-out, brilho 1.2s ease-in-out 4; }
+  .linha1 { display: flex; align-items: baseline; gap: 1vw; }
+  .grupo { font-size: 3.4vh; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+  .tempo { font-size: 3.4vh; font-weight: 900; color: var(--muted); white-space: nowrap; }
+  .quem { font-size: 2.2vh; color: var(--muted); margin-top: .4vh; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .quem b { color: var(--text); }
+  .msg { font-size: 2.3vh; margin-top: .6vh; color: #c9d6ea; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .atd .item { border-left-color: var(--blue); }
+  .atendente { color: var(--blue); font-weight: 800; }
+
+  .vazio { color: var(--muted); font-size: 2.8vh; margin-top: 2vh; }
+
+  footer { padding: 1vh 2.5vw; color: var(--muted); font-size: 1.9vh; display: flex; justify-content: space-between; gap: 2vw;
+    border-top: 1px solid var(--line); }
+  footer .off { color: var(--red); font-weight: 800; }
+  footer .rank b { color: var(--text); }
+
+  #erro { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; text-align: center;
+    font-size: 3.4vh; color: var(--muted); padding: 6vw; }
+
+  @keyframes pisca { 50% { opacity: .35; } }
+  @keyframes entra { from { opacity: 0; transform: translateY(1.5vh); } to { opacity: 1; transform: none; } }
+  @keyframes brilho { 50% { box-shadow: 0 0 0 .6vh rgba(247,148,29,.6); } }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="tit">Suporte <small>chamados do WhatsApp</small></div>
+    <div class="kpis">
+      <div class="kpi"><b id="kAbertos">-</b><span>abertos hoje</span></div>
+      <div class="kpi"><b id="kFin">-</b><span>finalizados hoje</span></div>
+      <div class="kpi"><b id="kResp">-</b><span>resposta média</span></div>
+    </div>
+    <div class="hora" id="hora"></div>
+  </header>
+  <div class="cols">
+    <section class="col esp"><h2><i class="dot"></i>AGUARDANDO <span class="n" id="nEsp">0</span></h2><div class="lista" id="esp"></div></section>
+    <section class="col atd"><h2><i class="dot"></i>EM ATENDIMENTO <span class="n" id="nAtd">0</span></h2><div class="lista" id="atd"></div></section>
+  </div>
+  <footer><span id="rank" class="rank"></span><span id="status"></span></footer>
+</div>
+<div id="erro"></div>
+<script>
+  // TV do suporte: chamados abertos pelos grupos "SUP" do WhatsApp. Link com a chave: tv-suporte.html?k=CHAVE
+  var API = "https://raizestecnologia-relay.onrender.com/api/tv/suporte";
+  var k = new URLSearchParams(location.search).get("k") || "";
+  var vistos = null; // ids já mostrados (pra destacar e tocar no chamado novo)
+
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function minDesde(iso) { return iso ? Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60000)) : 0; }
+  function fmtMin(m) { if (m == null) return "-"; if (m < 60) return m + " min"; var h = Math.floor(m / 60); return h + "h" + String(m % 60).padStart(2, "0"); }
+  // "SUPORTE POSTO BEATRIZ - WEBPOSTO" -> "POSTO BEATRIZ - WEBPOSTO"
+  function nomeGrupo(g) { return String(g || "").replace(/^\s*sup(orte)?\.?\s*/i, "") || g; }
+
+  function bip() {
+    try {
+      var a = new (window.AudioContext || window.webkitAudioContext)(), o = a.createOscillator(), v = a.createGain();
+      o.frequency.value = 880; o.connect(v); v.connect(a.destination); v.gain.value = .15; o.start();
+      setTimeout(function () { o.frequency.value = 1175; }, 180); setTimeout(function () { o.stop(); a.close(); }, 420);
+    } catch (e) {}
+  }
+
+  function card(c, novo) {
+    var esperando = c.status === "ABERTO";
+    var m = minDesde(esperando ? c.abertoEm : c.atendidoEm);
+    var cor = !esperando ? "" : m >= 30 ? " vermelho" : m >= 10 ? " amarelo" : "";
+    return '<div class="item' + cor + (novo ? " novo" : "") + '">' +
+      '<div class="linha1"><div class="grupo">' + esc(nomeGrupo(c.grupo)) + '</div><div class="tempo">' + fmtMin(m) + '</div></div>' +
+      '<div class="quem">' + (esperando
+        ? "<b>" + esc(c.cliente || c.clienteNumero || "cliente") + "</b> · " + c.mensagens + (c.mensagens > 1 ? " mensagens" : " mensagem")
+        : 'atendido por <span class="atendente">' + esc(c.atendidoPor || "-") + "</span> · cliente " + esc(c.cliente || "")) + '</div>' +
+      '<div class="msg">' + esc(c.ultimaMensagem || c.primeiraMensagem || "") + '</div></div>';
+  }
+
+  function render(d) {
+    var lista = d.chamados || [];
+    var esp = lista.filter(function (c) { return c.status === "ABERTO"; });
+    var atd = lista.filter(function (c) { return c.status === "ATENDIMENTO"; });
+    var ids = {}; lista.forEach(function (c) { ids[c.id] = 1; });
+    var temNovo = false;
+    function html(arr) {
+      return arr.length ? arr.map(function (c) { var novo = vistos && !vistos[c.id]; if (novo && c.status === "ABERTO") temNovo = true; return card(c, novo); }).join("")
+        : '<div class="vazio">Nenhum chamado.</div>';
+    }
+    document.getElementById("esp").innerHTML = html(esp);
+    document.getElementById("atd").innerHTML = html(atd);
+    document.getElementById("nEsp").textContent = esp.length;
+    document.getElementById("nAtd").textContent = atd.length;
+    if (temNovo) bip();
+    vistos = ids;
+    var h = d.hoje || {};
+    document.getElementById("kAbertos").textContent = h.total != null ? h.total : "-";
+    document.getElementById("kFin").textContent = h.finalizados != null ? h.finalizados : "-";
+    document.getElementById("kResp").textContent = fmtMin(h.mediaRespostaMin);
+    var r = (h.ranking || []).slice(0, 4).map(function (x, i) { return (i + 1) + "º <b>" + esc(x.nome) + "</b> " + x.atendidos; });
+    document.getElementById("rank").innerHTML = r.length ? "Hoje: " + r.join(" &nbsp;·&nbsp; ") : "Hoje ainda sem atendimentos";
+    document.getElementById("status").innerHTML = d.conector ? "WhatsApp conectado" : '<span class="off">WhatsApp do suporte desconectado</span>';
+  }
+
+  function carregar() {
+    fetch(API + "?k=" + encodeURIComponent(k)).then(function (r) {
+      if (r.status === 401) throw new Error("chave");
+      return r.json();
+    }).then(function (j) {
+      document.getElementById("erro").style.display = "none";
+      render(j.data || {});
+    }).catch(function (e) {
+      if (e.message === "chave") {
+        var el = document.getElementById("erro");
+        el.style.display = "flex";
+        el.textContent = "Link da TV inválido. Abra pelo painel: Suporte > Abrir na TV.";
+      } else {
+        document.getElementById("status").innerHTML = '<span class="off">Sem conexão com a central, tentando de novo...</span>';
+      }
+    });
+  }
+  function relogio() { document.getElementById("hora").textContent = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }); }
+  relogio(); setInterval(relogio, 10000);
+  carregar(); setInterval(carregar, 10000);
+</script>
+</body>
+</html>
