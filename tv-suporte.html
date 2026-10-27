@@ -369,6 +369,7 @@ var API = "https://raizestecnologia-relay.onrender.com/api/tv/suporte";
 var qs = new URLSearchParams(location.search);
 var CHAVE = qs.get("k") || "", DEMO = qs.get("demo") === "1";
 var AMARELO = 300, VERMELHO = 600; // segundos esperando resposta (5 e 10 min)
+var LONGO = 900; // chamado aberto há 15 min (mesmo com o técnico respondendo) também alerta
 var POP_SEG = 8;                  // quanto tempo o aviso de chamado novo fica na tela
 
 // ---------- tema: automático pelo horário de Brasília (claro das 8h às 15h, escuro das 15h às 8h) ----------
@@ -575,6 +576,8 @@ function desenhar() {
     var tec = c.atendidoPor || "-", tc = corTec(tec);
     el.style.setProperty("--tec", tc); el.style.setProperty("--tecg", hexA(tc, .35));
     var esperando = !!c.esperandoDesde, s = esperando ? seg(c.esperandoDesde) : seg(c.atendidoEm), lv = esperando ? nivel(s) : "ok";
+    var longo = seg(c.abertoEm) >= LONGO && lv !== "crit";
+    if (longo) { lv = "crit"; s = seg(c.abertoEm); }
     setCls(el, "ca", lv === "ok" ? "" : lv);
     setTxt(el, ".av", iniciais(tec));
     setTxt(el, ".g", nomeGrupo(c.grupo));
@@ -583,7 +586,7 @@ function desenhar() {
     setTxt(el, ".cl", c.cliente || "");
     setTxt(el, ".m", c.ultimaMensagem || "");
     setTxt(el, ".tm", fmt(s));
-    setTxt(el, ".lb", esperando ? (lv === "crit" ? "SEM RESPOSTA" : lv === "warn" ? "CLIENTE ESPERANDO" : "AGUARD. RESPOSTA") : "EM CURSO");
+    setTxt(el, ".lb", longo ? "ABERTO HÁ +15 MIN" : esperando ? (lv === "crit" ? "SEM RESPOSTA" : lv === "warn" ? "CLIENTE ESPERANDO" : "AGUARD. RESPOSTA") : "EM CURSO");
   }, '<div class="vazio-a">Nenhum atendimento em curso</div>');
 
   document.getElementById("nEsp").textContent = esp.length;
@@ -591,13 +594,21 @@ function desenhar() {
 
   // faixa: crítico (10 min) > atenção (5 min) > tudo em dia
   var crit = [], warn = [];
-  lista.forEach(function (c) { if (!c.esperandoDesde) return; var lv = nivel(seg(c.esperandoDesde)); if (lv === "crit") crit.push(c); else if (lv === "warn") warn.push(c); });
+  var longos = [];
+  lista.forEach(function (c) {
+    var lv = c.esperandoDesde ? nivel(seg(c.esperandoDesde)) : "ok";
+    if (lv === "crit") crit.push(c); else if (seg(c.abertoEm) >= LONGO) longos.push(c); else if (lv === "warn") warn.push(c);
+  });
   var f = document.getElementById("faixa");
   var html, cls;
   if (crit.length) {
     cls = "faixa crit";
     html = '<span class="pt"></span><b>ALERTA</b><span>' + (tema === "escuro" ? "Cliente esperando há mais de 10 min:" : "Cliente aguardando há mais de 10 minutos:") +
       '</span><span class="nomes">' + crit.map(function (c) { return esc(nomeGrupo(c.grupo)); }).join(" · ") + "</span>";
+  } else if (longos.length) {
+    cls = "faixa crit";
+    html = '<span class="pt"></span><b>ALERTA</b><span>' + (tema === "escuro" ? "Chamado aberto há mais de 15 min:" : "Chamado aberto há mais de 15 minutos:") +
+      '</span><span class="nomes">' + longos.map(function (c) { return esc(nomeGrupo(c.grupo)); }).join(" · ") + "</span>";
   } else if (warn.length) {
     cls = "faixa warn";
     html = '<span class="pt"></span><b>ATENÇÃO</b><span>Esperando resposta há mais de 5 min:</span><span class="nomes">' +
@@ -616,6 +627,7 @@ function desenhar() {
 
   // bip: 3 quando um cliente passa de 10 min; depois 2 a cada minuto enquanto alguém continuar no vermelho
   crit.forEach(function (c) { var k = c.id + "|" + c.esperandoDesde; if (!bipados.has(k)) { bipados.add(k); bip(3, 660); ultimoBipCrit = Date.now(); } });
+  longos.forEach(function (c) { var k = c.id + "|15"; if (!bipados.has(k)) { bipados.add(k); bip(3, 660); ultimoBipCrit = Date.now(); } });
   if (crit.length && Date.now() - ultimoBipCrit > 60000) { ultimoBipCrit = Date.now(); bip(2, 660); }
 
   // números do dia
