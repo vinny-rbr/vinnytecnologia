@@ -232,16 +232,71 @@ function Kpis({ lojas, isMaster }) {
     { ic: icAlert, cls: "ic-red", l: "A vencer (7 dias)", v: aVencer, s: "mensalidade a receber" },
     { ic: icMoney, cls: "ic-blue", l: "Receita do mês", v: "R$ " + pagantes.length * PRECO, s: `${pagantes.length} lojas × R$ 30` },
   ];
+  const [verPag, setVerPag] = useState(false);
   return (
-    <div className="kpis">
-      {cards.map((c, i) => (
-        <div className="kpi" key={i}>
-          <div className={"k-ic " + c.cls}><Ic d={c.ic} /></div>
-          <div className="k-l">{c.l}</div>
-          <div className="k-v tnum" style={c.vcls}>{c.v}</div>
-          <div className="k-s">{c.s}</div>
-        </div>
-      ))}
+    <>
+      <div className="kpis">
+        {cards.map((c, i) => {
+          const clica = isMaster && i === 3; // Receita/mês: abre a lista de quem entra na conta
+          return (
+            <div className={"kpi" + (clica ? " kpi-click" : "")} key={i} onClick={clica ? () => setVerPag(!verPag) : undefined}
+              style={clica ? { cursor: "pointer" } : undefined} title={clica ? "Ver quem entra nessa conta" : undefined}>
+              <div className={"k-ic " + c.cls}><Ic d={c.ic} /></div>
+              <div className="k-l">{c.l}</div>
+              <div className="k-v tnum" style={c.vcls}>{c.v}</div>
+              <div className="k-s">{c.s}{clica ? (verPag ? " · fechar" : " · ver lista") : ""}</div>
+            </div>
+          );
+        })}
+      </div>
+      {isMaster && verPag && <ListaPagantes pagantes={pagantes} />}
+    </>
+  );
+}
+
+/* Quem entra na Receita/mês do master: venda direta e lojas de revenda, com a situação de cada uma
+   (pago / em teste / a pagar), pra conferir se o número bate com quem paga de verdade. */
+const SIT_REV = { pago: ["Pago", "pill-ok"], teste: ["Em teste", "pill-wait"], apagar: ["A pagar", "pill-wait"],
+  bloqueada: ["Bloqueada", "pill-block"], aguardando: ["Aguardando", "pill-wait"], cortesia: ["Cortesia", "pill-ok"] };
+function ListaPagantes({ pagantes }) {
+  const fmtD = (s) => (s ? s.slice(0, 10).split("-").reverse().join("/") : "");
+  const linhas = pagantes.map((l) => {
+    const rev = !!l.revendaCodigo;
+    const sr = l.situacaoRevenda || {};
+    let sit, cls, info;
+    if (rev) {
+      [sit, cls] = SIT_REV[sr.tipo] || [sr.tipo || "?", ""];
+      info = sr.tipo === "pago" ? "até " + fmtD(sr.pagaAte) : sr.tipo === "teste" ? "teste até " + fmtD(sr.testeAte)
+        : sr.vencimento ? "venceu " + fmtD(sr.vencimento) : "";
+    } else {
+      sit = l.fase === "implantacao" ? "Implantação" : "Mensalidade";
+      cls = l.bloqueada ? "pill-block" : "pill-ok";
+      info = l.vencimentoAtual ? "vence " + fmtD(l.vencimentoAtual) : "";
+    }
+    return { l, rev, sit, cls, info, ult: rev ? sr.ultimoPagamentoEm : null, valor: Number(l.mensalidade) || 0 };
+  }).sort((a, b) => (a.rev - b.rev) || (a.l.revendaNome || "").localeCompare(b.l.revendaNome || "") || (a.l.nome || "").localeCompare(b.l.nome || ""));
+  const total = linhas.reduce((s, x) => s + x.valor, 0);
+  const pagos = linhas.filter((x) => x.rev ? x.sit === "Pago" : !x.l.bloqueada);
+  return (
+    <div className="panel" style={{ marginTop: 16 }}>
+      <div className="p-head"><span className="p-title"><Ic d={icMoney} /> Quem entra na Receita/mês</span>
+        <span className="sub">{linhas.length} lojas · R$ {total.toFixed(2).replace(".", ",")} · em dia: {pagos.length}</span></div>
+      <div className="tbl-wrap">
+        <table className="tbl">
+          <thead><tr><th>Loja</th><th>Origem</th><th>Situação</th><th>Último pagamento</th><th style={{ textAlign: "right" }}>Mensalidade</th></tr></thead>
+          <tbody>
+            {linhas.map(({ l, rev, sit, cls, info, ult, valor }) => (
+              <tr key={l.cnpj}>
+                <td><b>{l.nome || l.cnpj}</b><div className="mono sub">{l.cnpj}</div></td>
+                <td>{rev ? (l.revendaNome || l.revendaCodigo) : "Venda direta"}</td>
+                <td><span className={"pill " + cls}>{sit}</span> <span className="sub">{info}</span></td>
+                <td className="mono">{ult ? fmtD(ult) : "-"}</td>
+                <td className="mono" style={{ textAlign: "right", fontWeight: 600 }}>R$ {valor.toFixed(2).replace(".", ",")}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
