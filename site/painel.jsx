@@ -2582,8 +2582,9 @@ function ViewSuporte({ sess, mostrarToast }) {
   useEffect(() => { if (aba === "relatorio") carregarRel(); if (aba === "equipe") carregarEqp(); }, [aba, carregarRel, carregarEqp]);
 
   async function acao(c, qual) {
+    if (qual === "descartar" && !confirm(`Descartar o chamado #${c.id} (${c.grupo})?\n\nSai da TV e dos relatórios. Use para chamado aberto de brincadeira ou por engano.`)) return;
     setBusy(c.id);
-    try { await req(`/chamados/${c.id}/${qual}`, { method: "POST", body: {} }); await carregar(); mostrarToast(qual === "atender" ? "Chamado com você." : "Chamado finalizado."); }
+    try { await req(`/chamados/${c.id}/${qual}`, { method: "POST", body: {} }); await carregar(); mostrarToast(qual === "atender" ? "Chamado com você." : qual === "descartar" ? "Chamado descartado." : "Chamado finalizado."); }
     catch (e) { mostrarToast(e.message, false); }
     setBusy(null);
   }
@@ -2644,6 +2645,7 @@ function ViewSuporte({ sess, mostrarToast }) {
                     <div className="row-actions">
                       {c.status === "ABERTO" && <button className="btn btn-ghost btn-sm" disabled={busy === c.id} onClick={() => acao(c, "atender")}>Atender</button>}
                       <button className="btn btn-mg btn-sm" disabled={busy === c.id} onClick={() => acao(c, "finalizar")}><Ic d={icCheck} strokeWidth="3" /> Finalizar</button>
+                      <button className="btn btn-ghost btn-sm" title="Aberto de brincadeira ou por engano: tira da TV e dos relatórios" disabled={busy === c.id} onClick={() => acao(c, "descartar")}>Descartar</button>
                     </div>
                   ) : (
                     <span className={"pill " + (c.status === "FINALIZADO" ? "pill-ok" : "pill-wait")}>{c.status === "FINALIZADO" ? "finalizado" + (c.minutosSolucao != null ? " em " + supMin(c.minutosSolucao) : "") : c.status === "ATENDIMENTO" ? "em atendimento" : "aguardando"}</span>
