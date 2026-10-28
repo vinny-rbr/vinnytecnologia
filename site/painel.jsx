@@ -2566,6 +2566,7 @@ function ViewSuporte({ sess, mostrarToast }) {
   const [novo, setNovo] = useState({ nome: "", numero: "", funcao: "TECNICO" });
   const [autores, setAutores] = useState(null);
   const [busy, setBusy] = useState(null);
+  const [cats, setCats] = useState([]); // opções de problema (trocar no relatório)
   const req = (p, o = {}) => api("/suporte" + p, { base: ADMIN_API, token: sess.token, ...o });
 
   const carregar = useCallback(async () => {
@@ -2588,6 +2589,15 @@ function ViewSuporte({ sess, mostrarToast }) {
   const temQr = !!(cfg && cfg.qr);
   useEffect(() => { if (!temQr) return; const t = setInterval(carregar, 5000); return () => clearInterval(t); }, [temQr, carregar]);
   useEffect(() => { if (aba === "relatorio") carregarRel(); if (aba === "equipe") carregarEqp(); }, [aba, carregarRel, carregarEqp]);
+  useEffect(() => { if (aba === "relatorio" && !cats.length) req("/categorias").then((l) => setCats(l || [])).catch(() => {}); }, [aba]);
+
+  // robô errou o problema: troca aqui e ele não mexe mais
+  async function mudarCat(c, categoria) {
+    setBusy(c.id);
+    try { await req(`/chamados/${c.id}/categoria`, { method: "POST", body: { categoria } }); await carregarRel(); mostrarToast("Problema trocado."); }
+    catch (e) { mostrarToast(e.message, false); }
+    setBusy(null);
+  }
 
   async function acao(c, qual) {
     if (qual === "descartar" && !confirm(`Descartar o chamado #${c.id} (${c.grupo})?\n\nSai da TV e dos relatórios. Use para chamado aberto de brincadeira ou por engano.`)) return;
@@ -2642,10 +2652,15 @@ function ViewSuporte({ sess, mostrarToast }) {
             const espera = c.esperandoDesde ? supDesde(c.esperandoDesde) : null;
             const corEsp = espera == null ? undefined : espera >= 10 ? { color: "var(--neg)", fontWeight: 800 } : espera >= 5 ? { color: "var(--mg)", fontWeight: 700 } : undefined;
             return (
-              <tr key={c.id} onClick={(e) => { if (!e.target.closest("button")) abrirConversa(c); }} style={{ cursor: "pointer" }} title="Ver a conversa">
+              <tr key={c.id} onClick={(e) => { if (!e.target.closest("button, select")) abrirConversa(c); }} style={{ cursor: "pointer" }} title="Ver a conversa">
                 <td><b>{supGrupo(c.grupo)}</b> <span className="sub mono">#{c.id}</span>
                   {c.retornoDe && <div><span className="pill pill-block" title="Esse cliente já teve um chamado finalizado nas últimas 24h" style={{ whiteSpace: "nowrap" }}>retorno do #{c.retornoDe}</span></div>}</td>
-                {!comAcoes && <td><span className="pill pill-wait" style={{ whiteSpace: "nowrap" }}>{c.categoria || "Outros"}</span></td>}
+                {!comAcoes && <td>{cats.length
+                  ? <select className="sel" style={{ maxWidth: 210 }} aria-label={"Problema do chamado #" + c.id} title="Trocar o problema"
+                      value={c.categoria || "Outros"} disabled={busy === c.id} onChange={(e) => mudarCat(c, e.target.value)}>
+                      {cats.map((x) => <option key={x} value={x}>{x}</option>)}
+                    </select>
+                  : <span className="pill pill-wait" style={{ whiteSpace: "nowrap" }}>{c.categoria || "Outros"}</span>}</td>}
                 <td>{c.cliente || c.clienteNumero || "-"}</td>
                 <td style={{ maxWidth: 320, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={c.primeiraMensagem}>{c.ultimaMensagem || c.primeiraMensagem}</td>
                 <td className="mono">{supQuando(c.abertoEm)}</td>
