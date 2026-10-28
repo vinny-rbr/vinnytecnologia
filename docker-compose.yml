@@ -1,0 +1,8 @@
+# Site (vitrine + painel admin + TVs + demo + mesas), sem banco e sem backend.
+# No Coolify: Docker Compose apontando pra este arquivo, domínio na porta 80.
+services:
+  site:
+    build: .
+    restart: always
+    expose:
+      - "80"

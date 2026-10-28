@@ -2,8 +2,8 @@
    No-build React (UMD + Babel no navegador). Fala com o relay em /api/revenda. */
 const { useState, useEffect, useCallback } = React;
 
-const API = "https://raizestecnologia-relay.onrender.com/api/revenda";
-const ADMIN_API = "https://raizestecnologia-relay.onrender.com/api/admin";
+const API = "https://api.vinnytecnologia.com.br/api/revenda";
+const ADMIN_API = "https://api.vinnytecnologia.com.br/api/admin";
 const LS_TOKEN = "mg_rev_token";
 const LS_USER = "mg_rev_user";
 const PRECO = 30;
@@ -11,7 +11,7 @@ const IMPLANTACAO = 50;
 // Instalador-base LIMPO (mesmo pra todos). O navegador baixa, injeta o codigo do
 // revendedor no RaizesAgente.xml e devolve o zip pronto. Servido pelo relay (proxy do
 // release no GitHub) porque o relay ja responde com CORS aberto.
-const INSTALADOR_BASE = "https://raizestecnologia-relay.onrender.com/api/revenda/instalador-base";
+const INSTALADOR_BASE = "https://api.vinnytecnologia.com.br/api/revenda/instalador-base";
 // Programa Meu Giro Mesas (Windows): garçom/caixa na rede da loja (modo local do agente Link).
 const MESAS_DESKTOP = "https://github.com/vinny-rbr/raizestecnologia-agente/releases/download/mesas-desktop/MeuGiroMesas.zip";
 const SISTEMAS = [

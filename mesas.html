@@ -209,7 +209,7 @@
    Abre mesa, cliente com tabela de preço, lança itens e recebe (dinheiro com troco, Pix, débito,
    crédito, várias formas), fechando no caixa do LinkPro. Relay -> agente Link (/api/salao/garcom). */
 const { useState, useEffect, useCallback, useRef } = React;
-const API = "https://raizestecnologia-relay.onrender.com/api";
+const API = "https://api.vinnytecnologia.com.br/api";
 const LS_TOKEN = "mg_mesas_token", LS_LOJA = "mg_mesas_loja", LS_DEV = "mg_mesas_device", LS_PASSE = "mg_mesas_passe";
 // Modo LOCAL: página servida pelo agente da loja (http://IP-do-PC:8081/mesas). O login passa pelo relay
 // só pra pegar o passe assinado; o garçom fala direto com o agente pela rede (funciona sem internet).
