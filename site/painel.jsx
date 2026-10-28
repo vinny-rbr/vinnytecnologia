@@ -2538,6 +2538,11 @@ function ViewEtiquetas({ sess, lojas, isMaster, onRecurso, mostrarToast }) {
 const icChat = <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>;
 const supMin = (m) => (m == null ? "-" : m < 60 ? m + " min" : Math.floor(m / 60) + "h" + String(m % 60).padStart(2, "0"));
 const supDesde = (iso) => (iso ? Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60000)) : null);
+// QR do WhatsApp (conector pede quando a sessão cai) em SVG; lib qrcode-generator carregada no painel.html
+const supQrSvg = (txt) => {
+  try { const q = window.qrcode(0, "L"); q.addData(txt); q.make(); return q.createSvgTag({ cellSize: 4, margin: 2, scalable: true }); }
+  catch (e) { return ""; }
+};
 const supQuando = (iso) => {
   if (!iso) return "-";
   const d = new Date(iso), p = (n) => String(n).padStart(2, "0");
@@ -2579,6 +2584,9 @@ function ViewSuporte({ sess, mostrarToast }) {
     } catch (e) { mostrarToast(e.message, false); }
   }, [sess.token]);
   useEffect(() => { carregar(); const t = setInterval(carregar, 15000); return () => clearInterval(t); }, [carregar]);
+  // QR na tela: atualiza rápido (o WhatsApp troca o QR a cada ~20s)
+  const temQr = !!(cfg && cfg.qr);
+  useEffect(() => { if (!temQr) return; const t = setInterval(carregar, 5000); return () => clearInterval(t); }, [temQr, carregar]);
   useEffect(() => { if (aba === "relatorio") carregarRel(); if (aba === "equipe") carregarEqp(); }, [aba, carregarRel, carregarEqp]);
 
   async function acao(c, qual) {
@@ -2671,9 +2679,18 @@ function ViewSuporte({ sess, mostrarToast }) {
         <div><h1>Suporte</h1><p className="sub">Chamados dos grupos "SUP" do WhatsApp. A primeira resposta da equipe no grupo já marca quem atendeu; #finalizado no grupo ou o botão finaliza.</p></div>
         {linkTv && <a className="btn btn-ghost" href={linkTv} target="_blank" rel="noopener">Abrir na TV</a>}
       </div>
-      {cfg && !cfg.conectorOnline && (
+      {cfg && cfg.qr && (
+        <div className="panel" style={{ padding: 16, marginBottom: 14, borderColor: "var(--neg)", display: "flex", gap: 18, alignItems: "center", flexWrap: "wrap" }}>
+          <div style={{ background: "#fff", padding: 8, borderRadius: 8, width: 220, height: 220 }} dangerouslySetInnerHTML={{ __html: supQrSvg(cfg.qr) }} />
+          <div style={{ flex: "1 1 260px" }}>
+            <b style={{ color: "var(--neg)" }}>O WhatsApp do suporte foi desconectado.</b>
+            <p className="sub" style={{ margin: "6px 0 0" }}>No celular do suporte: WhatsApp &gt; Aparelhos conectados &gt; Conectar aparelho, e aponte para este QR. Ele troca a cada 20 segundos; esta tela atualiza sozinha.</p>
+          </div>
+        </div>
+      )}
+      {cfg && !cfg.qr && !cfg.conectorOnline && (
         <div className="panel" style={{ padding: 14, marginBottom: 14, borderColor: "var(--neg)" }}>
-          <b style={{ color: "var(--neg)" }}>Conector do WhatsApp desligado.</b> <span className="sub">Abra o atalho "Suporte WhatsApp" na Área de Trabalho do seu PC. Enquanto ele estiver desligado, mensagem de cliente não vira chamado.{cfg.ultimoSinal ? " Último sinal: " + supQuando(cfg.ultimoSinal) + "." : ""}</span>
+          <b style={{ color: "var(--neg)" }}>Conector do WhatsApp desligado.</b> <span className="sub">Ele roda no servidor e volta sozinho; se passar de 5 minutos, chega um aviso no seu celular. Enquanto estiver desligado, mensagem de cliente não vira chamado.{cfg.ultimoSinal ? " Último sinal: " + supQuando(cfg.ultimoSinal) + "." : ""}</span>
         </div>
       )}
       <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
@@ -2853,7 +2870,7 @@ function ViewSuporte({ sess, mostrarToast }) {
             </div>
           </div>
           <div>
-            <b>Chave do conector</b> <span className="sub">(já vai configurada no conector do seu PC; só use se precisar reinstalar)</span>
+            <b>Chave do conector</b> <span className="sub">(já está configurada no conector do servidor; só use se precisar reinstalar)</span>
             <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
               <button className="btn btn-ghost btn-sm" onClick={() => copiar(cfg.tokenConector || "", "Chave copiada.")}><Ic d={icCopy} /> Copiar chave</button>
             </div>
