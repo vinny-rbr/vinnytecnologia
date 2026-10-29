@@ -878,7 +878,97 @@ function ViewInstaladores({ sess, mostrarToast }) {
   );
 }
 
-function ViewConfig({ sess, onLogout, isMaster }) {
+/* ================= AVISO DE MANUTENÇÃO =================
+   O master liga no Configurações; aparece aqui no topo (master e revendas) e no app (login, escolha da
+   empresa e início) desde que liga até o fim da manutenção. */
+const AVISO_URL = "https://api.vinnytecnologia.com.br/api/aviso";
+const avisoQuando = (iso) => {
+  const d = new Date(iso), p = (n) => String(n).padStart(2, "0");
+  return p(d.getDate()) + "/" + p(d.getMonth() + 1) + " às " + p(d.getHours()) + ":" + p(d.getMinutes());
+};
+// "2026-10-28T21:00" (input datetime-local) <-> ISO
+const avisoLocal = (iso) => {
+  if (!iso) return "";
+  const d = new Date(iso), p = (n) => String(n).padStart(2, "0");
+  return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) + "T" + p(d.getHours()) + ":" + p(d.getMinutes());
+};
+function avisoTexto(a) {
+  const per = a.inicio && a.fim ? "de " + avisoQuando(a.inicio) + " até " + avisoQuando(a.fim)
+    : a.fim ? "até " + avisoQuando(a.fim) : a.inicio ? "a partir de " + avisoQuando(a.inicio) : "";
+  const titulo = a.emAndamento ? "Manutenção em andamento" : "Manutenção programada";
+  const padrao = a.tipo === "AVISO" ? "O sistema pode ficar instável nesse período." : "O sistema vai ficar indisponível nesse período.";
+  return { titulo: titulo + (per ? " " + per : ""), msg: a.mensagem || padrao };
+}
+function AvisoBanner() {
+  const [a, setA] = useState(null);
+  useEffect(() => {
+    const ler = () => fetch(AVISO_URL).then((r) => r.json()).then((j) => setA(j && j.data ? j.data : null)).catch(() => {});
+    ler();
+    const t = setInterval(ler, 5 * 60000);
+    window.addEventListener("mg-aviso", ler); // master salvou: atualiza na hora
+    return () => { clearInterval(t); window.removeEventListener("mg-aviso", ler); };
+  }, []);
+  if (!a) return null;
+  const { titulo, msg } = avisoTexto(a);
+  const forte = a.emAndamento || a.tipo !== "AVISO";
+  return (
+    <div className="panel" style={{ padding: "12px 16px", marginBottom: 16, display: "flex", gap: 12, alignItems: "flex-start",
+      borderColor: forte ? "var(--neg)" : "var(--mg)", background: "color-mix(in srgb," + (forte ? "#EE5A5A" : "var(--mg)") + " 10%,var(--card))" }}>
+      <span style={{ color: forte ? "var(--neg)" : "var(--mg)", flex: "none", marginTop: 2 }}><Ic d={icAlert} /></span>
+      <div><b>{titulo}</b><div className="sub" style={{ marginTop: 2 }}>{msg}</div></div>
+    </div>
+  );
+}
+
+function AvisoConfig({ sess, mostrarToast }) {
+  const [f, setF] = useState(null);
+  const [salvando, setSalvando] = useState(false);
+  useEffect(() => {
+    api("/aviso", { base: ADMIN_API, token: sess.token })
+      .then((a) => setF({ ativo: !!a.ativo, tipo: a.tipo || "INDISPONIVEL", inicio: avisoLocal(a.inicio), fim: avisoLocal(a.fim), mensagem: a.mensagem || "" }))
+      .catch((e) => mostrarToast(e.message, false));
+  }, [sess.token]);
+  if (!f) return null;
+  const set = (k, v) => setF({ ...f, [k]: v });
+  async function salvar() {
+    setSalvando(true);
+    try {
+      await api("/aviso", { base: ADMIN_API, token: sess.token, method: "POST", body: {
+        ativo: f.ativo, tipo: f.tipo, mensagem: f.mensagem,
+        inicio: f.inicio ? new Date(f.inicio).toISOString() : null, fim: f.fim ? new Date(f.fim).toISOString() : null } });
+      window.dispatchEvent(new Event("mg-aviso"));
+      mostrarToast(f.ativo ? "Aviso ligado: já aparece no app e no painel das revendas." : "Aviso desligado.");
+    } catch (e) { mostrarToast(e.message, false); }
+    setSalvando(false);
+  }
+  const previa = avisoTexto({ ...f, inicio: f.inicio && new Date(f.inicio).toISOString(), fim: f.fim && new Date(f.fim).toISOString(),
+    emAndamento: (!f.inicio || new Date(f.inicio) <= new Date()) && (!f.fim || new Date(f.fim) > new Date()) });
+  return (
+    <div className="panel" style={{ marginTop: 18 }}>
+      <div className="p-head"><span className="p-title"><Ic d={icAlert} /> Aviso de manutenção</span></div>
+      <div style={{ padding: 16, display: "grid", gap: 14 }}>
+        <label className="chk-row"><input type="checkbox" checked={f.ativo} onChange={(e) => set("ativo", e.target.checked)} />
+          <span><b>Mostrar aviso</b> <span className="sub">no app (login, escolha da empresa e início) e no painel das revendas</span></span></label>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <div className="field" style={{ marginBottom: 0 }}><label>Começa</label><input type="datetime-local" value={f.inicio} onChange={(e) => set("inicio", e.target.value)} /></div>
+          <div className="field" style={{ marginBottom: 0 }}><label>Termina</label><input type="datetime-local" value={f.fim} min={f.inicio} onChange={(e) => set("fim", e.target.value)} /></div>
+          <div className="field" style={{ marginBottom: 0 }}><label>Tipo</label>
+            <select className="sel" value={f.tipo} onChange={(e) => set("tipo", e.target.value)}>
+              <option value="INDISPONIVEL">Sistema fica indisponível</option>
+              <option value="AVISO">Só aviso (atualização, pode ficar instável)</option>
+            </select></div>
+        </div>
+        <div className="field" style={{ marginBottom: 0 }}><label>Mensagem (opcional)</label>
+          <textarea rows={2} maxLength={500} value={f.mensagem} onChange={(e) => set("mensagem", e.target.value)}
+            placeholder={previa.msg} style={{ width: "100%", resize: "vertical", background: "var(--ink-2)", border: "1px solid var(--line)", borderRadius: 10, padding: "10px 12px", color: "var(--text)", fontFamily: "var(--font)", fontSize: 14 }} /></div>
+        <div className="sub">Prévia: <b style={{ color: "var(--text)" }}>{previa.titulo}</b> · {previa.msg}<br />Some sozinho quando passa do horário de término.</div>
+        <div><button className="btn btn-mg" disabled={salvando} onClick={salvar}><Ic d={icCheck} strokeWidth="3" /> {salvando ? "Salvando…" : "Salvar aviso"}</button></div>
+      </div>
+    </div>
+  );
+}
+
+function ViewConfig({ sess, onLogout, isMaster, mostrarToast }) {
   const campos = isMaster
     ? [["Nome", sess.nome], ["E-mail", sess.email], ["Perfil", "Master (dono)"]]
     : [["Nome", sess.nome], ["E-mail", sess.email], ["Código de revenda", sess.codigo]];
@@ -890,6 +980,7 @@ function ViewConfig({ sess, onLogout, isMaster }) {
           <div className="cfg-row" key={i}><span className="cfg-k">{k}</span><span className="cfg-v mono">{v}</span></div>
         ))}
       </div>
+      {isMaster && <AvisoConfig sess={sess} mostrarToast={mostrarToast} />}
       <div style={{ marginTop: 18 }}>
         <button className="btn btn-ghost" onClick={onLogout}><Ic d={icLogout} /> Sair da conta</button>
       </div>
@@ -3377,6 +3468,7 @@ Você passa a receber no app os avisos quando o computador ou a impressora da lo
           </div>
         </div>
 
+        <AvisoBanner />
         {carregando ? (
           <div className="state"><div className="spinner"></div>Carregando…</div>
         ) : erro ? (
