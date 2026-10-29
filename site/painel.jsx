@@ -2643,7 +2643,7 @@ function ViewSuporte({ sess, mostrarToast }) {
   const atd = (ativos || []).filter((c) => c.status === "ATENDIMENTO");
 
   const tabelaChamados = (lista, comAcoes) => (
-    <div className="tbl-wrap">
+    <div className={"tbl-wrap" + (comAcoes ? " sup-tbl" : "")}>
       <table className="tbl">
         <thead><tr><th>Grupo</th>{!comAcoes && <th>Problema</th>}<th>Cliente</th><th>Mensagem</th><th>Aberto</th><th>{comAcoes ? "Esperando" : "Resposta"}</th><th>Atendido por</th><th>{comAcoes ? "" : "Situação"}</th></tr></thead>
         <tbody>
@@ -2688,9 +2688,35 @@ function ViewSuporte({ sess, mostrarToast }) {
     </div>
   );
 
+  // celular: os chamados em aberto viram cartões (a tabela não cabe na tela)
+  const cartoesChamados = (lista) => (
+    <div className="sup-cards">
+      {lista.map((c) => {
+        const espera = c.esperandoDesde ? supDesde(c.esperandoDesde) : null;
+        const corEsp = espera == null ? "" : espera >= 10 ? " neg" : espera >= 5 ? " warn" : "";
+        return (
+          <div key={c.id} className="sup-card" onClick={(e) => { if (!e.target.closest("button")) abrirConversa(c); }}>
+            <div className="sup-card-top">
+              <b>{supGrupo(c.grupo)}</b> <span className="sub mono">#{c.id}</span>
+              <span className={"sup-esp mono" + corEsp}>{espera == null ? "respondido" : "esperando " + supMin(espera)}</span>
+            </div>
+            {c.retornoDe && <span className="pill pill-block">retorno do #{c.retornoDe}</span>}
+            <div className="sup-card-msg"><span className="sub">{c.cliente || c.clienteNumero || "Cliente"}:</span> {c.ultimaMensagem || c.primeiraMensagem}</div>
+            <div className="sub">Aberto {supQuando(c.abertoEm)} · {c.atendidoPor ? "com " + c.atendidoPor : "ninguém atendeu"}</div>
+            <div className="sup-card-acoes">
+              {c.status === "ABERTO" && <button className="btn btn-ghost btn-sm" disabled={busy === c.id} onClick={() => acao(c, "atender")}>Atender</button>}
+              <button className="btn btn-mg btn-sm" disabled={busy === c.id} onClick={() => acao(c, "finalizar")}><Ic d={icCheck} strokeWidth="3" /> Finalizar</button>
+              <button className="btn btn-ghost btn-sm" disabled={busy === c.id} onClick={() => acao(c, "descartar")}>Descartar</button>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+
   return (
     <>
-      <div className="head-row">
+      <div className="head-row sup-head">
         <div><h1>Suporte</h1><p className="sub">Chamados dos grupos "SUP" do WhatsApp. A primeira resposta da equipe no grupo já marca quem atendeu; #finalizado no grupo ou o botão finaliza.</p></div>
         {linkTv && <a className="btn btn-ghost" href={linkTv} target="_blank" rel="noopener">Abrir na TV</a>}
       </div>
@@ -2716,11 +2742,11 @@ function ViewSuporte({ sess, mostrarToast }) {
         <>
           <div className="panel" style={{ marginBottom: 14 }}>
             <div className="p-head"><span className="p-title"><Ic d={icClock} /> Aguardando ({esp.length})</span></div>
-            {esp.length ? tabelaChamados(esp, true) : <div className="mini-empty" style={{ padding: 18 }}>Nenhum cliente esperando.</div>}
+            {esp.length ? <>{tabelaChamados(esp, true)}{cartoesChamados(esp)}</> : <div className="mini-empty" style={{ padding: 18 }}>Nenhum cliente esperando.</div>}
           </div>
           <div className="panel">
             <div className="p-head"><span className="p-title"><Ic d={icChat} /> Em atendimento ({atd.length})</span></div>
-            {atd.length ? tabelaChamados(atd, true) : <div className="mini-empty" style={{ padding: 18 }}>Nenhum chamado em atendimento.</div>}
+            {atd.length ? <>{tabelaChamados(atd, true)}{cartoesChamados(atd)}</> : <div className="mini-empty" style={{ padding: 18 }}>Nenhum chamado em atendimento.</div>}
           </div>
         </>
       )}
